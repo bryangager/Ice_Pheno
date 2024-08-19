@@ -1,0 +1,335 @@
+---
+title: "LV_Discharge"
+output: html_document
+date: "2024-07-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load libraries
+library(dplyr)
+library(dataRetrieval)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(viridis)
+
+# Get data for LV
+lv_no <- '401733105392404'
+
+# define parameters of interest, and get those parameter names
+# params <- c('00060', '00671', '80154', '00665')
+
+# get daily values from NWIS
+lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
+                         startDate = '1983-10-01', endDate = '2024-09-30')
+
+# rename columns using renameNWISColumns from package dataRetrieval
+lv_dat <- renameNWISColumns(lv_dat,
+                                p00665 = "TP_mgL",
+                                p00671 = "Orthophosphate_mgL",
+                                p80154 = "SS_mgL")
+
+
+# repeating process for 2019 to 2022
+lv_dat19_22 <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
+                         startDate = '2019-10-01', endDate = '2022-09-30')
+# rename columns using renameNWISColumns from package dataRetrieval
+lv_dat19_22 <- renameNWISColumns(lv_dat19_22,
+                                p00665 = "TP_mgL",
+                                p00671 = "Orthophosphate_mgL",
+                                p80154 = "SS_mgL")
+```
+
+
+```{r}
+# use function `grep` to identify which columns are code columns
+lv_names <- names(lv_dat)
+grep('_cd', lv_names) # returns the index of the match
+
+# 2019-2022
+# use function `grep` to identify which columns are code columns
+lv_names19_22 <- names(lv_dat19_22)
+grep('_cd', lv_names19_22) # returns the index of the match
+
+```
+
+
+```{r}
+grep('_cd', lv_names, value = TRUE) # returns the matched elements themselves
+```
+
+
+```{r}
+# change the code column names to be more explicit about what they contain
+# using function gsub
+gsub('_cd', '_code', lv_names)
+
+gsub('_cd', '_code', lv_names19_22)
+```
+
+
+```{r}
+lv_dat <- select(lv_dat, -contains('_cd'))
+head(lv_dat)
+
+
+lv_dat19_22 <- select(lv_dat19_22, -contains('_cd'))
+head(lv_dat19_22)
+```
+
+
+```{r}
+# add water year variable "waterYear" to our dataframe
+lv_dat <- addWaterYear(lv_dat)
+
+# calculate cumulative discharge for each year by first grouping by water year,
+# and then using the "cumsum" function. Add day of water year for plotting purposes.
+# These steps will build a new dataframe, with the existing information in yahara_dat
+# but with two additional columns.
+cumulative_dat <- group_by(lv_dat, waterYear) %>%
+  mutate(cumulative_dis = cumsum(Flow), 
+         wy_doy = seq(1:n()))
+# scaling across 2013 onwards
+test <- cumulative_dat_ungroup %>%
+  filter(waterYear>=2013) %>%
+  group_by(waterYear) %>% 
+  mutate(cumulative_dis_z = scale(cumulative_dis))
+
+
+# visually compare cumulative discharge across years
+ggplot(cumulative_dat, aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_line(aes(color = waterYear)) +
+  scale_color_viridis_c() +
+  scale_x_continuous(breaks = c(1, 93, 184, 275), labels = c("Oct 1", "Jan 1", "Apr 1", "July 1")) +
+  theme_bw() +
+  labs(color = "Water Year", x = "", y = "Cumulative Discharge")
+
+# 2019-2022
+# add water year variable "waterYear" to our dataframe
+lv_dat19_22 <- addWaterYear(lv_dat19_22)
+
+# calculate cumulative discharge for each year by first grouping by water year,
+# and then using the "cumsum" function. Add day of water year for plotting purposes.
+# These steps will build a new dataframe, with the existing information in yahara_dat
+# but with two additional columns.
+cumulative_dat19_22 <- group_by(lv_dat19_22, waterYear) %>%
+  mutate(cumulative_dis = cumsum(Flow), 
+         wy_doy = seq(1:n()))
+  
+# visually compare cumulative discharge across years
+ggplot(cumulative_dat19_22, aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_line(aes(color = waterYear)) +
+  scale_color_viridis_c() +
+  scale_x_continuous(breaks = c(1, 93, 184, 275), labels = c("Oct 1", "Jan 1", "Apr 1", "July 1")) +
+  theme_bw() +
+  labs(color = "Water Year 2019-2022", x = "", y = "Cumulative Discharge")
+
+```
+
+```{r}
+# ungroup cumulative_dat 
+cumulative_dat_ungroup <- cumulative_dat %>%
+  ungroup() %>%
+  as.data.frame()
+```
+
+
+```{r}
+
+# Water Year 2012:
+
+# plot ungrouped data frame
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2012) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(0, 366), y = c(0, 500)) +
+  labs(color = "Water Year 2012", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=208, color="red") 
+
+```
+
+```{r}
+# water year 2013
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2013) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2013", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=241, color="red") 
+```
+
+
+```{r}
+# water year 2014
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2014) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(190, 255), y = c(0, 500)) +
+  labs(color = "Water Year 2014", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=219, color="red") 
+```
+
+
+```{r}
+# water year 2015
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2015) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2015", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=220, color="red") 
+```
+
+
+```{r}
+# water year 2016
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2016) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2016", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=237, color="red") 
+```
+
+
+```{r}
+# water year 2017
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2017) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2017", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=229, color="red") 
+```
+
+
+```{r}
+# water year 2018
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2018) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2018", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=228, color="red") 
+```
+
+
+```{r}
+# water year 2019
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2019) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2019", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=242, color="red") 
+```
+
+
+```{r}
+# water year 2020
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2020) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(100, 240), y = c(0, 500)) +
+  labs(color = "Water Year 2020", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=218, color="red") 
+
+ggplot(test %>%
+         filter(waterYear == 2020) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis_z, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(100, 240), y=c(-1,0)) +
+  labs(color = "Water Year 2020", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=218, color="red") 
+```
+
+
+```{r}
+# water year 2021
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2021) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2021", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=245, color="red") 
+```
+
+
+```{r}
+# water year 2022
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2022) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_rect(aes(xmin=229,xmax=244,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.1)+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2022", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=230, color="red")
+```
+
+
+```{r}
+# water year 2023
+ggplot(cumulative_dat_ungroup %>%
+         filter(waterYear == 2023) %>%
+         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  geom_line(aes(color = waterYear)) +
+  theme_bw() +
+  lims(x = c(200, 250), y = c(0, 500)) +
+  labs(color = "Water Year 2023", x = "Water Year DOY", y = "Cumulative Discharge") +
+  facet_wrap(waterYear~.)+
+  geom_vline(xintercept=229, color="red")
+```
+
+
+```{r}
+# joining ice off table with discharge table
+ice_off_dates <- read.csv("ice_off_dates.csv")
+
+cumulative_dat_iceoff <- merge(x=cumulative_dat, y=ice_off_dates, by=c("waterYear","wy_doy"), all.x=T)
+```
+
+
+```{r}
+
+```
+
+
