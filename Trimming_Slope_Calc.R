@@ -5,7 +5,7 @@
 ##### 0) Set Up R Environment  #### 
 
     # Set working directory 
-    setwd("~/Documents/Loch Vale & Oleksy/Ice Phenology Project/Oxygen_Under_Ice")    
+    setwd("/Users/Gagers/Documents/Loch Vale & Oleksy/Ice Phenology Project/Ice_Pheno")    
 
     # Load Packages 
     suppressMessages(library(dplyr))
@@ -22,18 +22,19 @@
   # Load Data 
     
     # Trimming Windows 
-      trim_windows <- read_xlsx("Input_Data/20240819_toy_data_dates.xlsx")
+      trim_windows <- read_xlsx("Input_Files/20240819_ice_windows.xlsx")
       trim_windows <- as.data.frame(trim_windows)
       trim_windows$Full_Ice_Cover <- as.POSIXct(trim_windows$Full_Ice_Cover, tz = "MST", format = "%Y-%m-%d")
       trim_windows$Functional_Ice_Off <- as.POSIXct(trim_windows$Functional_Ice_Off, tz = "MST", format = "%Y-%m-%d")
       trim_windows$No_Ice_Cover <- as.POSIXct(trim_windows$No_Ice_Cover, tz = "MST", format = "%Y-%m-%d")
       trim_windows$Lake <- "LOC"
       trim_windows$Lake_WaterYear <- paste(trim_windows$Lake, trim_windows$Water_Year, sep = "_")
+      trim_windows <- trim_windows %>% drop_na()
       head(trim_windows)
 
 
     # Discharge Data
-        discharge_data <- read.csv("Input_Data/cumulativeQ_data.csv")
+        discharge_data <- read.csv("Input_Files/cumulativeQ_data.csv")
         head(discharge_data)
         
         #Format Discharge Data 
@@ -42,8 +43,8 @@
         discharge_data$Date <- as.POSIXct(discharge_data$Date, tz = "MST", format = "%Y-%m-%d")
         head(discharge_data)
         
-        # Subset discharge data to only years when we have ice on and ice off data 
-        water_years_of_interest <- c("2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023")
+        # Subset discharge data to only years when we have ice on and ice off data - not using 2018 because it contains NAs
+        water_years_of_interest <- c("2014", "2015", "2016", "2017", "2019", "2020", "2021", "2022", "2023")
         discharge_data_sub <- discharge_data[discharge_data$waterYear %in% water_years_of_interest , ]
         
         #Break up Discharge data into list by lake_WaterYear 
@@ -133,9 +134,9 @@
       trimmed_df <- as.data.frame(df) # Save output as a data frame 
     }
 
-        # Check function 
-            # check <- Trim_FullNo_FUNC (discharge_data_lst[[2]], trim_windows)
-            # head(check)
+        # # Check function 
+            check <- Trim_FullNo_FUNC (discharge_data_lst[[2]], trim_windows)
+            head(check)
 
   # 1.2 Apply each function across the list of discharge data 
     discharge_trimmed_FullNo_lst <- lapply(discharge_data_lst, windows_df = trim_windows, FUN = Trim_FullNo_FUNC)
@@ -144,10 +145,10 @@
     
     # Plot Trimmed to Check 
         # discharge_plot <- ggplot(discharge_trimmed_FullNo_lst[[5]], aes(x=Date, y=cumulative_dis)) +
-          # geom_point()  +  geom_line() + 
-          # theme_bw() +
-           # labs(x = "Date", y = "Cumulative Discharge", title = "Cumulative Discharge over time") 
-        # discharge_plot 
+        # geom_point()  +  geom_line() +
+        # theme_bw() +
+        # labs(x = "Date", y = "Cumulative Discharge", title = "Cumulative Discharge over time")
+        # discharge_plot
 
 # ________________________________________________________________________________________________
 ##### 2) Slope Calc #### 
@@ -184,9 +185,9 @@
                        R2, pvalue, slope, intercept)
     }
 
-        # Check that the function works on one df 
-              # check <-  SlopeCalc_FUNC(discharge_trimmed_FullNo_lst[[5]])
-              # check
+        # # Check that the function works on one df 
+        #       check <-  SlopeCalc_FUNC(discharge_trimmed_FullNo_lst[[5]])
+        #       check
 
 # 2.2 Apply the function across data 
   SlopeCalc_Output_FullNo <- lapply(discharge_trimmed_FullNo_lst, SlopeCalc_FUNC)
@@ -217,9 +218,9 @@
         head(Slope_FunctionalNo)
   
 # 2.4 Save Output   
-    # write_xlsx(Slope_FullNo ,"Output_Files/20240819_DischargeSlope_FullNo.xlsx")
-    # write_xlsx(Slope_FullFunctional ,"Output_Files/20240819_DischargeSlope_FullFunctional.xlsx")
-    # write_xlsx(Slope_FunctionalNo  ,"Output_Files/20240819_DischargeSlope_FunctionalNo.xlsx")
+    write_xlsx(Slope_FullNo ,"Output_Files/20240819_DischargeSlope_FullNo.xlsx")
+    write_xlsx(Slope_FullFunctional ,"Output_Files/20240819_DischargeSlope_FullFunctional.xlsx")
+    write_xlsx(Slope_FunctionalNo  ,"Output_Files/20240819_DischargeSlope_FunctionalNo.xlsx")
 
 
 
