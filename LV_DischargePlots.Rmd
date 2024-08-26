@@ -20,9 +20,13 @@ library(viridis)
 # Get data for LV
 lv_no <- '401733105392404'
 
-# get data for ice windows
+## get data for ice windows
 # full ice to functional ice window
 full_to_func <- read_xlsx("Output_Files/20240826_DischargeSlope_FullFunctional.xlsx")
+# full ice to no ice
+full_to_no <- read_xlsx("Output_Files/20240826_DischargeSlope_FullNo.xlsx")
+# functional to no
+func_to_no <- read_xlsx("Output_Files/20240826_DischargeSlope_FunctionalNo.xlsx")
 
 # define parameters of interest, and get those parameter names
 # params <- c('00060', '00671', '80154', '00665')
