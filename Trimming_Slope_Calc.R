@@ -186,8 +186,8 @@
     }
 
         # # Check that the function works on one df 
-        #       check <-  SlopeCalc_FUNC(discharge_trimmed_FullNo_lst[[5]])
-        #       check
+              # check <-  SlopeCalc_FUNC(discharge_trimmed_FullNo_lst[[5]])
+              # check
 
 # 2.2 Apply the function across data 
   SlopeCalc_Output_FullNo <- lapply(discharge_trimmed_FullNo_lst, SlopeCalc_FUNC)
@@ -218,9 +218,9 @@
         head(Slope_FunctionalNo)
   
 # 2.4 Save Output   
-    write_xlsx(Slope_FullNo ,"Output_Files/20240819_DischargeSlope_FullNo.xlsx")
-    write_xlsx(Slope_FullFunctional ,"Output_Files/20240819_DischargeSlope_FullFunctional.xlsx")
-    write_xlsx(Slope_FunctionalNo  ,"Output_Files/20240819_DischargeSlope_FunctionalNo.xlsx")
+    write_xlsx(Slope_FullNo ,"Output_Files/20240826_DischargeSlope_FullNo.xlsx")
+    write_xlsx(Slope_FullFunctional ,"Output_Files/20240826_DischargeSlope_FullFunctional.xlsx")
+    write_xlsx(Slope_FunctionalNo  ,"Output_Files/20240826_DischargeSlope_FunctionalNo.xlsx")
 
 
 

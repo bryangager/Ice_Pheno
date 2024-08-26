@@ -20,6 +20,10 @@ library(viridis)
 # Get data for LV
 lv_no <- '401733105392404'
 
+# get data for ice windows
+# full ice to functional ice window
+full_to_func <- read_xlsx("Output_Files/20240826_DischargeSlope_FullFunctional.xlsx")
+
 # define parameters of interest, and get those parameter names
 # params <- c('00060', '00671', '80154', '00665')
 
@@ -28,20 +32,20 @@ lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
                          startDate = '1983-10-01', endDate = '2024-09-30')
 
 # rename columns using renameNWISColumns from package dataRetrieval
-lv_dat <- renameNWISColumns(lv_dat,
-                                p00665 = "TP_mgL",
-                                p00671 = "Orthophosphate_mgL",
-                                p80154 = "SS_mgL")
+# lv_dat <- renameNWISColumns(lv_dat,
+#                                 p00665 = "TP_mgL",
+#                                 p00671 = "Orthophosphate_mgL",
+#                                 p80154 = "SS_mgL")
 
 
 # repeating process for 2019 to 2022
-lv_dat19_22 <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
-                         startDate = '2019-10-01', endDate = '2022-09-30')
+# lv_dat19_22 <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
+#                          startDate = '2019-10-01', endDate = '2022-09-30')
 # rename columns using renameNWISColumns from package dataRetrieval
-lv_dat19_22 <- renameNWISColumns(lv_dat19_22,
-                                p00665 = "TP_mgL",
-                                p00671 = "Orthophosphate_mgL",
-                                p80154 = "SS_mgL")
+# lv_dat19_22 <- renameNWISColumns(lv_dat19_22,
+#                                 p00665 = "TP_mgL",
+#                                 p00671 = "Orthophosphate_mgL",
+#                                 p80154 = "SS_mgL")
 ```
 
 
@@ -52,8 +56,8 @@ grep('_cd', lv_names) # returns the index of the match
 
 # 2019-2022
 # use function `grep` to identify which columns are code columns
-lv_names19_22 <- names(lv_dat19_22)
-grep('_cd', lv_names19_22) # returns the index of the match
+# lv_names19_22 <- names(lv_dat19_22)
+# grep('_cd', lv_names19_22) # returns the index of the match
 
 ```
 
@@ -68,7 +72,7 @@ grep('_cd', lv_names, value = TRUE) # returns the matched elements themselves
 # using function gsub
 gsub('_cd', '_code', lv_names)
 
-gsub('_cd', '_code', lv_names19_22)
+# gsub('_cd', '_code', lv_names19_22)
 ```
 
 
@@ -77,8 +81,8 @@ lv_dat <- select(lv_dat, -contains('_cd'))
 head(lv_dat)
 
 
-lv_dat19_22 <- select(lv_dat19_22, -contains('_cd'))
-head(lv_dat19_22)
+# lv_dat19_22 <- select(lv_dat19_22, -contains('_cd'))
+# head(lv_dat19_22)
 ```
 
 
@@ -108,26 +112,6 @@ ggplot(cumulative_dat, aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
   theme_bw() +
   labs(color = "Water Year", x = "", y = "Cumulative Discharge")
 
-# 2019-2022
-# add water year variable "waterYear" to our dataframe
-lv_dat19_22 <- addWaterYear(lv_dat19_22)
-
-# calculate cumulative discharge for each year by first grouping by water year,
-# and then using the "cumsum" function. Add day of water year for plotting purposes.
-# These steps will build a new dataframe, with the existing information in yahara_dat
-# but with two additional columns.
-cumulative_dat19_22 <- group_by(lv_dat19_22, waterYear) %>%
-  mutate(cumulative_dis = cumsum(Flow), 
-         wy_doy = seq(1:n()))
-  
-# visually compare cumulative discharge across years
-ggplot(cumulative_dat19_22, aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_line(aes(color = waterYear)) +
-  scale_color_viridis_c() +
-  scale_x_continuous(breaks = c(1, 93, 184, 275), labels = c("Oct 1", "Jan 1", "Apr 1", "July 1")) +
-  theme_bw() +
-  labs(color = "Water Year 2019-2022", x = "", y = "Cumulative Discharge")
-
 ```
 
 ```{r}
@@ -136,6 +120,7 @@ cumulative_dat_ungroup <- cumulative_dat %>%
   ungroup() %>%
   as.data.frame()
 ```
+
 
 
 ```{r}
