@@ -27,19 +27,21 @@ full_to_func <- read_xlsx("Output_Files/20240826_DischargeSlope_FullFunctional.x
 full_to_no <- read_xlsx("Output_Files/20240826_DischargeSlope_FullNo.xlsx")
 # functional to no
 func_to_no <- read_xlsx("Output_Files/20240826_DischargeSlope_FunctionalNo.xlsx")
+## test for indexing
+#testtest <- full_to_func[3, "slope_cfs_per_day"]
 
 # define parameters of interest, and get those parameter names
-# params <- c('00060', '00671', '80154', '00665')
+params <- c('00060', '00671', '80154', '00665')
 
 # get daily values from NWIS
 lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
                          startDate = '1983-10-01', endDate = '2024-09-30')
 
 # rename columns using renameNWISColumns from package dataRetrieval
-# lv_dat <- renameNWISColumns(lv_dat,
-#                                 p00665 = "TP_mgL",
-#                                 p00671 = "Orthophosphate_mgL",
-#                                 p80154 = "SS_mgL")
+lv_dat <- renameNWISColumns(lv_dat,
+                                p00665 = "TP_mgL",
+                                p00671 = "Orthophosphate_mgL",
+                                p80154 = "SS_mgL")
 
 
 # repeating process for 2019 to 2022
@@ -101,6 +103,12 @@ lv_dat <- addWaterYear(lv_dat)
 cumulative_dat <- group_by(lv_dat, waterYear) %>%
   mutate(cumulative_dis = cumsum(Flow), 
          wy_doy = seq(1:n()))
+
+# ungroup cumulative_dat 
+cumulative_dat_ungroup <- cumulative_dat %>%
+  ungroup() %>%
+  as.data.frame()
+
 # scaling across 2013 onwards
 test <- cumulative_dat_ungroup %>%
   filter(waterYear>=2013) %>%
@@ -119,10 +127,7 @@ ggplot(cumulative_dat, aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
 ```
 
 ```{r}
-# ungroup cumulative_dat 
-cumulative_dat_ungroup <- cumulative_dat %>%
-  ungroup() %>%
-  as.data.frame()
+
 ```
 
 
@@ -161,14 +166,17 @@ ggplot(cumulative_dat_ungroup %>%
 ```{r}
 # water year 2014
 ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2014) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+  filter(waterYear == 2014) %>%
+  mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
   geom_line(aes(color = waterYear)) +
   theme_bw() +
   lims(x = c(190, 255), y = c(0, 500)) +
   labs(color = "Water Year 2014", x = "Water Year DOY", y = "Cumulative Discharge") +
   facet_wrap(waterYear~.)+
-  geom_vline(xintercept=219, color="red") 
+  geom_vline(xintercept=219, color="cornflowerblue") +
+  # trying to add the slope line, not working
+  #geom_abline(data=full_to_func, aes(intercept=full_to_func[1,"intercept"],slope=full_to_func[1,"slope_cfs_per_day"]))
+
 ```
 
 

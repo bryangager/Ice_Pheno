@@ -44,7 +44,7 @@
         head(discharge_data)
         
         # Subset discharge data to only years when we have ice on and ice off data - not using 2018 because it contains NAs
-        water_years_of_interest <- c("2014", "2015", "2016", "2017", "2019", "2020", "2021", "2022", "2023")
+        water_years_of_interest <- c("2014", "2015", "2016", "2017","2018","2019", "2020", "2021", "2022", "2023")
         discharge_data_sub <- discharge_data[discharge_data$waterYear %in% water_years_of_interest , ]
         
         #Break up Discharge data into list by lake_WaterYear 
