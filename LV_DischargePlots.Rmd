@@ -22,11 +22,11 @@ lv_no <- '401733105392404'
 
 ## get data for ice windows
 # full ice to functional ice window
-full_to_func <- read_xlsx("Output_Files/20240826_DischargeSlope_FullFunctional.xlsx")
+full_to_func <- read_xlsx("Output_Files/20240829_DischargeSlope_FullFunctional.xlsx")
 # full ice to no ice
-full_to_no <- read_xlsx("Output_Files/20240826_DischargeSlope_FullNo.xlsx")
+full_to_no <- read_xlsx("Output_Files/20240829_DischargeSlope_FullNo.xlsx")
 # functional to no
-func_to_no <- read_xlsx("Output_Files/20240826_DischargeSlope_FunctionalNo.xlsx")
+func_to_no <- read_xlsx("Output_Files/20240829_DischargeSlope_FunctionalNo.xlsx")
 ## test for indexing
 #testtest <- full_to_func[3, "slope_cfs_per_day"]
 
@@ -164,156 +164,259 @@ ggplot(cumulative_dat_ungroup %>%
 
 
 ```{r}
+# messing around with the dfs
+
+# joining the three "windows" dfs together
+# bind_rows(dataframe1, dataframe2, dataframe3) - need same headers
+slopes_and_intercepts <- bind_rows(full_to_func, full_to_no, func_to_no)
+
+# creating new columns to separate lakeID and water year, making slope and intercept num instead of char
+slopes_and_intercepts_sep <- slopes_and_intercepts %>% 
+  separate(Lake_WaterYear, into = c("Lake_ID", "waterYear"), sep = "_", remove = FALSE) %>% mutate(waterYear=as.numeric(waterYear), slope_cfs_per_day=as.numeric(slope_cfs_per_day), intercept = as.numeric(intercept))
+
+# joining slope df with all of the windows slope dfs
+test_big_join <- cumulative_dat_ungroup %>% left_join(.,slopes_and_intercepts_sep, by="waterYear")
+
+# filtering out a water year within the joined df
+test2a <-test_big_join %>%
+    filter(waterYear == 2014)
+
+# how to add the abline if all the "windows" dfs with slopes were joined with cumulativeQ df:
+  geom_abline(test %>% filter(window="the window i want") ,aes(intercept = intercept,
+                  slope = slope_cfs_per_day),
+              color = "orange")
+  
+# how it was working only using test (only one window joined)
+  geom_abline(aes(intercept = intercept,
+                  slope = slope_cfs_per_day),
+              color = "orange")
+  
+# running a simple regression to check the slope in the slopes df:
+  test2014 <- cumulative_dat_ungroup %>% 
+  filter(Date>="2014-04-21"&Date<="2014-05-05")
+
+  lm2014 <- lm(cumulative_dis~wy_doy, data = test2014)
+  summary(lm2014)
+
+```
+
+
+```{r fig.width=14}
 # water year 2014
-ggplot(cumulative_dat_ungroup %>%
-  filter(waterYear == 2014) %>%
-  mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+
+# this plot is using the "test" df which is joined with the full_to_func df
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2014) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2014) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(190, 255), y = c(0, 500)) +
+  lims(x = c(180, 260), y = c(100, 750)) +
   labs(color = "Water Year 2014", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=219, color="cornflowerblue") +
-  # trying to add the slope line, not working
-  #geom_abline(data=full_to_func, aes(intercept=full_to_func[1,"intercept"],slope=full_to_func[1,"slope_cfs_per_day"]))
+  facet_wrap(Window ~ .) +
+  geom_vline(xintercept = 219, color = "cornflowerblue")+
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
+
+
+
+# export all plots
+# check the structure!
 
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2015
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2015) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+# this plot is using the "test" df which is joined with the full_to_func df
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2015) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2015) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 220, color = "cornflowerblue", size = 1)+
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(180, 260), y = c(130, 500)) +
   labs(color = "Water Year 2015", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=220, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2016
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2016) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2016) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2016) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 237, color = "cornflowerblue")+
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(180, 260), y = c(50, 700)) +
   labs(color = "Water Year 2016", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=237, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2017
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2017) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2017) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2017) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 229, color = "cornflowerblue")+ # functional ice off
+  geom_vline(xintercept = 238, color = "orange")+ # pierson ice off
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(170, 255), y = c(50, 600)) +
   labs(color = "Water Year 2017", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=229, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width =14}
 # water year 2018
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2018) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2018) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2018) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 221, color = "cornflowerblue")+ # functional ice off
+  geom_vline(xintercept = 229, color = "orange")+ # pierson ice off
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(210, 240), y = c(180, 750)) +
   labs(color = "Water Year 2018", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=228, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2019
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2019) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2019) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2019) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 242, color = "cornflowerblue")+ # functional ice off
+  geom_vline(xintercept = 253, color = "orange")+ # pierson ice off
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(200, 270), y = c(180, 1000)) +
   labs(color = "Water Year 2019", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=242, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2020
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2020) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2020) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2020) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 218, color = "cornflowerblue")+ # functional ice off
+  #geom_vline(xintercept = 253, color = "orange")+ # pierson ice off - missing for this year
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(100, 240), y = c(0, 500)) +
+  lims(x = c(200, 240), y = c(50, 350)) +
   labs(color = "Water Year 2020", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=218, color="red") 
-
-ggplot(test %>%
-         filter(waterYear == 2020) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis_z, group = waterYear))+
-  geom_line(aes(color = waterYear)) +
-  theme_bw() +
-  lims(x = c(100, 240), y=c(-1,0)) +
-  labs(color = "Water Year 2020", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=218, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2021
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2021) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2021) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2021) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 238, color = "cornflowerblue")+ # functional ice off
+  geom_vline(xintercept = 250, color = "orange", size = .9)+ # pierson ice off
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(200, 270), y = c(50, 900)) +
   labs(color = "Water Year 2021", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=245, color="red") 
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2022
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2022) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
-  geom_rect(aes(xmin=229,xmax=244,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.1)+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2022) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2022) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 230, color = "cornflowerblue", size = 0.9)+ # functional ice off
+  #geom_vline(xintercept = 250, color = "orange", size = 0.9)+ # pierson ice off - missing for this year
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(200, 250), y = c(50, 450)) +
   labs(color = "Water Year 2022", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=230, color="red")
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
 
-```{r}
+```{r fig.width=14}
 # water year 2023
-ggplot(cumulative_dat_ungroup %>%
-         filter(waterYear == 2023) %>%
-         mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+ggplot(
+  test_big_join %>%
+    filter(waterYear == 2023) %>%
+    mutate(waterYear = as.factor(waterYear)),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+  geom_abline(data = test_big_join %>% filter(waterYear == 2023) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_vline(xintercept = 229, color = "cornflowerblue")+ # functional ice off
+  #geom_vline(xintercept = 250, color = "orange", size = 0.9)+ # pierson ice off - missing for this year
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(200, 250), y = c(0, 500)) +
+  lims(x = c(205, 250), y = c(70, 600)) +
   labs(color = "Water Year 2023", x = "Water Year DOY", y = "Cumulative Discharge") +
-  facet_wrap(waterYear~.)+
-  geom_vline(xintercept=229, color="red")
+  facet_wrap(Window ~ .) +
+  theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
+
+
+# saving this simple plot just in case
+
+# ggplot(cumulative_dat_ungroup %>%
+#          filter(waterYear == 2023) %>%
+#          mutate(waterYear=as.factor(waterYear)), aes(x = wy_doy, y = cumulative_dis, group = waterYear))+
+#   geom_line(aes(color = waterYear)) +
+#   theme_bw() +
+#   lims(x = c(200, 250), y = c(0, 500)) +
+#   labs(color = "Water Year 2023", x = "Water Year DOY", y = "Cumulative Discharge") +
+#   facet_wrap(waterYear~.)+
+#   geom_vline(xintercept=229, color="red")
 ```
 
 

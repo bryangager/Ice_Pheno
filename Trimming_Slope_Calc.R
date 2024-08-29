@@ -65,10 +65,10 @@
 # 1.1 Write Functions to Trim Discharge files based on off windows    
 
         # Dummy data to write function 
-         discharge_df <- discharge_data_lst[[3]]
-         windows_df <- as.data.frame(trim_windows)
-         head(discharge_df)
-         head(windows_df)
+         # discharge_df <- discharge_data_lst[[3]]
+         # windows_df <- as.data.frame(trim_windows)
+         # head(discharge_df)
+         # head(windows_df)
         
     # Trim From Full Ice Cover to No Ice Cover _________________________
     Trim_FullNo_FUNC <- function(discharge_df, windows_df){
@@ -156,7 +156,7 @@
 # 2.1 Write Function to calculate slope
     
     # Dummy data to write function 
-       trimmed_discharge <- discharge_trimmed_FullNo_lst[[5]]
+       # trimmed_discharge <- discharge_trimmed_FullNo_lst[[5]]
 
     SlopeCalc_FUNC <- function(trimmed_discharge){
       
@@ -173,7 +173,7 @@
       window_end_date <- trimmed_discharge[last_row_number, "Date"] %>% as.character()
       
       #Linear models and extracting regression coefficients 
-      lm_discharge <- lm(cumulative_dis ~ Date, data = trimmed_discharge) #Linear Regression of CO2 concentration over time 
+      lm_discharge <- lm(cumulative_dis ~ wy_doy, data = trimmed_discharge) #Linear Regression of cumulative discharge over time 
       R2 <- summary(lm_discharge)$r.squared   #pull the R^2 of the regression line and save to a variable 
       pvalue <- summary(lm_discharge)$coefficients[2,4]   #pull the R^2 of the regression line and save to a variable 
       slope <- summary(lm_discharge)$coefficients[2,1]     #pull the slope of the regression line and save to a variable
@@ -218,9 +218,9 @@
         head(Slope_FunctionalNo)
   
 # 2.4 Save Output   
-    write_xlsx(Slope_FullNo ,"Output_Files/20240826_DischargeSlope_FullNo.xlsx")
-    write_xlsx(Slope_FullFunctional ,"Output_Files/20240826_DischargeSlope_FullFunctional.xlsx")
-    write_xlsx(Slope_FunctionalNo  ,"Output_Files/20240826_DischargeSlope_FunctionalNo.xlsx")
+    write_xlsx(Slope_FullNo ,"Output_Files/20240829_DischargeSlope_FullNo.xlsx")
+    write_xlsx(Slope_FullFunctional ,"Output_Files/20240829_DischargeSlope_FullFunctional.xlsx")
+    write_xlsx(Slope_FunctionalNo  ,"Output_Files/20240829_DischargeSlope_FunctionalNo.xlsx")
 
 
 
