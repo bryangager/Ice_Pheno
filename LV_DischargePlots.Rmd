@@ -8,6 +8,7 @@ date: "2024-07-31"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Read in hydrology data
 ```{r}
 # load libraries
 library(dplyr)
@@ -16,6 +17,9 @@ library(lubridate)
 library(tidyr)
 library(ggplot2)
 library(viridis)
+library(readxl)
+library(imputeTS)
+library(tsibble)
 
 # Get data for LV
 lv_no <- '401733105392404'
@@ -52,6 +56,38 @@ lv_dat <- renameNWISColumns(lv_dat,
 #                                 p00665 = "TP_mgL",
 #                                 p00671 = "Orthophosphate_mgL",
 #                                 p80154 = "SS_mgL")
+```
+
+# Read in temp and cond data
+```{r}
+
+#What data are available?
+dailyDataAvailable <- whatNWISdata(
+  siteNumber = lv_no
+)
+
+#Pull in temperature and conductivity Loch outlet
+parameterCd <- c('00095','00010')
+lv_dat_outlet_input <- readWQPqw(paste0("USGS-", lv_no), parameterCd)
+
+
+#Clean up dataframe
+lv_dat_outlet <- lv_dat_outlet_input %>%
+  select(ActivityStartDate, ActivityConductingOrganizationText, CharacteristicName, ResultMeasureValue) %>%
+  pivot_wider(names_from = CharacteristicName, values_from = ResultMeasureValue, values_fn = mean) %>%
+  rename(cond_uScm="Specific conductance",
+         temperature_C_raw="Temperature, water",
+         Date = "ActivityStartDate") %>%
+  select(-ActivityConductingOrganizationText) %>%
+  mutate(wy_doy = hydro.day(Date)) %>%
+  addWaterYear() %>% 
+  distinct(Date, .keep_all = TRUE) %>%
+  as_tsibble(., key = waterYear, index = Date) %>% #time series tibble
+  fill_gaps() %>%  #makes the missing data implicit
+  mutate(cond_uScm_impute = imputeTS::na_interpolation(cond_uScm, maxgap = 7),
+         temperature_C_raw_impute = imputeTS::na_interpolation(temperature_C_raw, maxgap = 7))
+
+
 ```
 
 
