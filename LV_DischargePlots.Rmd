@@ -169,7 +169,7 @@ ggplot(cumulative_dat, aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
 ```
 
 
-
+# 2012
 ```{r}
 
 # Water Year 2012:
@@ -186,7 +186,7 @@ ggplot(cumulative_dat_ungroup %>%
   geom_vline(xintercept=208, color="red") 
 
 ```
-
+# 2013
 ```{r}
 # water year 2013
 ggplot(cumulative_dat_ungroup %>%
@@ -200,7 +200,7 @@ ggplot(cumulative_dat_ungroup %>%
   geom_vline(xintercept=241, color="red") 
 ```
 
-
+# Messing with dfs
 ```{r}
 # messing around with the dfs
 
@@ -239,6 +239,86 @@ test2a <-test_big_join %>%
 ```
 
 
+# Look at variation in linear slopes, interecepts, etc
+```{r}
+slopes_and_intercepts <- bind_rows(full_to_func, full_to_no, func_to_no)
+# creating new columns to separate lakeID and water year, making slope and intercept num instead of char
+slopes_and_intercepts <- slopes_and_intercepts %>%
+  separate(
+    Lake_WaterYear,
+    into = c("Lake_ID", "waterYear"),
+    sep = "_",
+    remove = FALSE
+  ) %>% mutate(
+    # waterYear = as.numeric(waterYear),
+    slope_cfs_per_day = as.numeric(slope_cfs_per_day),
+    intercept = as.numeric(intercept),
+    start_cumulative_dis_cfs = as.numeric(start_cumulative_dis_cfs),
+    end_cumulative_dis_cfs = as.numeric(end_cumulative_dis_cfs),
+    R2 = as.numeric(R2),
+    start_date = hydro.day(ymd(start_date)),
+    end_date = hydro.day(ymd(end_date))
+  )
+
+#How much variability is there in the slopes?
+summary_slopes <- slopes_and_intercepts %>%
+  group_by(Window) %>%
+  summarize_if(is.numeric, list(mean=mean, sd=sd))
+
+summary_slopes_plotting <- slopes_and_intercepts %>%
+  select(Window, start_date:intercept) %>%
+  select(-pvalue) %>%
+  group_by(Window) %>%
+  #Calculate some new metrics:
+  mutate(pred_end_Q = slope_cfs_per_day * end_date + intercept,
+         # ^ predict the end Q given the known end date of the timeperiod
+         pred_DOY_end = (end_cumulative_dis_cfs-intercept) / slope_cfs_per_day,
+         # ^ predict the end DOY given the known cumul. Q of the timeperiod
+         diff_pred_vs_obs_Q = pred_end_Q - end_cumulative_dis_cfs,
+         # ^ calculate the diff between pred. and obs. Q
+         diff_pred_vs_obs_days = pred_end_Q - end_cumulative_dis_cfs) %>%
+         # ^ calculate the diff in days between pred. and obs end_date) 
+  pivot_longer(-Window) %>%
+  group_by(Window, name) %>%
+  summarize(mean = mean(value),
+            sd = sd(value),
+            min = min(value),
+            max = max(value))
+
+
+#Plot mean +/- sd for all variables
+summary_slopes_plotting%>%
+  ggplot() + 
+  geom_errorbar(aes(x=Window, group=Window, color=Window, ymin=mean-sd, ymax=mean+sd), width=.5,
+                 position=position_dodge(.9)) +
+  geom_point(aes(x=Window, y=mean, group=Window, fill=Window, color=Window), color="black", shape=21)+
+  facet_wrap(~name, scales="free", ncol=3) +
+  theme(legend.position="bottom",
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.x=element_blank(),
+        legend.margin = margin(0, 0, 0, 0))+
+  labs(y="Parameter value",
+       title="Error bars show sd, dot is mean")
+
+#Plot mean +/- min and max values for all variables
+summary_slopes_plotting%>%
+  ggplot() + 
+  geom_errorbar(aes(x=Window, group=Window, color=Window, ymin=min, ymax=max), width=.5,
+                 position=position_dodge(.9)) +
+  geom_point(aes(x=Window, y=mean, group=Window, fill=Window, color=Window), color="black", shape=21)+
+  facet_wrap(~name, scales="free", ncol=3) +
+  theme(legend.position="bottom",
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.x=element_blank(),
+        legend.margin = margin(0, 0, 0, 0))+
+  labs(y="Parameter value",
+       title="Error bars show complete range, dot is mean")
+
+```
+
+# 2014
 ```{r fig.width=14}
 # water year 2014
 
@@ -265,7 +345,7 @@ ggplot(
 
 ```
 
-
+# 2015
 ```{r fig.width=14}
 # water year 2015
 # this plot is using the "test" df which is joined with the full_to_func df
@@ -285,7 +365,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2016
 ```{r fig.width=14}
 # water year 2016
 ggplot(
@@ -304,7 +384,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2017 - with temp and conductivity
 ```{r fig.width=14}
 # water year 2017
 ggplot(
@@ -324,7 +404,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2018
 ```{r fig.width =14}
 # water year 2018
 ggplot(
@@ -344,7 +424,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2019
 ```{r fig.width=14}
 # water year 2019
 ggplot(
@@ -364,7 +444,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2020
 ```{r fig.width=14}
 # water year 2020
 ggplot(
@@ -384,7 +464,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2021
 ```{r fig.width=14}
 # water year 2021
 ggplot(
@@ -404,7 +484,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2022
 ```{r fig.width=14}
 # water year 2022
 ggplot(
@@ -424,7 +504,7 @@ ggplot(
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
 ```
 
-
+# 2023
 ```{r fig.width=14}
 # water year 2023
 ggplot(
@@ -457,7 +537,7 @@ ggplot(
 #   geom_vline(xintercept=229, color="red")
 ```
 
-
+# Join ice off dates with discharge
 ```{r}
 # joining ice off table with discharge table
 ice_off_dates <- read.csv("ice_off_dates.csv")
@@ -465,9 +545,134 @@ ice_off_dates <- read.csv("ice_off_dates.csv")
 cumulative_dat_iceoff <- merge(x=cumulative_dat, y=ice_off_dates, by=c("waterYear","wy_doy"), all.x=T)
 ```
 
-
+# Conductivity and temperature plots
+## 2014
 ```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2014) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 219, color = "cornflowerblue") # functional ice off
+```
+## 2015
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2015) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 220, color = "cornflowerblue") # functional ice off
+```
+## 2016
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2016) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 237, color = "cornflowerblue") # functional ice off
+```
 
+
+
+
+
+## 2017
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2017) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 229, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 238, color = "orange") # pierson ice off
+        # geom_line(data=test_big_join %>% filter (waterYear == 2017), aes(x=wy_doy, y=cumulative_dis))+
+        # lims(x = c(100, 300), y = c(0, 200))
+```
+## 2018
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2018) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 221, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 229, color = "orange") # pierson ice off
+```
+## 2019
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2019) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 242, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 253, color = "orange") # pierson ice off
+```
+
+## 2020
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2020) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 218, color = "cornflowerblue") # functional ice off
+        #geom_vline(xintercept = 253, color = "orange") # pierson ice off missing for 2020
+```
+
+## 2021
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2021) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 238, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 250, color = "orange") # pierson ice off
+```
+
+## 2022
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2022) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 230, color = "cornflowerblue") # functional ice off
+        # geom_vline(xintercept = 250, color = "orange", size = .9) # pierson ice off missing for 2022
+```
+
+## 2023
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2023) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 229, color = "cornflowerblue") # functional ice off
+        # geom_vline(xintercept = 250, color = "orange", size = .9) # pierson ice off missing for 2022
 ```
 
 
