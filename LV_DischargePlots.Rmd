@@ -21,6 +21,8 @@ library(readxl)
 library(imputeTS)
 library(tsibble)
 
+source("00_functions.R")
+
 # Get data for LV
 lv_no <- '401733105392404'
 
@@ -234,84 +236,6 @@ test2a <-test_big_join %>%
   lm2014 <- lm(cumulative_dis~wy_doy, data = test2014)
   summary(lm2014)
 
-```
-
-## Look at variation in linear slopes, interecepts, etc
-```{r}
-slopes_and_intercepts <- bind_rows(full_to_func, full_to_no, func_to_no)
-# creating new columns to separate lakeID and water year, making slope and intercept num instead of char
-slopes_and_intercepts <- slopes_and_intercepts %>%
-  separate(
-    Lake_WaterYear,
-    into = c("Lake_ID", "waterYear"),
-    sep = "_",
-    remove = FALSE
-  ) %>% mutate(
-    # waterYear = as.numeric(waterYear),
-    slope_cfs_per_day = as.numeric(slope_cfs_per_day),
-    intercept = as.numeric(intercept),
-    start_cumulative_dis_cfs = as.numeric(start_cumulative_dis_cfs),
-    end_cumulative_dis_cfs = as.numeric(end_cumulative_dis_cfs),
-    R2 = as.numeric(R2),
-    start_date = hydro.day(ymd(start_date)),
-    end_date = hydro.day(ymd(end_date))
-  )
-
-#How much variability is there in the slopes?
-summary_slopes <- slopes_and_intercepts %>%
-  group_by(Window) %>%
-  summarize_if(is.numeric, list(mean=mean, sd=sd))
-
-summary_slopes_plotting <- slopes_and_intercepts %>%
-  select(Window, start_date:intercept) %>%
-  select(-pvalue) %>%
-  group_by(Window) %>%
-  #Calculate some new metrics:
-  mutate(pred_end_Q = slope_cfs_per_day * end_date + intercept,
-         # ^ predict the end Q given the known end date of the timeperiod
-         pred_DOY_end = (end_cumulative_dis_cfs-intercept) / slope_cfs_per_day,
-         # ^ predict the end DOY given the known cumul. Q of the timeperiod
-         diff_pred_vs_obs_Q = pred_end_Q - end_cumulative_dis_cfs,
-         # ^ calculate the diff between pred. and obs. Q
-         diff_pred_vs_obs_days = pred_end_Q - end_cumulative_dis_cfs) %>%
-         # ^ calculate the diff in days between pred. and obs end_date) 
-  pivot_longer(-Window) %>%
-  group_by(Window, name) %>%
-  summarize(mean = mean(value),
-            sd = sd(value),
-            min = min(value),
-            max = max(value))
-
-
-#Plot mean +/- sd for all variables
-summary_slopes_plotting%>%
-  ggplot() + 
-  geom_errorbar(aes(x=Window, group=Window, color=Window, ymin=mean-sd, ymax=mean+sd), width=.5,
-                 position=position_dodge(.9)) +
-  geom_point(aes(x=Window, y=mean, group=Window, fill=Window, color=Window), color="black", shape=21)+
-  facet_wrap(~name, scales="free", ncol=3) +
-  theme(legend.position="bottom",
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.title.x=element_blank(),
-        legend.margin = margin(0, 0, 0, 0))+
-  labs(y="Parameter value",
-       title="Error bars show sd, dot is mean")
-
-#Plot mean +/- min and max values for all variables
-summary_slopes_plotting%>%
-  ggplot() + 
-  geom_errorbar(aes(x=Window, group=Window, color=Window, ymin=min, ymax=max), width=.5,
-                 position=position_dodge(.9)) +
-  geom_point(aes(x=Window, y=mean, group=Window, fill=Window, color=Window), color="black", shape=21)+
-  facet_wrap(~name, scales="free", ncol=3) +
-  theme(legend.position="bottom",
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.title.x=element_blank(),
-        legend.margin = margin(0, 0, 0, 0))+
-  labs(y="Parameter value",
-       title="Error bars show complete range, dot is mean")
 ```
 
 
