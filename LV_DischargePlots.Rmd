@@ -236,7 +236,29 @@ test2a <-test_big_join %>%
   lm2014 <- lm(cumulative_dis~wy_doy, data = test2014)
   summary(lm2014)
 
+  
+# joining the cumulative discharge main dataframe, conductivity and temperature dataframe, and ice off dates dataframe
+  # cumulative flow and temp and conductivity data
+  cumul_outlet <- cumulative_dat_ungroup %>% left_join(.,lv_dat_outlet, by="Date")
+  # cumulative flow and temp and conductivity and ice off
+  ice_off_dates_file <- read_xlsx("Input_Files/ice_off_dates20240918.xlsx")
+  cumul_tempcond_iceoff <- cumul_outlet %>% left_join(.,ice_off_dates_file,by="Date")
+  # joining the 20th percentile dates
+  twenty_perc_dates <- read_xlsx("Input_Files/twenty_perc_dates.xlsx")
+  cumul_tempcond_iceoff_twenty <- cumul_tempcond_iceoff %>% left_join(.,twenty_perc_dates,by="Date")
 ```
+
+# Regressions?
+```{r}
+temp_cond_cumul_model <- lm(formula = cumul_tempcond_iceoff_twenty$wy_doy_ice_off ~ cumul_tempcond_iceoff_twenty$cumulative_dis + cumul_tempcond_iceoff_twenty$temperature_C_raw_impute + cumul_tempcond_iceoff_twenty$cond_uScm_impute)
+
+summary(temp_cond_flow_model)
+summary(temp_cond_cumul_model)
+
+```
+
+
+
 
 # Adding Flow Percentile Days
 ```{r}
@@ -564,13 +586,6 @@ ggplot(
 #   geom_vline(xintercept=229, color="red")
 ```
 
-# Join ice off dates with discharge
-```{r}
-# joining ice off table with discharge table
-ice_off_dates <- read.csv("ice_off_dates.csv")
-
-cumulative_dat_iceoff <- merge(x=cumulative_dat, y=ice_off_dates, by=c("waterYear","wy_doy"), all.x=T)
-```
 
 # Conductivity and temperature plots
 ## 2014
