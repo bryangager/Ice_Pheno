@@ -551,4 +551,141 @@ cumulative_dat_iceoff <- merge(x=cumulative_dat, y=ice_off_dates, by=c("waterYea
 ggplot(lv_dat_outlet %>% 
         filter(waterYear == 2014) %>% 
         mutate(waterYear = as.factor(waterYear)),
-      
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 219, color = "cornflowerblue") # functional ice off
+```
+## 2015
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2015) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 220, color = "cornflowerblue") # functional ice off
+```
+## 2016
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2016) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 237, color = "cornflowerblue") # functional ice off
+```
+
+
+
+
+
+## 2017
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2017) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_vline(xintercept = 229, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 238, color = "orange") # pierson ice off
+        # geom_line(data=test_big_join %>% filter (waterYear == 2017), aes(x=wy_doy, y=cumulative_dis))+
+        # lims(x = c(100, 300), y = c(0, 200))
+```
+## 2018
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2018) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 221, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 229, color = "orange") # pierson ice off
+```
+## 2019
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2019) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 242, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 253, color = "orange") # pierson ice off
+```
+
+## 2020
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2020) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 218, color = "cornflowerblue") # functional ice off
+        #geom_vline(xintercept = 253, color = "orange") # pierson ice off missing for 2020
+```
+
+## 2021
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2021) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 238, color = "cornflowerblue")+ # functional ice off
+        geom_vline(xintercept = 250, color = "orange") # pierson ice off
+```
+
+## 2022
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2022) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 230, color = "cornflowerblue") # functional ice off
+        # geom_vline(xintercept = 250, color = "orange", size = .9) # pierson ice off missing for 2022
+```
+
+## 2023
+```{r}
+ggplot(lv_dat_outlet %>% 
+        filter(waterYear == 2023) %>% 
+        mutate(waterYear = as.factor(waterYear)),
+        aes(x = wy_doy, group = waterYear))+
+        geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
+        geom_line(aes(x = wy_doy, y = cond_uScm_impute))+
+        geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
+        geom_vline(xintercept = 229, color = "cornflowerblue") # functional ice off
+        # geom_vline(xintercept = 250, color = "orange", size = .9) # pierson ice off missing for 2022
+```
+# Flow Percentiles
+```{r}
+percentile_days <- cumulative_dat_ungroup %>%
+group_by(waterYear) %>%
+arrange(Date) %>% 
+mutate(total_flow = sum(Flow)) %>% 
+summarise(day_20th = cur_data()$Date[which(cumulative_dis >= 0.2 * total_flow)[1]],
+day_50th = cur_data()$Date[which(cumulative_dis >= 0.5 * total_flow)[1]],
+day_80th = cur_data()$Date[which(cumulative_dis >= 0.8 * total_flow)[1]]) %>%   
+mutate(day_20th_doy = yday(day_20th),
+day_50th_doy = yday(day_50th),
+day_80th_doy = yday(day_80th))
+```
+
+
