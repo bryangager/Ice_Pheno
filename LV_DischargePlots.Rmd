@@ -238,6 +238,25 @@ test2a <-test_big_join %>%
 
 ```
 
+# Adding Flow Percentile Days
+```{r}
+percentile_days <- cumulative_dat_ungroup %>%
+group_by(waterYear) %>%
+arrange(Date) %>% 
+mutate(total_flow = sum(Flow)) %>% 
+summarise(day_20th = cur_data()$Date[which(cumulative_dis >= 0.2 * total_flow)[1]],
+day_50th = cur_data()$Date[which(cumulative_dis >= 0.5 * total_flow)[1]],
+day_80th = cur_data()$Date[which(cumulative_dis >= 0.8 * total_flow)[1]]) %>%   
+mutate(day_20th_doy = yday(day_20th),
+day_50th_doy = yday(day_50th),
+day_80th_doy = yday(day_80th))
+
+
+cumul_with_percentile <- test_big_join %>% left_join(.,percentile_days, by="waterYear")
+```
+
+
+
 
 # Look at variation in linear slopes, interecepts, etc
 ```{r}
@@ -324,15 +343,16 @@ summary_slopes_plotting%>%
 
 # this plot is using the "test" df which is joined with the full_to_func df
 ggplot(
-  test_big_join %>%
+  cumul_with_percentile %>%
     filter(waterYear == 2014) %>%
     mutate(waterYear = as.factor(waterYear)),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
   geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
-  geom_abline(data = test_big_join %>% filter(waterYear == 2014) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  #geom_abline(data = cumul_with_percentile %>% filter(waterYear == 2014) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
+  geom_point(aes(x=243,y=506.80))+ # 20th percentile of discharge
   geom_line(aes(color = waterYear)) +
   theme_bw() +
-  lims(x = c(180, 260), y = c(100, 750)) +
+  lims(x = c(200, 260), y = c(150, 750))+
   labs(color = "Water Year 2014", x = "Water Year DOY", y = "Cumulative Discharge") +
   facet_wrap(Window ~ .) +
   geom_vline(xintercept = 219, color = "cornflowerblue")+
@@ -358,8 +378,9 @@ ggplot(
   geom_abline(data = test_big_join %>% filter(waterYear == 2015) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
   geom_vline(xintercept = 220, color = "cornflowerblue", size = 1)+
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=245,y=482.88))+ # 20th percentile of discharge
   theme_bw() +
-  lims(x = c(180, 260), y = c(130, 500)) +
+  lims(x = c(180, 260), y = c(130, 600)) +
   labs(color = "Water Year 2015", x = "Water Year DOY", y = "Cumulative Discharge") +
   facet_wrap(Window ~ .) +
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
@@ -377,6 +398,7 @@ ggplot(
   geom_abline(data = test_big_join %>% filter(waterYear == 2016) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
   geom_vline(xintercept = 237, color = "cornflowerblue")+
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=248,y=381.67))+ # 20th percentile
   theme_bw() +
   lims(x = c(180, 260), y = c(50, 700)) +
   labs(color = "Water Year 2016", x = "Water Year DOY", y = "Cumulative Discharge") +
@@ -397,6 +419,7 @@ ggplot(
   geom_vline(xintercept = 229, color = "cornflowerblue")+ # functional ice off
   geom_vline(xintercept = 238, color = "orange")+ # pierson ice off
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=249,y=494.49))+
   theme_bw() +
   lims(x = c(170, 255), y = c(50, 600)) +
   labs(color = "Water Year 2017", x = "Water Year DOY", y = "Cumulative Discharge") +
@@ -417,6 +440,7 @@ ggplot(
   geom_vline(xintercept = 221, color = "cornflowerblue")+ # functional ice off
   geom_vline(xintercept = 229, color = "orange")+ # pierson ice off
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=228,y=389.03))+
   theme_bw() +
   lims(x = c(210, 240), y = c(180, 750)) +
   labs(color = "Water Year 2018", x = "Water Year DOY", y = "Cumulative Discharge") +
@@ -437,6 +461,7 @@ ggplot(
   geom_vline(xintercept = 242, color = "cornflowerblue")+ # functional ice off
   geom_vline(xintercept = 253, color = "orange")+ # pierson ice off
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=249,y=496.67))+
   theme_bw() +
   lims(x = c(200, 270), y = c(180, 1000)) +
   labs(color = "Water Year 2019", x = "Water Year DOY", y = "Cumulative Discharge") +
@@ -457,8 +482,9 @@ ggplot(
   geom_vline(xintercept = 218, color = "cornflowerblue")+ # functional ice off
   #geom_vline(xintercept = 253, color = "orange")+ # pierson ice off - missing for this year
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=242,y=366.19))+
   theme_bw() +
-  lims(x = c(200, 240), y = c(50, 350)) +
+  lims(x = c(200, 250), y = c(50, 450)) +
   labs(color = "Water Year 2020", x = "Water Year DOY", y = "Cumulative Discharge") +
   facet_wrap(Window ~ .) +
   theme(panel.ontop=TRUE, panel.background = element_rect(fill = NA))
@@ -477,6 +503,7 @@ ggplot(
   geom_vline(xintercept = 238, color = "cornflowerblue")+ # functional ice off
   geom_vline(xintercept = 250, color = "orange", size = .9)+ # pierson ice off
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=246,y=413.04))+
   theme_bw() +
   lims(x = c(200, 270), y = c(50, 900)) +
   labs(color = "Water Year 2021", x = "Water Year DOY", y = "Cumulative Discharge") +
@@ -495,8 +522,8 @@ ggplot(
   geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
   geom_abline(data = test_big_join %>% filter(waterYear == 2022) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
   geom_vline(xintercept = 230, color = "cornflowerblue", size = 0.9)+ # functional ice off
-  #geom_vline(xintercept = 250, color = "orange", size = 0.9)+ # pierson ice off - missing for this year
   geom_line(aes(color = waterYear)) +
+  geom_point(aes(x=249,y=418.81))+
   theme_bw() +
   lims(x = c(200, 250), y = c(50, 450)) +
   labs(color = "Water Year 2022", x = "Water Year DOY", y = "Cumulative Discharge") +
@@ -515,7 +542,7 @@ ggplot(
   geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
   geom_abline(data = test_big_join %>% filter(waterYear == 2023) ,aes(intercept = intercept, slope = slope_cfs_per_day,color = Window)) +
   geom_vline(xintercept = 229, color = "cornflowerblue")+ # functional ice off
-  #geom_vline(xintercept = 250, color = "orange", size = 0.9)+ # pierson ice off - missing for this year
+  geom_point(aes(x=243,y=440.94))+
   geom_line(aes(color = waterYear)) +
   theme_bw() +
   lims(x = c(205, 250), y = c(70, 600)) +
@@ -673,19 +700,6 @@ ggplot(lv_dat_outlet %>%
         geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
         geom_vline(xintercept = 229, color = "cornflowerblue") # functional ice off
         # geom_vline(xintercept = 250, color = "orange", size = .9) # pierson ice off missing for 2022
-```
-# Flow Percentiles
-```{r}
-percentile_days <- cumulative_dat_ungroup %>%
-group_by(waterYear) %>%
-arrange(Date) %>% 
-mutate(total_flow = sum(Flow)) %>% 
-summarise(day_20th = cur_data()$Date[which(cumulative_dis >= 0.2 * total_flow)[1]],
-day_50th = cur_data()$Date[which(cumulative_dis >= 0.5 * total_flow)[1]],
-day_80th = cur_data()$Date[which(cumulative_dis >= 0.8 * total_flow)[1]]) %>%   
-mutate(day_20th_doy = yday(day_20th),
-day_50th_doy = yday(day_50th),
-day_80th_doy = yday(day_80th))
 ```
 
 
