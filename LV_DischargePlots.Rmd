@@ -255,6 +255,22 @@ temp_cond_cumul_model <- lm(formula = cumul_tempcond_iceoff_twenty$wy_doy_ice_of
 summary(temp_cond_flow_model)
 summary(temp_cond_cumul_model)
 
+
+ice_off_dates_waterYear <- ice_off_dates_file %>% mutate(waterYear = calcWaterYear(Date)) %>% select(-Date)
+twenty_perc_dates_waterYear <- twenty_perc_dates %>% mutate(waterYear = calcWaterYear((Date))) %>% select(-Date)
+
+str(twenty_perc_dates_waterYear)
+str(ice_off_dates_waterYear)
+
+ice_off_twentyPercent <- full_join(ice_off_dates_waterYear,twenty_perc_dates_waterYear, by="waterYear") %>% drop_na(wy_doy_ice_off)
+
+write_xlsx(ice_off_twentyPercent ,"Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
+
+# model 1 - just flow
+model1 <- lm(wy_doy_ice_off~wy_doy_20Percent, data=ice_off_twentyPercent)
+summary(model1)
+
+
 ```
 
 
@@ -609,6 +625,8 @@ ggplot(lv_dat_outlet %>%
         geom_line(aes(x = wy_doy, y = temperature_C_raw_impute))+
         geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="grey",alpha=0.01)+
         geom_vline(xintercept = 220, color = "cornflowerblue") # functional ice off
+
+ggplot()
 ```
 ## 2016
 ```{r}
