@@ -11,15 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Read in hydrology data
 ```{r}
 # load libraries
-library(dplyr)
-library(dataRetrieval)
-library(lubridate)
-library(tidyr)
-library(ggplot2)
-library(viridis)
-library(readxl)
-library(imputeTS)
-library(tsibble)
+library(pacman)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble)
 
 source("00_functions.R")
 
@@ -33,8 +26,7 @@ full_to_func <- read_xlsx("Output_Files/20240829_DischargeSlope_FullFunctional.x
 full_to_no <- read_xlsx("Output_Files/20240829_DischargeSlope_FullNo.xlsx")
 # functional to no
 func_to_no <- read_xlsx("Output_Files/20240829_DischargeSlope_FunctionalNo.xlsx")
-## test for indexing
-#testtest <- full_to_func[3, "slope_cfs_per_day"]
+
 
 # define parameters of interest, and get those parameter names
 params <- c('00060', '00671', '80154', '00665')
@@ -65,8 +57,7 @@ lv_dat <- renameNWISColumns(lv_dat,
 
 #What data are available?
 dailyDataAvailable <- whatNWISdata(
-  siteNumber = lv_no
-)
+  siteNumber = lv_no)
 
 #Pull in temperature and conductivity Loch outlet
 parameterCd <- c('00095','00010')

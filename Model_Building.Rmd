@@ -5,6 +5,83 @@ date: "2024-09-25"
 ---
 # Libraries and Functions
 ```{r}
+library(pacman)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble)
 
+source("Input_Files/00_functions.R")
+```
+# Outlet - Bring in Cumulative Flow
+```{r}
+# Get data for LV
+lv_no <- '401733105392404'
+
+# define parameters of interest, and get those parameter names
+params <- c('00060', '00671', '80154', '00665')
+
+# get daily values from NWIS
+lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
+                         startDate = '1983-10-01', endDate = '2024-09-30')
+
+# rename columns using renameNWISColumns from package dataRetrieval
+lv_dat <- renameNWISColumns(lv_dat,
+                                p00665 = "TP_mgL",
+                                p00671 = "Orthophosphate_mgL",
+                                p80154 = "SS_mgL")
+
+# use function `grep` to identify which columns are code columns
+lv_names <- names(lv_dat)
+grep('_cd', lv_names) # returns the index of the match
+
+grep('_cd', lv_names, value = TRUE) # returns the matched elements themselves
+
+# change the code column names to be more explicit about what they contain
+# using function gsub
+gsub('_cd', '_code', lv_names)
+
+lv_dat <- select(lv_dat, -contains('_cd'))
+head(lv_dat)
+
+lv_dat <- addWaterYear(lv_dat)
+
+# calculate cumulative discharge for each year by first grouping by water year,
+# and then using the "cumsum" function. Add day of water year for plotting purposes.
+# These steps will build a new dataframe, with the existing information in yahara_dat
+# but with two additional columns.
+cumulative_dat <- group_by(lv_dat, waterYear) %>%
+  mutate(cumulative_dis = cumsum(Flow), 
+         wy_doy = seq(1:n()))
+
+# ungroup cumulative_dat 
+cumulative_dat_ungroup <- cumulative_dat %>%
+  ungroup() %>%
+  as.data.frame()
+
+# make sure it looks good
+str(cumulative_dat_ungroup)
+
+# rename the df so its nicer, remove the site number column
+cumulative_flow_df <- cumulative_dat_ungroup %>% select(-site_no)
+view(cumulative_flow_df)
+```
+# Outlet - Bring in Temp and Conductivity Data from Outlet
+```{r}
+out_cond_dat <- read.csv("Input_Files/Loch_O_daily_conductivity.csv")
+out_temp_dat <- read.csv("Input_Files/Loch_O_daily_temperature.csv")
+out_condTemp_dat <- left_join(out_cond_dat,out_temp_dat, by = "Date")
+view(out_condTemp_dat)
+```
+# Bring in Ice off and 20th Percentile dates
+```{r}
+ice_off_20thPer_dates <- read_xlsx("Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
+view(ice_off_20thPer_dates)
+```
+# Plot temp and conductivity by year
+```{r}
+# out_condTemp_long <- pivot_longer(out_condTemp_dat, -Date, names_to="hydro_variables", values_to = "temp_or_cond")
+out_condTemp_long <- pivot_longer(out_condTemp_dat, -Date, names_to="hydro_variables", values_to = "temp_or_cond") %>% mutate(Date = as.Date(as.character(Date), format = "%d/%m/%y")) 
+# %>% mutate(waterYear = calcWaterYear(Date))
+ view(out_condTemp_long)
+cond_temp_plot <- ggplot(out_condTemp_long, aes(Date,temp_or_cond, col = hydro_variables))
+cond_temp_plot + geom_line()
 ```
 
