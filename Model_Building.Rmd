@@ -60,7 +60,7 @@ cumulative_dat_ungroup <- cumulative_dat %>%
 str(cumulative_dat_ungroup)
 
 # rename the df so its nicer, remove the site number column
-cumulative_flow_df <- cumulative_dat_ungroup %>% select(-site_no)
+cumulative_flow_df <- cumulative_dat_ungroup %>% select(-site_no) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
 view(cumulative_flow_df)
 ```
 # Outlet - Bring in Temp and Conductivity Data from Outlet
@@ -79,19 +79,38 @@ view(ice_off_20thPer_dates)
 ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.)
 view(ice_off_binary)
 # combine binary ice on or off with temp and conductivity
-out_dat_and_ice <- left_join(out_condTemp_dat,ice_off_binary, by = "Date")
+out_dat_and_ice <- left_join(out_condTemp_dat,ice_off_binary, by = "Date") %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
 view(out_dat_and_ice)
+
 ```
+# Combine all data
+```{r}
+cumul_out_ice_ALL <- left_join(out_dat_and_ice,cumulative_flow_df,by="Date") %>% select(-wy_doy.y) %>% rename(wy_doy = wy_doy.x)
+view(cumul_out_ice_ALL)
+```
+
 # Regression
 ```{r}
-model1 <- glm(ice_or_no~Temperature_C+cond_uScm, data = out_dat_and_ice, family = binomial)
+model1 <- glm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL, family = binomial)
 summary(model1)
 
-model1a <- glm(ice_or_no~Temperature_C+cond_uScm, data = out_dat_and_ice, family = gaussian)
+model1a <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = binomial)
 summary(model1a)
 
-model2 <- lm(ice_or_no~Temperature_C+cond_uScm, data = out_dat_and_ice)
-summary(model2)
+model2 <- glm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL, family = gaussian)
+summary(model2a)
+
+model2a <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = gaussian)
+summary(model2a)
+
+model3 <- lm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL)
+summary(model3)
+
+model4 <- lm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL)
+summary(model4)
+
+model5 <- lm(ice_or_no~Temperature_C+cond_uScm+cumulative_dis, data = cumul_out_ice_ALL)
+summary(model5)
 ```
 
 
