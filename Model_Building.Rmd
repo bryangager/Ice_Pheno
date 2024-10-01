@@ -72,12 +72,37 @@ view(out_condTemp_dat)
 ```
 # Bring in Ice off and 20th Percentile dates
 ```{r}
+# ice off dates and 20th percentile dates
 ice_off_20thPer_dates <- read_xlsx("Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
 view(ice_off_20thPer_dates)
+# 2013 - 2023 daily ice on (1) or off (0)
+ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.)
+view(ice_off_binary)
+# combine binary ice on or off with temp and conductivity
+out_dat_and_ice <- left_join(out_condTemp_dat,ice_off_binary, by = "Date")
+view(out_dat_and_ice)
 ```
+# Regression
+```{r}
+model1 <- glm(ice_or_no~Temperature_C+cond_uScm, data = out_dat_and_ice, family = binomial)
+summary(model1)
+
+model1a <- glm(ice_or_no~Temperature_C+cond_uScm, data = out_dat_and_ice, family = gaussian)
+summary(model1a)
+
+model2 <- lm(ice_or_no~Temperature_C+cond_uScm, data = out_dat_and_ice)
+summary(model2)
+```
+
+
+
+
 # Long format Temp and Conductivity
 ```{r}
 out_condTemp_long <- pivot_longer(out_condTemp_dat, -Date, names_to="hydro_variables", values_to = "temp_or_cond") %>% mutate(waterYear = calcWaterYear(Date)) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))%>% mutate(wy_doy = hydro.day(Date))
+
+# write_xlsx(out_condTemp_long ,"Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
+
 
 view(out_condTemp_long)
 
