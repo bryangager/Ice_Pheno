@@ -255,13 +255,11 @@ str(ice_off_dates_waterYear)
 
 ice_off_twentyPercent <- full_join(ice_off_dates_waterYear,twenty_perc_dates_waterYear, by="waterYear") %>% drop_na(wy_doy_ice_off)
 
-write_xlsx(ice_off_twentyPercent ,"Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
+#write_xlsx(ice_off_twentyPercent ,"Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
 
 # model 1 - just flow
 model1 <- lm(wy_doy_ice_off~wy_doy_20Percent, data=ice_off_twentyPercent)
 summary(model1)
-
-
 ```
 
 
