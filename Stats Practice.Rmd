@@ -1,0 +1,85 @@
+---
+title: "Stats Practice"
+output: html_document
+date: "2024-10-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+#install.packages("kmed")
+library(kmed)
+dat <- heart
+
+# select variables
+library(dplyr)
+dat <- dat |>
+  select(
+    age,
+    sex,
+    cp,
+    thalach,
+    class
+  )
+
+# print dataset's structure
+str(dat)
+```
+```{r}
+# rename variables
+dat <- dat |>
+  rename(
+    chest_pain = cp,
+    max_heartrate = thalach,
+    heart_disease = class
+  )
+```
+
+```{r}
+# recode sex
+dat$sex <- factor(dat$sex,
+  levels = c(FALSE, TRUE),
+  labels = c("female", "male")
+)
+
+# recode chest_pain
+dat$chest_pain <- factor(dat$chest_pain,
+  levels = 1:4,
+  labels = c("typical angina", "atypical angina", "non-anginal pain", "asymptomatic")
+)
+```
+
+```{r}
+# recode heart_disease into 2 classes
+dat$heart_disease <- ifelse(dat$heart_disease == 0,
+  0,
+  1
+)
+```
+
+```{r}
+# set labels for heart_disease
+dat$heart_disease <- factor(dat$heart_disease,
+  levels = c(0, 1),
+  labels = c("no disease", "disease")
+)
+
+```
+
+```{r}
+levels(dat$heart_disease)
+```
+```{r}
+# print first 6 observations
+head(dat)
+```
+```{r}
+# basic descriptive statistics
+summary(dat)
+```
+
+
+

@@ -6,7 +6,7 @@ date: "2024-09-25"
 # Libraries and Functions
 ```{r}
 library(pacman)
-p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC)
 
 source("Input_Files/00_functions.R")
 ```
@@ -69,8 +69,12 @@ out_cond_dat <- read.csv("Input_Files/Loch_O_daily_conductivity.csv")
 out_temp_dat <- read.csv("Input_Files/Loch_O_daily_temperature.csv")
 out_condTemp_dat19_23 <- left_join(out_cond_dat,out_temp_dat, by = "Date")
 out_condTemp_dat11_19 <- read.csv("Input_Files/LochDaily_TempCond_2011-2019.csv")
-view(out_condTemp_dat11_19) # change the date format in the excel file
-view(out_condTemp_dat)
+View(out_condTemp_dat11_19)
+View(out_condTemp_dat)
+
+# merge 2011-2019 with 2019-2023
+out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all = TRUE)
+View(out_condTemp_allDates)
 ```
 # Bring in Ice off and 20th Percentile dates
 ```{r}
@@ -79,10 +83,25 @@ ice_off_20thPer_dates <- read_xlsx("Input_Files/20240925_IceOff_20thQuartile_Dat
 view(ice_off_20thPer_dates)
 # 2013 - 2023 daily ice on (1) or off (0)
 ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.)
-view(ice_off_binary)
+View(ice_off_binary)
+
+# recode ice_or_no into 2 classes
+ice_off_binary$ice_presence <- ifelse(ice_off_binary$ice_or_no == 0,
+  0,
+  1
+)
+# set labels for ice
+ice_off_binary$ice_presence <- factor(ice_off_binary$ice_presence,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+View(ice_off_binary)
+str(ice_off_binary$ice_presence)
+levels(ice_off_binary$ice_presence)
+
 # combine binary ice on or off with temp and conductivity
-out_dat_and_ice <- left_join(out_condTemp_dat,ice_off_binary, by = "Date") %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
-view(out_dat_and_ice)
+out_dat_and_ice <- left_join(out_condTemp_allDates,ice_off_binary, by = "Date") %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+View(out_dat_and_ice)
 
 # full_data <- ice_off_binary %>%
 #   mutate(Date = ymd(Date)) %>%
@@ -90,10 +109,12 @@ view(out_dat_and_ice)
 #   drop_na(temp_or_cond)
 
 ```
+
+
 # Combine all data
 ```{r}
 cumul_out_ice_ALL <- left_join(out_dat_and_ice,cumulative_flow_df,by="Date") %>% select(-wy_doy.y) %>% rename(wy_doy = wy_doy.x) %>% drop_na(ice_or_no)
-view(cumul_out_ice_ALL)
+View(cumul_out_ice_ALL)
 
 ALL_2020 <- cumul_out_ice_ALL %>% filter(waterYear == 2020)
 ALL_2021 <- cumul_out_ice_ALL %>% filter(waterYear == 2021)
@@ -110,12 +131,6 @@ summary(model1)
 model1a <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = binomial)
 summary(model1a)
 
-model2 <- glm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL, family = gaussian)
-summary(model2)
-
-model2a <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = gaussian)
-summary(model2a)
-
 model3 <- lm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL)
 summary(model3)
 
@@ -130,6 +145,230 @@ plot(model1a)
 model_window <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = ALL_some, family = binomial)
 summary(model_window)
 ```
+# Binary Regressions following the Tutorial
+```{r}
+model_allDates <- glm(ice_presence~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = binomial)
+summary(model_allDates)
+
+model1Var <- glm(ice_presence~Temperature_C, data = cumul_out_ice_ALL, family = binomial)
+summary(model1Var)
+exp(coef(model1Var)["Temperature_C"])
+# the above exponential function of the coefficient for temperature means that one unit of increase with temperature increases the chances of there being no ice by a factor of 2.424
+# the probability of there being no ice increases by 142% when temperature increases by 1
+
+model1Var2021 <- glm(ic_presencee~Temperature_C, data = ALL_2021, family = binomial)
+summary(model1Var2021)
+exp(coef(model1Var2021)["Temperature_C"])
+# in 2021, the probability of there being no ice increases by a factor of 117% when temperature increases by 1
+```
+# Temp Model Plot, Following Tutorial
+```{r}
+plot_model(model1Var,
+  type = "pred",
+  terms = "Temperature_C"
+) +
+  labs(y = "Prob (no ice)")
+```
+# Conductivity Model and Plot
+```{r}
+cond_model <- glm(ice_presence~cond_uScm, data = cumul_out_ice_ALL, family = binomial)
+summary(cond_model)
+exp(coef(cond_model)["cond_uScm"])
+# -29% - probability of no ice decreases by 29% when conductivity rises by one unit (high conductivity = ice)
+plot_model(cond_model,
+  type = "pred",
+  terms = "cond_uScm"
+) +
+  labs(y = "Prob (no ice)")
+```
+# Flow model and Plot
+```{r}
+flow_model <- glm(ice_presence~Flow, data = cumul_out_ice_ALL, family = binomial)
+summary(flow_model)
+exp(coef(flow_model)["Flow"])
+# 21% - probability of no ice increases by 21% when Flow increases by one unit - high flow = no ice
+plot_model(flow_model,
+  type = "pred",
+  terms = "Flow"
+) +
+  labs(y = "Prob (no ice)")
+```
+# Cumulative Flow Model and Plot
+```{r}
+cumul_flow_model <- glm(ice_presence~cumulative_dis, data = cumul_out_ice_ALL, family = binomial)
+summary(cumul_flow_model)
+exp(coef(cumul_flow_model)["cumulative_dis"])
+# probability of no ice increases by < 1% when cumulative flow increases by one unit (cumulative flow units don't show relationship well)
+plot_model(cumul_flow_model,
+  type = "pred",
+  terms = "cumulative_dis"
+) +
+  labs(y = "Prob (no ice)")
+```
+# All factors?
+```{r}
+all_model <- glm(ice_presence~Flow+Temperature_C+cond_uScm+waterYear, data = cumul_out_ice_ALL, family = binomial)
+summary(all_model)
+
+reduced_model <- glm(ice_presence~Temperature_C+cond_uScm+waterYear, data = cumul_out_ice_ALL, family = binomial)
+# when just flow and water year - relationship between flow and ice is correct. 
+# when flow and temp and water year or flow and cond and water year or flow and temp and cond or all three, relationship between flow and ice is wrong...
+anova(reduced_model, all_model,
+  test = "LRT"
+)
+
+# OR and 95% CI
+round(exp(cbind(OR = coef(reduced_model), confint(reduced_model))), 3)
+# only the ORs with significant p-values
+round(exp(coef(reduced_model))[coef(summary(reduced_model))[, "Pr(>|z|)"] < 0.05], 3)
+# probability of no ice decreases with increase in flow and conductivity, and increases with increase in temperature and water year -- high FLOW(?) and conductivity = ice, high temp and later year = no ice
+
+plot_model(reduced_model,
+  type = "pred",
+  terms = c("Temperature_C [all]","waterYear [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+plot_model(reduced_model,
+  type = "pred",
+  terms = c("cond_uScm [all]","waterYear [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+```
+# Testing interaction
+```{r}
+inter_model <- glm(ice_presence~Temperature_C*cond_uScm*Flow*waterYear, data = cumul_out_ice_ALL, family = binomial)
+summary(inter_model)
+anova(reduced_model, inter_model,
+  test = "LRT"
+)
+round(exp(coef(inter_model))[coef(summary(inter_model))[, "Pr(>|z|)"] < 0.05], 3)
+
+inter_model2 <- glm(ice_presence~Temperature_C+cond_uScm*Flow*waterYear, data = cumul_out_ice_ALL, family = binomial)
+summary(inter_model2)
+
+round(exp(coef(inter_model2))[coef(summary(inter_model2))[, "Pr(>|z|)"] < 0.05], 3)
+
+anova(inter_model2, inter_model,
+  test = "LRT"
+)
+
+inter_model3 <- glm(ice_presence~Temperature_C+cond_uScm*Flow+waterYear, data = cumul_out_ice_ALL, family = binomial)
+summary(inter_model3)
+
+round(exp(coef(inter_model3))[coef(summary(inter_model3))[, "Pr(>|z|)"] < 0.05], 3)
+
+anova(inter_model3, inter_model2,
+  test = "LRT"
+)
+
+plot_model(inter_model3,
+  type = "pred",
+  terms = c("Flow [all]","waterYear [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+# what the heck is this
+
+inter_model4 <- glm(ice_presence~Temperature_C*cond_uScm*waterYear, data = cumul_out_ice_ALL, family = binomial)
+summary(inter_model4)
+
+round(exp(coef(inter_model4))[coef(summary(inter_model4))[, "Pr(>|z|)"] < 0.05], 3)
+
+anova(inter_model4, inter_model3,
+  test = "LRT"
+)
+
+inter_model5 <- glm(ice_presence~Temperature_C+cond_uScm*waterYear, data = cumul_out_ice_ALL, family = binomial)
+summary(inter_model5)
+
+round(exp(coef(inter_model5))[coef(summary(inter_model5))[, "Pr(>|z|)"] < 0.05], 3)
+
+anova(inter_model5, inter_model4,
+  test = "LRT")
+
+plot_model(inter_model5,
+  type = "pred",
+  terms = c("Temperature_C [all]","waterYear [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+plot_model(inter_model5,
+  type = "pred",
+  terms = c("cond_uScm","waterYear [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+```
+# Model selection
+```{r}
+# save initial model
+all_variables_m <- glm(ice_presence ~ (Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear)^2,
+  data = cumul_out_ice_ALL,
+  family = "binomial"
+)
+# select best model according to AIC using mixed selection
+AIC_chosen_model <- step(all_variables_m,
+  direction = "both", # both = mixed selection
+  trace = FALSE # do not display intermediate steps
+)
+# display results of final model
+summary(AIC_chosen_model)
+```
+# Testing Predictions
+```{r}
+# create a vector of predicted probabilities
+preds <- predict(AIC_chosen_model,
+  newdata = select(cumul_out_ice_ALL, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice IS on The Loch
+preds_outcome <- ifelse(preds < 0.5,
+  1,
+  0
+)
+
+# transform predictions into factor and set labels
+preds_outcome <- factor(preds_outcome,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab <- table(cumul_out_ice_ALL$ice_presence, preds_outcome,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab
+
+accuracy <- sum(diag(tab)) / sum(tab)
+accuracy
+
+# sensitivity
+sensitivity <- tab[2, 2] / (tab[2, 2] + tab[2, 1])
+sensitivity
+
+# specificity
+specificity <- tab[1, 1] / (tab[1, 1] + tab[1, 2])
+specificity
+```
+# AUC and ROC
+```{r}
+# save roc object
+res <- roc(ice_presence ~ fitted(AIC_chosen_model),
+  data = cumul_out_ice_ALL
+)
+
+# plot ROC curve
+ggroc(res, legacy.axes = TRUE)
+```
+
 
 ```{r}
 pred_values <- predict(model_window, type = "response")
