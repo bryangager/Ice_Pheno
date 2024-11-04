@@ -6,7 +6,7 @@ date: "2024-09-25"
 # Libraries and Functions
 ```{r}
 library(pacman)
-p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary)
 
 source("Input_Files/00_functions.R")
 ```
@@ -109,6 +109,36 @@ View(flow_temp_cond_weekly_ice_impute)
 imputed_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice_impute, c(183,288)) # April 1 - July 15
 weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(183,288)) # April 1 - July 15
 ```
+ 
+# Plotting weekly and imputed data
+```{r}
+p1 <- ggplot(out_cond_temp_daily %>% filter(waterYear==2012)%>% filter(wy_doy >188 & wy_doy < 288), aes(x = wy_doy)) +
+  geom_point(aes(y = Temperature_C, color = "Daily Temperature (C) 2012")) +
+  geom_vline(xintercept = 207)+
+  labs(color = "Legend") +
+  theme_minimal() +
+  theme(legend.position = "top")+
+  lims(y = c(0, 11.5))
+
+p2 <- ggplot(flow_temp_cond_impute %>% filter(waterYear.x==2012)%>% filter(wy_doy.x >188 & wy_doy.x < 288), aes(x = wy_doy.x)) +
+  geom_point(aes(y = temperature_C_raw_impute, color = "Imputed Temperature (C) 2012")) +
+  geom_vline(xintercept = 207)+
+  labs(color = "Legend") +
+  theme_minimal() +
+  theme(legend.position = "top")+
+  lims(y = c(0, 11.5))
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+
+
+
+
+
+
+
 ## Imputed Modeling
 ```{r}
 imputeModel <- glm(ice_presence~cumulative_dis+temperature_C_raw_impute, data = imputed_data_trimmed, family = binomial)
@@ -232,6 +262,13 @@ plot_model(weeklyModel,
 ) +
   labs(y = "Prob (no ice)")
 ```
+# Comparing Models
+```{r}
+tab_model(weeklyModel, imputeModel, reducedTrimModel,
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
 
 
 
@@ -247,6 +284,12 @@ View(out_condTemp_dat)
 # merge 2011-2019 with 2019-2023
 out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all = TRUE)
 View(out_condTemp_allDates)
+
+# making a df for daily temp and cond for plotting
+out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
+  distinct(Date, .keep_all = TRUE)
+View(out_cond_temp_daily)
+
 ```
 # Bring in Ice off and 20th Percentile dates
 ```{r}
@@ -556,6 +599,20 @@ sensitivityTrim
 specificityTrim <- tabTrim[1, 1] / (tabTrim[1, 1] + tabTrim[1, 2])
 specificityTrim
 ```
+# AUC (trimmed daily)
+```{r}
+aucTrim <- roc(ice_presence ~ fitted(reducedTrimModel),
+  data = allData_trimmed)
+ggroc(aucTrim, legacy.axes = TRUE) +
+  labs(title = paste0("AUC = ", round(aucTrim$auc, 2)))
+```
+# Summary
+```{r}
+tbl_regression(reducedTrimModel, exponentiate = TRUE)
+```
+
+
+
 ## Trimmed Data with Predictions
 ```{r}
 predValuesAll <- predict(reducedTrimModel, type = "response")
