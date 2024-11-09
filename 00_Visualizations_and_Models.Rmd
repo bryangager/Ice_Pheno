@@ -1,0 +1,445 @@
+---
+title: "00_Visualizations_and_Models"
+output: html_document
+date: "2024-11-09"
+---
+# Analysis
+This document will walk through some initial plots of raw data, followed by model construction
+
+## Data Background:
+There are 10 dataframes that will be used in this process, which are created in the source file "01_Data_Imput"
+Two dataframes hold weekly data from 1982 - 2024, two hold imputed weekly data from 1982 - 2024, two that hold the weekly data that is trimmed to 2014 - 2023, two that hold the imputed data from 2014 - 2023, and two hold daily data from 2014 - 2023.
+There are two of each of these dataframes because one is trimmed to only include April 1 - July 15 each year, and the other is un-trimmed. Models will be built with the trimmed data in order for the relationship between flow and ice presence to be correct.
+Training models will be built using data from 2014-2023, these are the years in which in-situ ice observations are available.
+```{r echo = FALSE}
+# load libraries
+library(pacman)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary)
+# This is the file that combines and cleans data:
+source("Input_Files/01_Data_Input.R")
+
+# Un-comment a dataframe to view:
+## these three are the un-trimmed data
+#daily:
+#View(flow_temp_cond_daily_ice)
+# weekly:
+#View(flow_temp_cond_weekly_ice)
+# weekly imputed:
+#View(flow_temp_cond_imputed_ice)
+## these are the trimmed data:
+# daily:
+#View(daily_data_trimmed)
+# weekly:
+#View(weekly_data_trimmed)
+# weekly imputed:
+#View(imputed_data_trimmed)
+# weekly trimmed for 2014-2023:
+#View(flow_temp_cond_weekly_ice_14_23)
+# weekly trimmed 2014-2023 and trimmed for spring:
+#View(weekly_data_trimmed_14_23)
+# weekly imputed trimmed for 2014-2023
+#View(flow_temp_cond_imputed_ice_14_23)
+# weekly imputed trimmed for 2014-2023 and trimmed for spring:
+#View(imputed_data_trimmed_14_23)
+```
+## Visualizations:
+Let's look at some of the raw data:
+
+Here's a low-resolution look at the cumulative flow for each year in which we have in-situ ice observations. Visually, between the water year day of year 200 - 250, flow usually begins to increase.
+```{r echo=FALSE}
+ggplot(flow_temp_cond_daily_ice %>% filter(waterYear >= 2014 & waterYear < 2024), aes(x = wy_doy, y = cumulative_dis))+
+  geom_line() +  # Use geom_point() if you prefer points instead of lines
+  facet_wrap(~ waterYear) +  # Creates a separate plot for each water year
+  labs(
+    title = "Cumulative Discharge (cfs)",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge") 
+```
+Now let's take a closer look at each year and compare the cumulative discharge to ice observations - the shaded area of each plot represents the observed time of ice beginning to melt to when there is 0 ice on The Loch.
+
+Visually, the variability in each year is not too high, but probably high enough that a model only using cumulative discharge would not be accurate for predicting ice-off.
+```{r echo = FALSE}
+# water year 2014
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2014),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(200, 260), y = c(150, 750))+
+  labs(x = "Water Year Day of Year (2014)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2015:
+```{r echo = FALSE}
+# water year 2015:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2015),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(180, 260), y = c(130, 600))+
+  labs(x = "Water Year Day of Year (2015)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2016:
+```{r echo = FALSE}
+# water year 2016:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2016),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(180, 260), y = c(50, 700))+
+  labs(x = "Water Year Day of Year (2016)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2017:
+```{r echo = FALSE}
+# water year 2017:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(170, 255), y = c(50, 600))+
+  labs(x = "Water Year Day of Year (2017)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2018:
+```{r echo = FALSE}
+# water year 2018:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2018),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(210, 240), y = c(180, 750))+
+  labs(x = "Water Year Day of Year (2018)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2019:
+```{r echo = FALSE}
+# water year 2019:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2019),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(200, 270), y = c(180, 1000))+
+  labs(x = "Water Year Day of Year (2019)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2020:
+```{r echo=FALSE}
+# water year 2020:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2020),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(200, 250), y = c(50, 450))+
+  labs(x = "Water Year Day of Year (2020)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2021:
+```{r echo=FALSE}
+# water year 2021
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2021),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(200, 270), y = c(50, 900))+
+  labs(x = "Water Year Day of Year (2021)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2022:
+```{r echo=FALSE}
+# water year 2022
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2022),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(200, 250), y = c(50, 450))+
+  labs(x = "Water Year Day of Year (2022)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+2023:
+```{r echo=FALSE}
+# water year 2023:
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2023),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  geom_line() +
+  lims(x = c(205, 250), y = c(70, 600))+
+  labs(x = "Water Year Day of Year (2023)", y = "Cumulative Discharge (cfs)")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+```
+Now let's look at the daily observations of temperature and conductivity by year compared to the date of 0 ice on The Loch (represented by a vertical black line).
+
+Visually, temperature and conductivity seem to have less variation year-to-year.
+```{r}
+# making a long format dataframe to visualize the two variables together.
+out_condTempDaily_long <- pivot_longer(out_cond_temp_daily, -c(Date,wy_doy,waterYear), names_to="hydro_variables", values_to = "temp_or_cond") %>% mutate(waterYear = calcWaterYear(Date)) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))%>% mutate(wy_doy = hydro.day(Date))
+```
+Every year:
+```{r}
+
+ggplot(out_condTempDaily_long %>% filter(waterYear >= 2014 & waterYear <=2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year", y = "Temperature (C), Conductivity (uS/cm)")+facet_wrap(~ waterYear)
+
+```
+
+
+2014:
+```{r echo=FALSE}
+# water year 2014
+ggplot(out_condTempDaily_long %>% filter(waterYear==2014), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2014)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 247) # ice off date
+```
+2015:
+```{r echo=FALSE}
+# water year 2015
+ggplot(out_condTempDaily_long %>% filter(waterYear==2015), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2015)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 239) # ice off date
+```
+2016:
+```{r echo=FALSE}
+# water year 2016
+ggplot(out_condTempDaily_long %>% filter(waterYear==2016), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2016)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 251) # ice off date
+```
+2017:
+```{r echo=FALSE}
+# water year 2017
+ggplot(out_condTempDaily_long %>% filter(waterYear==2017), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2017)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 243) # ice off date
+```
+2018:
+```{r echo=FALSE}
+# water year 2018
+ggplot(out_condTempDaily_long %>% filter(waterYear==2018), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2018)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 235) # ice off date
+```
+2019:
+```{r echo=FALSE}
+# water year 2019
+ggplot(out_condTempDaily_long %>% filter(waterYear==2019), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2019)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 260) # ice off date
+```
+2020:
+```{r echo=FALSE}
+# water year 2020
+ggplot(out_condTempDaily_long %>% filter(waterYear==2020), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2020)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 234) # ice off date
+```
+2021:
+```{r echo=FALSE}
+# water year 2021
+ggplot(out_condTempDaily_long %>% filter(waterYear==2021), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2021)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 255) # ice off date
+```
+2022:
+```{r echo=FALSE}
+# water year 2022
+ggplot(out_condTempDaily_long %>% filter(waterYear==2022), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2022)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 244) # ice off date
+```
+2023:
+```{r echo=FALSE}
+# water year 2023
+ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2023)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 243) # ice off date
+```
+## Models:
+Here we start to make simple binary logistic regression models with different variables and compare their accuracy.
+
+April 1 - July 15 Trimmed vs. Un-Trimmed Data - all variables:
+These models take into account all the variables: temperature, conductivity, flow, cumulative discharge, and water year.
+```{r}
+# untrimmed data:
+untrimmed_daily_all <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = flow_temp_cond_daily_ice, family = binomial)
+
+untrimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = flow_temp_cond_weekly_ice_14_23, family = binomial)
+
+untrimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = flow_temp_cond_imputed_ice_14_23, family = binomial)
+
+# trimmed data:
+trimmed_daily_all <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23, family = binomial)
+
+```
+How do they compare?
+The R^2 for the models using data trimmed to include only April 1 - July 15 increase by ~ 0.2 for each different temporal frequency. So from now on, we will be using the trimmed data.
+```{r}
+tab_model(untrimmed_daily_all,untrimmed_weekly_all,untrimmed_imputed_all,trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+Now that we know to use the trimmed data, we'll narrow down the variables used in the model. We'll start by removing flow because we have cumulative discharge had a lower p-value in the trimmed models.
+```{r}
+trimmed_daily_reduced1 <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced1 <- glm(ice_presence~cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced1 <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23, family = binomial)
+```
+Results: <0.01 change in R^2
+```{r}
+tab_model(trimmed_daily_reduced1, trimmed_imputed_reduced1,trimmed_weekly_reduced1, trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+Now we'll remove water year because it was not significant in any of the reduced models.
+```{r}
+trimmed_daily_reduced2 <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced2 <- glm(ice_presence~cumulative_dis+temperature_C_raw+cond_uScm, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced2 <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute, data = imputed_data_trimmed_14_23, family = binomial)
+```
+Results: No change in R^2
+```{r}
+tab_model(trimmed_daily_reduced2, trimmed_imputed_reduced2,trimmed_weekly_reduced2, trimmed_daily_reduced1,trimmed_imputed_reduced1,trimmed_weekly_reduced1,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+Now we'll remove conductivity because its p-value was only <0.05 in one model
+```{r}
+trimmed_daily_reduced_final <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23, family = binomial)
+```
+Results: -0.011 change for weekly R^2, <0.01 change in daily and imputed R^2
+```{r}
+tab_model(trimmed_daily_reduced_final, trimmed_imputed_reduced_final,trimmed_weekly_reduced_final, trimmed_daily_reduced2,trimmed_imputed_reduced2,trimmed_weekly_reduced2,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+
+Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off.
+```{r}
+discharge_plot <- plot_model(trimmed_imputed_reduced_final,
+  type = "pred",
+  terms = c("cumulative_dis [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+temp_plot <- plot_model(trimmed_imputed_reduced_final,
+  type = "pred",
+  terms = c("temperature_C_impute [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+discharge_plot
+temp_plot
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trying to use broom
+```{r}
+daily_trimmed_preds <- augment(trimmed_daily_reduced_final, data = daily_data_trimmed) %>%
+  select(-c(.resid,.hat,.sigma,.cooksd,.std.resid))
+
+# View the new dataframe with predictions
+head(daily_trimmed_preds)
+```
+
+Adding predicted values to a test df
+```{r}
+# create a vector of predicted probabilities
+preds <- predict(trimmed_imputed_reduced_final,
+  newdata = select(flow_temp_cond_imputed_ice_14_23, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice IS on The Loch
+preds_outcome <- ifelse(preds < 0.5,
+  1,
+  0
+)
+
+# transform predictions into factor and set labels
+preds_outcome <- factor(preds_outcome,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab <- table(flow_temp_cond_imputed_ice_14_23$ice_presence, preds_outcome,
+  dnn = c("observed", "predicted")
+)
+
+View(preds_outcome)
+# print results
+tab
+# 
+# accuracy <- sum(diag(tab)) / sum(tab)
+# accuracy
+# 
+# # sensitivity
+# sensitivity <- tab[2, 2] / (tab[2, 2] + tab[2, 1])
+# sensitivity
+# 
+# # specificity
+# specificity <- tab[1, 1] / (tab[1, 1] + tab[1, 2])
+# specificity
+```
+
+```{r}
+#test$predictions <- preds
+test$predictions <- test$predictions <- ifelse(preds < 0.5,
+  1,
+  0
+) %>%  factor(preds_outcome,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+```
+

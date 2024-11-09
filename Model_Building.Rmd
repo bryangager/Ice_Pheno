@@ -13,102 +13,84 @@ source("Input_Files/00_functions.R")
 ```
 # Outlet - Bring in Cumulative Flow
 ```{r}
-# Get data for LV
-lv_no <- '401733105392404'
-
-# define parameters of interest, and get those parameter names
-params <- c('00060', '00671', '80154', '00665')
-
-# get daily values from NWIS
-lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = params,
-                         startDate = '1983-10-01', endDate = '2024-09-30')
-
-# rename columns using renameNWISColumns from package dataRetrieval
-lv_dat <- renameNWISColumns(lv_dat,
-                                p00665 = "TP_mgL",
-                                p00671 = "Orthophosphate_mgL",
-                                p80154 = "SS_mgL")
-
-# use function `grep` to identify which columns are code columns
-lv_names <- names(lv_dat)
-grep('_cd', lv_names) # returns the index of the match
-
-grep('_cd', lv_names, value = TRUE) # returns the matched elements themselves
-
-# change the code column names to be more explicit about what they contain
-# using function gsub
-gsub('_cd', '_code', lv_names)
-
-lv_dat <- select(lv_dat, -contains('_cd'))
-head(lv_dat)
-
-lv_dat <- addWaterYear(lv_dat)
-
-# calculate cumulative discharge for each year by first grouping by water year,
-# and then using the "cumsum" function. Add day of water year for plotting purposes.
-# These steps will build a new dataframe, with the existing information in yahara_dat
-# but with two additional columns.
-cumulative_dat <- group_by(lv_dat, waterYear) %>%
-  mutate(cumulative_dis = cumsum(Flow), 
-         wy_doy = seq(1:n()))
-
-# ungroup cumulative_dat 
-cumulative_dat_ungroup <- cumulative_dat %>%
-  ungroup() %>%
-  as.data.frame()
-
-# make sure it looks good
-str(cumulative_dat_ungroup)
-
-# rename the df so its nicer, remove the site number column
-cumulative_flow_df <- cumulative_dat_ungroup %>% select(-site_no) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
-View(cumulative_flow_df)
+# LV Site Number:
+# lv_no <- '401733105392404'
+# 
+# # define parameter for discharge (00060)
+# param <- '00060'
+# 
+# # get daily values from NWIS
+# lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = param,
+#                      startDate = '1983-10-01', endDate = '2024-09-30')
+# 
+# # rename columns using renameNWISColumns from package dataRetrieval
+# # this renames the column for Flow from the parameter ID to "Flow"
+# lv_dat <- renameNWISColumns(lv_dat)
+# 
+# # Removing column with USGS code for observations
+# lv_dat <- select(lv_dat, -contains('_cd'))
+# 
+# # Adding the water year to the df
+# lv_dat <- addWaterYear(lv_dat)
+# 
+# # calculating cumulative discharge for each year by first grouping by water year,
+# # and then using the "cumsum" function. Add day of water year for plotting purposes.
+# cumulative_dat <- group_by(lv_dat, waterYear) %>%
+#   mutate(cumulative_dis = cumsum(Flow), 
+#          wy_doy = seq(1:n()))
+# 
+# # ungroup the dataframe
+# cumulative_dat_ungroup <- cumulative_dat %>%
+#   ungroup() %>%
+#   as.data.frame()
+# 
+# # rename the df, remove the site number column, make sure dates are in date format. This is the final df
+# cumulative_flow_df <- cumulative_dat_ungroup %>% select(-site_no) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+# View(cumulative_flow_df)
 ```
 # Outlet Weekly Temp and Cond:
 ```{r}
-parameterCd <- c('00095','00010')
-lv_dat_outlet_input <- readWQPqw(paste0("USGS-", lv_no), parameterCd)
+# parameterCd <- c('00095','00010')
+# lv_dat_outlet_input <- readWQPqw(paste0("USGS-", lv_no), parameterCd)
 
 #Clean up dataframe
-lv_dat_outlet <- lv_dat_outlet_input %>%
-  select(ActivityStartDate, ActivityConductingOrganizationText, CharacteristicName, ResultMeasureValue) %>%
-  pivot_wider(names_from = CharacteristicName, values_from = ResultMeasureValue, values_fn = mean) %>%
-  rename(cond_uScm="Specific conductance",
-         temperature_C_raw="Temperature, water",
-         Date = "ActivityStartDate") %>%
-  select(-ActivityConductingOrganizationText) %>%
-  mutate(wy_doy = hydro.day(Date)) %>%
-  addWaterYear() %>% 
-  distinct(Date, .keep_all = TRUE) %>%
-  as_tsibble(., key = waterYear, index = Date) %>% #time series tibble
-  fill_gaps() #%>%  #makes the missing data implicit
-View(lv_dat_outlet) # THIS IS WEEKLY
-# Imputed data:
-lv_out_impute <- lv_dat_outlet %>%
-  mutate(cond_uScm_impute = imputeTS::na_interpolation(cond_uScm, maxgap = 7),
-       temperature_C_raw_impute = imputeTS::na_interpolation(temperature_C_raw, maxgap = 7))
-
-# Binding the weekly data and imputed data with cumulative flow
-flow_temp_cond_weekly <- full_join(cumulative_flow_df, lv_dat_outlet, by = "Date")
-flow_temp_cond_impute <- full_join(cumulative_flow_df, lv_out_impute, by = "Date")
-View(flow_temp_cond_impute)
+# lv_dat_outlet <- lv_dat_outlet_input %>%
+#   select(ActivityStartDate, ActivityConductingOrganizationText, CharacteristicName, ResultMeasureValue) %>%
+#   pivot_wider(names_from = CharacteristicName, values_from = ResultMeasureValue, values_fn = mean) %>%
+#   rename(cond_uScm="Specific conductance",
+#          temperature_C_raw="Temperature, water",
+#          Date = "ActivityStartDate") %>%
+#   select(-ActivityConductingOrganizationText) %>%
+#   mutate(wy_doy = hydro.day(Date)) %>%
+#   addWaterYear() %>% 
+#   distinct(Date, .keep_all = TRUE) %>%
+#   as_tsibble(., key = waterYear, index = Date) %>% #time series tibble
+#   fill_gaps() #%>%  #makes the missing data implicit
+# View(lv_dat_outlet) # THIS IS WEEKLY
+# # Imputed data:
+# lv_out_impute <- lv_dat_outlet %>%
+#   mutate(cond_uScm_impute = imputeTS::na_interpolation(cond_uScm, maxgap = 7),
+#        temperature_C_impute = imputeTS::na_interpolation(temperature_C_raw, maxgap = 7))
+# 
+# # Binding the weekly data and imputed data with cumulative flow
+# flow_temp_cond_weekly <- full_join(cumulative_flow_df, lv_dat_outlet, by = "Date")
+# flow_temp_cond_impute <- full_join(cumulative_flow_df, lv_out_impute, by = "Date")
+# View(flow_temp_cond_impute)
 # now sort them for 2011-2023 and bind them with the ice_presence by making a new data frame with select(ice_presence, Date) from the big data set
 
-# making a df for ice_presence and Date to join to these bad boys
-ice_presence_df <- cumul_out_ice_ALL %>% select(Date, ice_or_no, ice_presence)
 
 # Joining weekly and imputed data with the ice presence
 # weekly data frame:
-flow_temp_cond_weekly_ice <- full_join(flow_temp_cond_weekly, ice_presence_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm, temperature_C_raw, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x) %>% filter(waterYear>=2014)
-View(flow_temp_cond_weekly_ice)
+# flow_temp_cond_weekly_ice <- full_join(flow_temp_cond_weekly, ice_presence_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm, temperature_C_raw, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x)
+# View(flow_temp_cond_weekly_ice)
 
-# imputed data frame:
-flow_temp_cond_weekly_ice_impute <- full_join(flow_temp_cond_impute, ice_presence_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm_impute, temperature_C_raw_impute, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x) %>% filter(waterYear>=2014)
-View(flow_temp_cond_weekly_ice_impute)
+# # imputed data frame:
+# flow_temp_cond_imputed_ice <- full_join(flow_temp_cond_impute, ice_presence_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm_impute, temperature_C_impute, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x)
+# View(flow_temp_cond_imputed_ice)
 
-# trimming the data frames for windows:
-imputed_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice_impute, c(183,288)) # April 1 - July 15
-weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(183,288)) # April 1 - July 15
+# # trimming the data frames for windows:
+# imputed_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(183,288)) # April 1 - July 15
+# weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(183,288)) # April 1 - July 15
 ```
  
 # Plotting weekly and imputed data
@@ -122,7 +104,7 @@ p1 <- ggplot(out_cond_temp_daily %>% filter(waterYear==2012)%>% filter(wy_doy >1
   lims(y = c(0, 11.5))
 
 p2 <- ggplot(flow_temp_cond_impute %>% filter(waterYear.x==2012)%>% filter(wy_doy.x >188 & wy_doy.x < 288), aes(x = wy_doy.x)) +
-  geom_point(aes(y = temperature_C_raw_impute, color = "Imputed Temperature (C) 2012")) +
+  geom_point(aes(y = temperature_C_impute, color = "Imputed Temperature (C) 2012")) +
   geom_vline(xintercept = 207)+
   labs(color = "Legend") +
   theme_minimal() +
@@ -142,7 +124,7 @@ grid.arrange(p1, p2, ncol = 2)
 
 ## Imputed Modeling
 ```{r}
-imputeModel <- glm(ice_presence~cumulative_dis+temperature_C_raw_impute, data = imputed_data_trimmed, family = binomial)
+imputeModel <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed, family = binomial)
 summary(imputeModel)
 ```
 ## Accuracy of Imputed
@@ -195,7 +177,7 @@ plot_model(imputeModel,
 
 plot_model(imputeModel,
   type = "pred",
-  terms = c("temperature_C_raw_impute [all]"),
+  terms = c("temperature_C_impute [all]"),
   ci.lvl = NA # remove confidence bands
 ) +
   labs(y = "Prob (no ice)")
@@ -275,49 +257,51 @@ tab_model(weeklyModel, imputeModel, reducedTrimModel,
 
 # Outlet - Bring in Temp and Conductivity Data from Outlet
 ```{r}
-out_cond_dat <- read.csv("Input_Files/Loch_O_daily_conductivity.csv")
-out_temp_dat <- read.csv("Input_Files/Loch_O_daily_temperature.csv")
-out_condTemp_dat19_23 <- left_join(out_cond_dat,out_temp_dat, by = "Date")
-out_condTemp_dat11_19 <- read.csv("Input_Files/LochDaily_TempCond_2011-2019.csv")
-View(out_condTemp_dat11_19)
-View(out_condTemp_dat)
-
-# merge 2011-2019 with 2019-2023
-out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all = TRUE)
-View(out_condTemp_allDates)
-
-# making a df for daily temp and cond for plotting
-out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
-  distinct(Date, .keep_all = TRUE)
-View(out_cond_temp_daily)
+# out_cond_dat <- read.csv("Input_Files/Loch_O_daily_conductivity.csv")
+# out_temp_dat <- read.csv("Input_Files/Loch_O_daily_temperature.csv")
+# out_condTemp_dat19_23 <- full_join(out_cond_dat,out_temp_dat, by = "Date")
+# out_condTemp_dat11_19 <- read.csv("Input_Files/LochDaily_TempCond_2011-2019.csv")
+# View(out_condTemp_dat11_19)
+# 
+# # merge 2011-2019 with 2019-2023
+# out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all = TRUE)
+# View(out_condTemp_allDates)
+# 
+# # making a df for daily temp and cond for plotting
+# out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
+#   distinct(Date, .keep_all = TRUE)
+# View(out_cond_temp_daily)
 
 ```
 # Bring in Ice off and 20th Percentile dates
 ```{r}
-# ice off dates and 20th percentile dates
-ice_off_20thPer_dates <- read_xlsx("Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
-view(ice_off_20thPer_dates)
-# 2013 - 2023 daily ice on (1) or off (0)
-ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.)
-View(ice_off_binary)
+# # ice off dates and 20th percentile dates
+# ice_off_20thPer_dates <- read_xlsx("Input_Files/20240925_IceOff_20thQuartile_Dates.xlsx")
+# View(ice_off_20thPer_dates)
+# # 2013 - 2023 daily ice on (1) or off (0)
+# ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+# View(ice_off_binary)
+# 
+# # recode ice_or_no into 2 classes
+# ice_off_binary$ice_presence <- ifelse(ice_off_binary$ice_or_no == 0,
+#   0,
+#   1
+# )
+# # set labels for ice
+# ice_off_binary$ice_presence <- factor(ice_off_binary$ice_presence,
+#   levels = c(1, 0),
+#   labels = c("ice", "no ice")
+# )
+# View(ice_off_binary)
+# str(ice_off_binary$ice_presence)
+# levels(ice_off_binary$ice_presence)
 
-# recode ice_or_no into 2 classes
-ice_off_binary$ice_presence <- ifelse(ice_off_binary$ice_or_no == 0,
-  0,
-  1
-)
-# set labels for ice
-ice_off_binary$ice_presence <- factor(ice_off_binary$ice_presence,
-  levels = c(1, 0),
-  labels = c("ice", "no ice")
-)
-View(ice_off_binary)
-str(ice_off_binary$ice_presence)
-levels(ice_off_binary$ice_presence)
-
-# combine binary ice on or off with temp and conductivity
-out_dat_and_ice <- left_join(out_condTemp_allDates,ice_off_binary, by = "Date") %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
-View(out_dat_and_ice)
+# making a df for ice_presence and Date to join to these bad boys
+# ice_presence_df <- ice_off_binary %>% select(Date, ice_or_no, ice_presence)
+# 
+# # combine binary ice on or off with DAILY temp and conductivity
+# out_dat_and_ice_daily <- full_join(out_cond_temp_daily,ice_presence_df, by = "Date")
+# View(out_dat_and_ice_daily)
 
 # full_data <- ice_off_binary %>%
 #   mutate(Date = ymd(Date)) %>%
@@ -329,44 +313,43 @@ View(out_dat_and_ice)
 
 # Combine all data
 ```{r}
-cumul_out_ice_ALL <- left_join(out_dat_and_ice,cumulative_flow_df,by="Date") %>% select(-wy_doy.y) %>% rename(wy_doy = wy_doy.x) %>% drop_na(ice_or_no)
-View(cumul_out_ice_ALL)
+# flow_temp_cond_daily_ice <- left_join(out_dat_and_ice_daily,cumulative_flow_df,by="Date") %>% select(-c(wy_doy.y,waterYear.y)) %>% rename(c(wy_doy = wy_doy.x,waterYear = waterYear.x)) %>% drop_na(ice_or_no)
+# View(flow_temp_cond_daily_ice)
 
-ALL_2020 <- cumul_out_ice_ALL %>% filter(waterYear == 2020)
-ALL_2021 <- cumul_out_ice_ALL %>% filter(waterYear == 2021)
-some_2021 <- cumul_out_ice_ALL %>% filter(waterYear == 2021) %>% filter(wy_doy > 183 & wy_doy <263)
-ALL_some <- cumul_out_ice_ALL %>% filter(wy_doy > 183 & wy_doy <263)
-view(ALL_some)
+ALL_2020 <- flow_temp_cond_daily_ice %>% filter(waterYear == 2020)
+ALL_2021 <- flow_temp_cond_daily_ice %>% filter(waterYear == 2021)
+some_2021 <- flow_temp_cond_daily_ice %>% filter(waterYear == 2021) %>% filter(wy_doy > 183 & wy_doy <263)
+daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(183,288)) # April 1 - July 15
 ```
 
 # Regression
 ```{r}
-model1 <- glm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL, family = binomial)
+model1 <- glm(ice_or_no~Temperature_C+cond_uScm, data = flow_temp_cond_daily_ice, family = binomial)
 summary(model1)
 
-model1a <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = binomial)
+model1a <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = flow_temp_cond_daily_ice, family = binomial)
 summary(model1a)
 
-model3 <- lm(ice_or_no~Temperature_C+cond_uScm, data = cumul_out_ice_ALL)
+model3 <- lm(ice_or_no~Temperature_C+cond_uScm, data = flow_temp_cond_daily_ice)
 summary(model3)
 
-model4 <- lm(ice_or_no~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL)
+model4 <- lm(ice_or_no~Temperature_C+cond_uScm+Flow, data = flow_temp_cond_daily_ice)
 summary(model4)
 
-model5 <- lm(ice_or_no~Temperature_C+cond_uScm+cumulative_dis, data = cumul_out_ice_ALL)
+model5 <- lm(ice_or_no~Temperature_C+cond_uScm+cumulative_dis, data = flow_temp_cond_daily_ice)
 summary(model5)
 
 plot(model1a)
 
-model_window <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = ALL_some, family = binomial)
+model_window <- glm(ice_or_no~Temperature_C+cond_uScm+Flow, data = daily_data_trimmed, family = binomial)
 summary(model_window)
 ```
 # Binary Regressions following the Tutorial
 ```{r}
-model_allDates <- glm(ice_presence~Temperature_C+cond_uScm+Flow, data = cumul_out_ice_ALL, family = binomial)
+model_allDates <- glm(ice_presence~Temperature_C+cond_uScm+Flow, data = flow_temp_cond_daily_ice, family = binomial)
 summary(model_allDates)
 
-model1Var <- glm(ice_presence~Temperature_C, data = cumul_out_ice_ALL, family = binomial)
+model1Var <- glm(ice_presence~Temperature_C, data = flow_temp_cond_daily_ice, family = binomial)
 summary(model1Var)
 exp(coef(model1Var)["Temperature_C"])
 # the above exponential function of the coefficient for temperature means that one unit of increase with temperature increases the chances of there being no ice by a factor of 2.424
@@ -387,7 +370,7 @@ plot_model(model1Var,
 ```
 # Conductivity Model and Plot
 ```{r}
-cond_model <- glm(ice_presence~cond_uScm, data = cumul_out_ice_ALL, family = binomial)
+cond_model <- glm(ice_presence~cond_uScm, data = flow_temp_cond_daily_ice, family = binomial)
 summary(cond_model)
 exp(coef(cond_model)["cond_uScm"])
 # -29% - probability of no ice decreases by 29% when conductivity rises by one unit (high conductivity = ice)
@@ -399,7 +382,7 @@ plot_model(cond_model,
 ```
 # Flow model and Plot
 ```{r}
-flow_model <- glm(ice_presence~Flow, data = cumul_out_ice_ALL, family = binomial)
+flow_model <- glm(ice_presence~Flow, data = flow_temp_cond_daily_ice, family = binomial)
 summary(flow_model)
 exp(coef(flow_model)["Flow"])
 # 21% - probability of no ice increases by 21% when Flow increases by one unit - high flow = no ice
@@ -411,7 +394,7 @@ plot_model(flow_model,
 ```
 # Cumulative Flow Model and Plot
 ```{r}
-cumul_flow_model <- glm(ice_presence~cumulative_dis, data = cumul_out_ice_ALL, family = binomial)
+cumul_flow_model <- glm(ice_presence~cumulative_dis, data = flow_temp_cond_daily_ice, family = binomial)
 summary(cumul_flow_model)
 exp(coef(cumul_flow_model)["cumulative_dis"])
 # probability of no ice increases by < 1% when cumulative flow increases by one unit (cumulative flow units don't show relationship well)
@@ -423,10 +406,10 @@ plot_model(cumul_flow_model,
 ```
 # All factors?
 ```{r}
-all_model <- glm(ice_presence~Flow+Temperature_C+cond_uScm+waterYear, data = cumul_out_ice_ALL, family = binomial)
+all_model <- glm(ice_presence~Flow+Temperature_C+cond_uScm+waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 summary(all_model)
 
-reduced_model <- glm(ice_presence~Temperature_C+cond_uScm+waterYear, data = cumul_out_ice_ALL, family = binomial)
+reduced_model <- glm(ice_presence~Temperature_C+cond_uScm+waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 # when just flow and water year - relationship between flow and ice is correct. 
 # when flow and temp and water year or flow and cond and water year or flow and temp and cond or all three, relationship between flow and ice is wrong...
 anova(reduced_model, all_model,
@@ -464,7 +447,7 @@ plot_model(reduced_model,
 ```{r}
 # create a vector of predicted probabilities
 preds1 <- predict(reduced_model,
-  newdata = select(cumul_out_ice_ALL, -ice_presence), # remove real outcomes
+  newdata = select(flow_temp_cond_daily_ice, -ice_presence), # remove real outcomes
   type = "response"
 )
 
@@ -481,7 +464,7 @@ preds_outcome1 <- factor(preds_outcome1,
 )
 
 # compare observed vs. predicted outcome
-tab1 <- table(cumul_out_ice_ALL$ice_presence, preds_outcome1,
+tab1 <- table(flow_temp_cond_daily_ice$ice_presence, preds_outcome1,
   dnn = c("observed", "predicted")
 )
 
@@ -526,16 +509,15 @@ filter_by_year_and_doy <- function(data, doy_range) {
   return(result)
 }
 
-allData_trimmed <- filter_by_year_and_doy(cumul_out_ice_ALL, c(183,288)) # April 1 - July 15
-# 2020 is very spotty, missing days
+
 
 ```
 ## Trimmed data models:
 ```{r}
-trimmedDatModel <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm+waterYear, data = allData_trimmed, family = binomial)
+trimmedDatModel <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
 summary(trimmedDatModel)
 
-reducedTrimModel <- glm(ice_presence~cumulative_dis+Temperature_C, data = allData_trimmed, family = binomial)
+reducedTrimModel <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
 summary(reducedTrimModel)
 ```
 ## Trimmed Data Coef
@@ -565,7 +547,7 @@ plot_model(reducedTrimModel,
 ```{r}
 # create a vector of predicted probabilities
 predsTrim <- predict(reducedTrimModel,
-  newdata = select(allData_trimmed, -ice_presence), # remove real outcomes
+  newdata = select(daily_data_trimmed, -ice_presence), # remove real outcomes
   type = "response"
 )
 
@@ -582,7 +564,7 @@ preds_outcomeTrim <- factor(preds_outcomeTrim,
 )
 
 # compare observed vs. predicted outcome
-tabTrim <- table(allData_trimmed$ice_presence, preds_outcomeTrim,
+tabTrim <- table(daily_data_trimmed$ice_presence, preds_outcomeTrim,
   dnn = c("observed", "predicted")
 )
 
@@ -603,7 +585,7 @@ specificityTrim
 # AUC (trimmed daily)
 ```{r}
 aucTrim <- roc(ice_presence ~ fitted(reducedTrimModel),
-  data = allData_trimmed)
+  data = daily_data_trimmed)
 ggroc(aucTrim, legacy.axes = TRUE) +
   labs(title = paste0("AUC = ", round(aucTrim$auc, 2)))
 ```
@@ -617,13 +599,13 @@ tbl_regression(reducedTrimModel, exponentiate = TRUE)
 ## Trimmed Data with Predictions
 ```{r}
 predValuesAll <- predict(reducedTrimModel, type = "response")
-dfPred <- data.frame(observed = allData_trimmed$ice_presence, predicted = predValuesAll)
+dfPred <- data.frame(observed = daily_data_trimmed$ice_presence, predicted = predValuesAll)
 ggplot(dfPred, aes(y = predicted, x = observed))+
   geom_point()
 ```
 ## Using Predict Function to predict values on entire dataset
 ```{r}
-testAllPredict <- cumul_out_ice_ALL
+testAllPredict <- flow_temp_cond_daily_ice
 # Generate predictions for the new dataset
 testAllPredict$predicted_prob_ice <- predict(reducedTrimModel, newdata = testAllPredict, type = "response")
 # Apply threshold for binary predicitons
@@ -636,14 +618,14 @@ View(testAllPredict)
 
 # Testing interaction
 ```{r}
-inter_model <- glm(ice_presence~Temperature_C*cond_uScm*Flow*waterYear, data = cumul_out_ice_ALL, family = binomial)
+inter_model <- glm(ice_presence~Temperature_C*cond_uScm*Flow*waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 summary(inter_model)
 anova(reduced_model, inter_model,
   test = "LRT"
 )
 round(exp(coef(inter_model))[coef(summary(inter_model))[, "Pr(>|z|)"] < 0.05], 3)
 
-inter_model2 <- glm(ice_presence~Temperature_C+cond_uScm*Flow*waterYear, data = cumul_out_ice_ALL, family = binomial)
+inter_model2 <- glm(ice_presence~Temperature_C+cond_uScm*Flow*waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 summary(inter_model2)
 
 round(exp(coef(inter_model2))[coef(summary(inter_model2))[, "Pr(>|z|)"] < 0.05], 3)
@@ -652,7 +634,7 @@ anova(inter_model2, inter_model,
   test = "LRT"
 )
 
-inter_model3 <- glm(ice_presence~Temperature_C+cond_uScm*Flow+waterYear, data = cumul_out_ice_ALL, family = binomial)
+inter_model3 <- glm(ice_presence~Temperature_C+cond_uScm*Flow+waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 summary(inter_model3)
 
 round(exp(coef(inter_model3))[coef(summary(inter_model3))[, "Pr(>|z|)"] < 0.05], 3)
@@ -669,7 +651,7 @@ plot_model(inter_model3,
   labs(y = "Prob (no ice)")
 # what the heck is this
 
-inter_model4 <- glm(ice_presence~Temperature_C*cond_uScm*waterYear, data = cumul_out_ice_ALL, family = binomial)
+inter_model4 <- glm(ice_presence~Temperature_C*cond_uScm*waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 summary(inter_model4)
 
 round(exp(coef(inter_model4))[coef(summary(inter_model4))[, "Pr(>|z|)"] < 0.05], 3)
@@ -678,7 +660,7 @@ anova(inter_model4, inter_model3,
   test = "LRT"
 )
 
-inter_model5 <- glm(ice_presence~Temperature_C+cond_uScm*waterYear, data = cumul_out_ice_ALL, family = binomial)
+inter_model5 <- glm(ice_presence~Temperature_C+cond_uScm*waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 summary(inter_model5)
 
 round(exp(coef(inter_model5))[coef(summary(inter_model5))[, "Pr(>|z|)"] < 0.05], 3)
@@ -705,7 +687,7 @@ plot_model(inter_model5,
 ```{r}
 # save initial model
 all_variables_m <- glm(ice_presence ~ (Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear)^2,
-  data = cumul_out_ice_ALL,
+  data = flow_temp_cond_daily_ice,
   family = "binomial"
 )
 # select best model according to AIC using mixed selection
@@ -720,7 +702,7 @@ summary(AIC_chosen_model)
 ```{r}
 # create a vector of predicted probabilities
 preds <- predict(AIC_chosen_model,
-  newdata = select(cumul_out_ice_ALL, -ice_presence), # remove real outcomes
+  newdata = select(flow_temp_cond_daily_ice, -ice_presence), # remove real outcomes
   type = "response"
 )
 
@@ -737,7 +719,7 @@ preds_outcome <- factor(preds_outcome,
 )
 
 # compare observed vs. predicted outcome
-tab <- table(cumul_out_ice_ALL$ice_presence, preds_outcome,
+tab <- table(flow_temp_cond_daily_ice$ice_presence, preds_outcome,
   dnn = c("observed", "predicted")
 )
 
@@ -759,7 +741,7 @@ specificity
 ```{r}
 # save roc object
 res <- roc(ice_presence ~ fitted(AIC_chosen_model),
-  data = cumul_out_ice_ALL
+  data = flow_temp_cond_daily_ice
 )
 
 # plot ROC curve
@@ -769,7 +751,7 @@ ggroc(res, legacy.axes = TRUE)
 
 ```{r}
 pred_values <- predict(model_window, type = "response")
-df <- data.frame(observed = ALL_some$ice_or_no, predicted = pred_values)
+df <- data.frame(observed = daily_data_trimmed$ice_or_no, predicted = pred_values)
 ggplot(df, aes(y = predicted, x = observed))+
   geom_point()
 ```

@@ -97,3 +97,29 @@ signifD <- function(x, d, upper, lower, eval = 0) {
   decr[!want | miss] <- NA
   list(incr = incr, decr = decr)
 }
+
+
+# filtering by each year for a range of days in wy doy
+filter_by_year_and_doy <- function(data, doy_range) {
+  # Check if the doy_range is valid
+  if (length(doy_range) != 2 || doy_range[1] >= doy_range[2]) {
+    stop("Please provide a valid range in the form of c(start_doy, end_doy).")
+  }
+  
+  # Create an empty data frame to store results
+  result <- data.frame()
+  
+  # Iterate through each unique year
+  unique_years <- unique(data$waterYear)
+  
+  for (year in unique_years) {
+    # Filter the data for the current year and doy range
+    filtered_data <- data %>%
+      filter(waterYear == year, wy_doy >= doy_range[1], wy_doy <= doy_range[2])
+    
+    # Combine the filtered data into the result data frame
+    result <- bind_rows(result, filtered_data)
+  }
+  
+  return(result)
+}
