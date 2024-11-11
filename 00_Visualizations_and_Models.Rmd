@@ -689,6 +689,14 @@ plot2023_3 <- ggplot(daily_data_trimmed_prob %>% filter(waterYear == 2023), aes(
   ) + lims(x = c(220,270))+ geom_vline(xintercept = 243) # ice off date
 grid.arrange(plot2023, plot2023_3, ncol = 1)
 ```
+Pivot Longer:
+```{r}
+daily_pred_long <- pivot_longer(daily_data_trimmed_prob, c(Temperature_C,cumulative_dis,ice_probability), names_to="pred_variables", values_to = "temp_dis_prob")
+```
+Plot
+```{r}
+ggplot(daily_pred_long %>% filter(waterYear==2020), aes(wy_doy,temp_dis_prob, group = waterYear, col = pred_variables)) + geom_point(size = 0.5) + geom_vline(xintercept = 234)+lims(x=c(220,260),y=c(0,300))
+```
 
 
 

@@ -157,16 +157,4 @@ weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(183,2
 ## 2014-2023
 daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(183,288)) # April 1 - July 15
 
-####### Trimming Dfs again to match daily variables for model comparison (training time-frame)
-
-# imputed un-trimmed:
-flow_temp_cond_imputed_ice_14_23 <- flow_temp_cond_imputed_ice %>% filter(waterYear >= 2014 & waterYear <= 2023)
-# weekly un-trimmed:
-flow_temp_cond_weekly_ice_14_23 <- flow_temp_cond_weekly_ice %>% filter(waterYear >= 2014 & waterYear <= 2023)
-
-# imputed trimmed:
-imputed_data_trimmed_14_23 <- imputed_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
-# weekly trimmed:
-weekly_data_trimmed_14_23 <- weekly_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
-
-
+####### Trimming Dfs again t
