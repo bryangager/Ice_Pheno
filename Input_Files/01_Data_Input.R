@@ -105,6 +105,11 @@ out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz 
 
 
 ######## Bring in OBSERVED ice presence on The Loch
+
+# this is just the observed ice-off dates from 2013-2023 with date of ice-off, date, and waterYear
+obs_ice_off_dates <- read_xlsx("Input_Files/ice_off_dates20240918.xlsx")
+#View(obs_ice_off_dates)
+
 # Reading CSV
 ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
 #View(ice_off_binary)

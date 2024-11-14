@@ -45,6 +45,20 @@ source("Input_Files/01_Data_Input.R")
 ## Visualizations:
 Let's look at some of the raw data:
 
+First, let's look at the observed dates of ice-off by year (±6 days) obtained from photos taken by field crews:
+```{r}
+obs_ice_off_plot <- ggplot(obs_ice_off_dates, aes(x = waterYear, y = wy_doy_ice_off)) +
+  geom_point() +
+  geom_smooth()+
+  scale_x_continuous(
+    breaks = seq(min(obs_ice_off_dates$waterYear), max(obs_ice_off_dates$waterYear), by = 1))+
+  labs(
+    title = "Observed Date of Ice-Off 2013-2023",
+    x = "Year",
+    y = "Water Year DOY of Ice-Off (± 6d)")
+obs_ice_off_plot
+```
+
 Here's a low-resolution look at the cumulative flow for each year in which we have in-situ ice observations. Visually, between the water year day of year 200 - 250, flow usually begins to increase.
 ```{r echo=FALSE}
 ggplot(flow_temp_cond_daily_ice %>% filter(waterYear >= 2014 & waterYear < 2024), aes(x = wy_doy, y = cumulative_dis))+
@@ -579,7 +593,7 @@ plot2014_3 <- ggplot(daily_data_trimmed_prob %>% filter(waterYear == 2014), aes(
     x = "Water Year Day of Year",
     y = "Temperature (C)"
   ) + lims(x = c(220,270))+ geom_vline(xintercept = 247) # ice off date
-grid.arrange(plot2014, plot2014_3, ncol = 1)
+grid.arrange(plot2014,plot2014_2, plot2014_3, ncol = 1)
 ```
 2015:
 ```{r echo=FALSE}
@@ -689,6 +703,20 @@ plot2023_3 <- ggplot(daily_data_trimmed_prob %>% filter(waterYear == 2023), aes(
   ) + lims(x = c(220,270))+ geom_vline(xintercept = 243) # ice off date
 grid.arrange(plot2023, plot2023_3, ncol = 1)
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Trying things
 Pivot Longer:
 ```{r}
 daily_pred_long <- pivot_longer(daily_data_trimmed_prob, c(Temperature_C,cumulative_dis,ice_probability), names_to="pred_variables", values_to = "temp_dis_prob")
@@ -758,16 +786,16 @@ tab
 ```
 
 ```{r}
-test <- daily_data_trimmed
-
-#test$predictions <- preds
-test$predictions <- test$predictions <- ifelse(preds < 0.5,
-  1,
-  0
-) %>%  factor(preds_outcome,
-  levels = c(1, 0),
-  labels = c("ice", "no ice")
-)
-
-```
+# test <- daily_data_trimmed
+# 
+# #test$predictions <- preds
+# test$predictions <- test$predictions <- ifelse(preds < 0.5,
+#   1,
+#   0
+# ) %>%  factor(preds_outcome,
+#   levels = c(1, 0),
+#   labels = c("ice", "no ice")
+# )
+# 
+# ```
 
