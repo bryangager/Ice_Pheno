@@ -110,6 +110,10 @@ out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz 
 obs_ice_off_dates <- read_xlsx("Input_Files/ice_off_dates20240918.xlsx")
 #View(obs_ice_off_dates)
 
+# this is a df with the wy_doy date of 100% ice and the wy_doy date with 0% ice for 2013-2023
+obs_ice_melt_windows <- read_xlsx("Input_Files/ice_100_to_0_dates_20241114.xlsx")
+#View(obs_ice_melt_windows)
+
 # Reading CSV
 ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
 #View(ice_off_binary)
@@ -156,22 +160,16 @@ flow_temp_cond_imputed_ice <- full_join(flow_temp_cond_impute, ice_presence_df, 
 
 # trimming the data frames for windows:
 ## 1982 - 2024
-imputed_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(183,288)) # April 1 - July 15
+imputed_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(170,288)) # March 18 - July 15
 ## 1982-2024
-weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(183,288)) # April 1 - July 15
+weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(170,288)) # March 18 - July 15
 ## 2014-2023
-daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(183,288)) # April 1 - July 15
+daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(170,288)) # March 18 - July 15
+
+
+
 
 ####### Trimming Dfs again to match daily variables for model comparison (training time-frame)
 
 # imputed un-trimmed:
-flow_temp_cond_imputed_ice_14_23 <- flow_temp_cond_imputed_ice %>% filter(waterYear >= 2014 & waterYear <= 2023)
-# weekly un-trimmed:
-flow_temp_cond_weekly_ice_14_23 <- flow_temp_cond_weekly_ice %>% filter(waterYear >= 2014 & waterYear <= 2023)
-
-# imputed trimmed:
-imputed_data_trimmed_14_23 <- imputed_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
-# weekly trimmed:
-weekly_data_trimmed_14_23 <- weekly_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
-
-
+flow_temp_cond_imputed_ice_14_23 <- flow_temp_cond_imputed_ice %>% filter(w
