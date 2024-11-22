@@ -3,10 +3,10 @@ title: "00_Visualizations_and_Models"
 output: html_document
 date: "2024-11-09"
 ---
-# Analysis
+
 This document will walk through some initial plots of raw data, followed by model construction
 
-## Data Background:
+# Data Background:
 There are 10 dataframes that will be used in this process, which are created in the source file "01_Data_Imput"
 Two dataframes hold weekly data from 1982 - 2024, two hold imputed weekly data from 1982 - 2024, two that hold the weekly data that is trimmed to 2014 - 2023, two that hold the imputed data from 2014 - 2023, and two hold daily data from 2014 - 2023.
 There are two of each of these dataframes because one is trimmed to only include April 1 - July 15 each year, and the other is un-trimmed. Models will be built with the trimmed data in order for the relationship between flow and ice presence to be correct.
@@ -378,10 +378,14 @@ temp_plot
 Now we'll plot the probability of ice as a function of time.
 Here we make a new data frame with the imputed values, and add the probability of ice presence given by the model
 ```{r echo=FALSE}
-probabilities <- predict(trimmed_daily_reduced_final, type = "response")
+# probabilities_impute <- predict(trimmed_imputed_reduced_final, type = "response")
+# 
+# imputed_data_trimmed_prob <- imputed_data_trimmed
+# imputed_data_trimmed_prob$ice_probability <- probabilities_impute
+# this is giving a list of probabilities - predict with (data frame water year and wy_doy)
+# then merge these together. This will produce a lot of NAs but that's okay
 
-daily_data_trimmed_prob <- daily_data_trimmed
-daily_data_trimmed_prob$ice_probability <- probabilities
+# this was daily predicted values before I changed it to imputed for meeting
 ```
 2014:
 ```{r echo=FALSE}
@@ -1276,7 +1280,193 @@ sensitivity_avg
 specificity_avg<- tab_avg[1, 1] / (tab_avg[1, 1] + tab_avg[1, 2])
 specificity_avg
 ```
+# First day of no ice each year
+```{r}
+# probabilities_cumulTemp <- predict(daily_cumulTemp_model, type = "response")
 
+preds_test <- predict(daily_cumulTemp_model,
+  newdata = select(cumul_Temp_dat_trim_Prob, -ice_presence), # remove real outcomes
+  type = "response")
+preds_test_factor <- ifelse(preds_test < meanAllYears_cumulTemp,
+  1,
+  0
+) %>%  factor(preds_test_factor, levels = c(1, 0),labels = c("ice", "no ice"))
 
+test_factored_preds <- cumul_Temp_dat_trim_Prob %>% select(waterYear,wy_doy,ice_presence)
+test_factored_preds$predicted_ice <- preds_test_factor
+```
+Pulling out the first day each year when 
+```{r}
+# Create an empty data frame to store the results
+ice_off_dates_predicted_obs <- data.frame()
 
+# Iterate through each unique waterYear
+for(year in unique(test_factored_preds$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- test_factored_preds %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  ice_off_dates_predicted_obs <- bind_rows(ice_off_dates_predicted_obs, result_row)
+}
+
+# View the result data frame
+View(ice_off_dates_predicted_obs)
+```
+Find the difference between them
+```{r}
+ice_off_dates_predicted_obs$difference <- ((ice_off_dates_predicted_obs$first_no_ice_presence_doy)-(ice_off_dates_predicted_obs$first_no_ice_predicted_doy))*-1
+print(mean(ice_off_dates_predicted_obs$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+```
+
+# Imputed Error Fix?
+```{r}
+# pulling out probabilities
+probabilities_impute <- predict(trimmed_imputed_reduced_final, type = "response")
+# making the probability a binary using the threshold derived from the average of daily temp model probabilities
+probability_impute_0_1 <- ifelse(probabilities_impute < meanAllYears_dailyTemp,
+  1,
+  0
+)
+# changing the labels of the probabilities
+probability_impute_factor <- factor(probability_impute_0_1, levels = c(1, 0),labels = c("ice", "no ice"))
+# adding the probabilities to a df of only the observations with imputed temp
+imputed_data_trimmed_prob <- imputed_data_trimmed_14_23  %>% select(waterYear,wy_doy,temperature_C_impute) %>% na.omit()
+imputed_data_trimmed_prob$predicted_ice <- probability_impute_factor
+# adding the probabilities back to the main df
+
+imputed_data_trimmed_14_23_prob_levels <- full_join(imputed_data_trimmed_prob,imputed_data_trimmed_14_23, by = c("waterYear","wy_doy")) %>% select(-temperature_C_impute.x) %>% rename(temperature_C_impute=temperature_C_impute.y)
+
+```
+
+Pulling out the first day each year when ice is "no ice"
+```{r}
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_14_23_prob_levels$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_14_23_prob_levels %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs <- bind_rows(imputed_ice_off_dates_predicted_obs, result_row)
+}
+
+# View the result data frame
+View(imputed_ice_off_dates_predicted_obs)
+```
+Find the difference between them
+```{r}
+imputed_ice_off_dates_predicted_obs$difference <- ((imputed_ice_off_dates_predicted_obs$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+# it's actually -7.88, 2023 has missing data and prediction is way off
+```
+
+# Hindcasting:
+```{r}
+hindcast_preds <- predict(trimmed_imputed_reduced_final,
+  newdata = imputed_data_trimmed,
+  type = "response")
+
+# making the probability a binary using the threshold derived from the average of daily temp model probabilities
+hindcast_probs_0_1 <- ifelse(hindcast_preds < meanAllYears_dailyTemp,
+  1,
+  0
+)
+# changing the labels of the probabilities
+hindcast_prob_factor <- factor(hindcast_probs_0_1, levels = c(1, 0),labels = c("ice", "no ice"))
+
+# adding the probabilities to the main df
+hindcast_imputed_df <- imputed_data_trimmed  
+hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
+```
+
+Pulling out the first day each year when ice is "no ice" for hindcasted data
+```{r}
+# Initialize an empty data frame to store the results
+hindcasted_ice_off_dates <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(hindcast_imputed_df$waterYear)) {
+  
+  # Filter the data for the current year where predicted_ice == "no ice"
+  year_data <- hindcast_imputed_df %>% 
+    filter(waterYear == year, predicted_ice == "no ice") %>%
+    arrange(wy_doy)  # Sort by wy_doy to find the first day
+  
+  # If there is any day where predicted_ice == "no ice"
+  if (nrow(year_data) > 0) {
+    # Get the first day (earliest day) in that year where predicted_ice == "no ice"
+    first_no_ice_day <- year_data %>% slice(1)
+    
+    # Create a new row with the waterYear and first wy_doy
+    result_row <- data.frame(
+      waterYear = year,
+      first_no_ice_doy = first_no_ice_day$wy_doy
+    )
+    
+    # Append the result_row to the result_df
+    hindcasted_ice_off_dates <- bind_rows(hindcasted_ice_off_dates, result_row)
+  }
+}
+
+# View the result data frame
+print(hindcasted_ice_off_dates)
+```
+Plot them!
+```{r}
+hindcast_plot <- ggplot(hindcasted_ice_off_dates, aes(x = waterYear, y = first_no_ice_doy)) +
+  geom_point() +
+  geom_smooth()+
+  scale_x_continuous(
+    breaks = seq(min(hindcasted_ice_off_dates$waterYear), max(hindcasted_ice_off_dates$waterYear), by = 1))+
+  labs(
+    title = "Hindcasted Date of Ice-Off 1984-2023",
+    x = "Year",
+    y = "Water Year DOY of Ice-Off")+
+   theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))
+hindcast_plot
+```
 
