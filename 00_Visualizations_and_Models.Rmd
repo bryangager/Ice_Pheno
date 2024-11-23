@@ -26,6 +26,7 @@ source("Input_Files/01_Data_Input.R")
 #View(flow_temp_cond_weekly_ice)
 # weekly imputed:
 #View(flow_temp_cond_imputed_ice)
+
 ## these are the trimmed data:
 # daily:
 #View(daily_data_trimmed)
@@ -33,6 +34,7 @@ source("Input_Files/01_Data_Input.R")
 #View(weekly_data_trimmed)
 # weekly imputed:
 #View(imputed_data_trimmed)
+
 # weekly trimmed for 2014-2023:
 #View(flow_temp_cond_weekly_ice_14_23)
 # weekly trimmed 2014-2023 and trimmed for spring:

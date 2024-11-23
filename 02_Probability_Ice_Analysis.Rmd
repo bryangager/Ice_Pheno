@@ -1,0 +1,640 @@
+---
+title: "Plotting Probability"
+output: html_document
+date: "2024-11-23"
+---
+
+```{r}
+# load libraries
+library(pacman)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary)
+# This is the file that combines and cleans data:
+source("Input_Files/01_Data_Input.R")
+```
+# Plotting Probability
+Now we'll plot the probability of ice as a function of time.
+Here we make a new data frame with the imputed values, and add the probability of ice presence given by the model
+
+*Keep in mind that a probability of 1 = NO ICE and a probability of 0 = ICE. (Because we are predicting ice-off dates)
+```{r echo=FALSE}
+
+probabilities_impute <- predict(trimmed_imputed_reduced_final,
+  newdata = select(imputed_data_trimmed_14_23, -ice_presence), # remove real outcomes
+  type = "response")
+imputed_data_trimmed_prob <- imputed_data_trimmed_14_23
+imputed_data_trimmed_prob$ice_probability <- probabilities_impute
+
+```
+# Cumul. Discharge and Probability of Ice
+## 2014:
+```{r echo=FALSE}
+
+plot2014 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(title = "Predicted Probability of Ice Over Time",x = "Water Year Day of Year",y = "Probability of Ice")+ 
+  theme_dark()+
+  lims(x = c(200,265))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2014_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)")+ lims(x = c(200,265)) + 
+    theme_dark()+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2014, plot2014_2, ncol = 1)
+```
+## 2015:
+```{r echo=FALSE}
+
+plot2015 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(195,265))+
+  theme_dark()+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2015_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)") + 
+    lims(x = c(195,265))+
+    theme_dark()+
+    theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+grid.arrange(plot2015, plot2015_2, ncol = 1)
+```
+## 2016:
+```{r echo=FALSE}
+
+plot2016 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2016), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(190,270))+
+  theme_dark()+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2016_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2016), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(190,270))+
+  theme_dark()+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+grid.arrange(plot2016, plot2016_2, ncol = 1)
+```
+## 2017:
+```{r fig.height}
+
+plot2017 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2017), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(170,260))+
+  theme_dark()+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2017_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2017), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  )+ lims(x = c(170,260)) +
+  theme_dark()+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+grid.arrange(plot2017, plot2017_2, ncol = 1)
+```
+## 2018:
+```{r echo=FALSE}
+
+plot2018 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2018), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(200,250))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2018_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2018), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(200,250))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+grid.arrange(plot2018, plot2018_2, ncol = 1)
+```
+## 2019:
+```{r echo=FALSE}
+
+plot2019 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2019), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(200,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+plot2019_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2019), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(200,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2019, plot2019_2, ncol = 1)
+```
+## 2020:
+```{r echo=FALSE}
+
+plot2020 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2020), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(200,250))+ 
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+plot2020_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2020), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(200,250))+ 
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2020, plot2020_2, ncol = 1)
+```
+## 2021:
+```{r echo=FALSE}
+
+plot2021 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2021), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(200,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2021_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2021), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(200,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2021, plot2021_2, ncol = 1)
+```
+## 2022:
+```{r echo=FALSE}
+
+plot2022 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2022), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(210,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2022_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2022), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(210,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2022, plot2022_2, ncol = 1)
+```
+## 2023:
+```{r echo=FALSE}
+
+plot2023 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2023), aes(x = wy_doy, y = ice_probability)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Predicted Probability of Ice Over Time",
+    x = "Water Year Day of Year",
+    y = "Probability of Ice"
+  )+ lims(x = c(210,260))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+plot2023_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2023), aes(x = wy_doy, y = cumulative_dis)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Cumulative Discharge Over Time",
+    x = "Water Year Day of Year",
+    y = "Cumulative Discharge (cfs)"
+  ) + lims(x = c(210,260))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+grid.arrange(plot2023, plot2023_2, ncol = 1)
+```
+# Temperature and Probability of Ice:
+## 2014:
+```{r echo=FALSE}
+
+plot2014_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark()+
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(200,265))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2014,plot2014_3, ncol = 1)
+```
+## 2015:
+```{r echo=FALSE}
+
+plot2015_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark()+
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(195,265))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2015, plot2015_3, ncol = 1)
+```
+## 2016:
+```{r echo=FALSE}
+
+plot2016_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2016), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark()+
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(190,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2016, plot2016_3, ncol = 1)
+```
+## 2017:
+```{r echo=FALSE}
+
+plot2017_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2017), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark()+
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(170,260))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2017, plot2017_3, ncol = 1)
+```
+## 2018:
+```{r echo=FALSE}
+
+plot2018_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2018), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(200,250))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2018, plot2018_3, ncol = 1)
+```
+## 2019:
+```{r echo=FALSE}
+
+plot2019_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2019), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  )+ lims(x = c(200,270)) +
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2019, plot2019_3, ncol = 1)
+```
+## 2020:
+```{r echo=FALSE}
+
+plot2020_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2020), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(200,250))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2020, plot2020_3, ncol = 1)
+```
+## 2021:
+```{r echo=FALSE}
+
+plot2021_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2021), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(200,270))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2021, plot2021_3, ncol = 1)
+```
+## 2022:
+```{r echo=FALSE}
+
+plot2022_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2022), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  )+ lims(x = c(210,270)) +
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2022, plot2022_3, ncol = 1)
+```
+## 2023:
+```{r echo=FALSE}
+
+plot2023_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2023), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark() +
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(210,260))+ 
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+grid.arrange(plot2023, plot2023_3, ncol = 1)
+```
+As you can see, there are no temperature data for 2021 - 2023, and there is a large gap in temperature data in 2019. These years will be left out of the function used to determine the threshold of probability to use when there is no ice on The Loch.
+
+# Average Probability in Observed Windows:
+## Extracting only observations and predicted probabilities within observed ice windows:
+```{r}
+# Function to extract ice_probability between wy_doy_100_ice and wy_doy_0_ice, which are the dates of 100% ice and 0% ice obtained from the photos of The Loch. These dates are contained in the DF "obs_ice_melt_windows".
+extract_ice_probability <- function(imputed_data_trimmed_prob, obs_ice_melt_windows) {
+  
+  # Initialize an empty list to store the results
+  result_list <- list()
+  
+  # Loop through each unique waterYear
+  for (year in unique(obs_ice_melt_windows$waterYear)) {
+    
+    # Get the doy range for the current waterYear
+    doy_100 <- obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == year]
+    doy_0 <- obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == year]
+    
+    # Subset the imputed_data_trimmed_prob data frame for the current year
+    prob_data <- imputed_data_trimmed_prob[imputed_data_trimmed_prob$waterYear == year, ]
+    
+    # Filter the rows where wy_doy is between wy_doy_100_ice and wy_doy_0_ice
+    filtered_data <- prob_data[prob_data$wy_doy >= doy_100 & prob_data$wy_doy <= doy_0, ]
+    
+    # Store the filtered data in the result list
+    result_list[[as.character(year)]] <- filtered_data
+  }
+  
+  # Combine all the filtered data frames into one
+  probs_df <- do.call(rbind, result_list)
+  
+  return(probs_df)
+}
+
+# Applying the function to our data
+probs_df <- extract_ice_probability(imputed_data_trimmed_prob, obs_ice_melt_windows)
+# filtering to remove 2021-2023 and 2019:
+probs_df <- probs_df %>% filter(waterYear<2021 & waterYear != 2019)
+# View the result
+#View(probs_df)
+```
+Now we can calculate the average probability of each year within only the timeframe of observed ice melt.
+```{r}
+# calculate the average probability by year:
+avg_probs_df <- group_by(probs_df, waterYear) %>%
+  mutate(average_prob = mean(ice_probability))
+# calculate the average probability across all years
+avg_prob_all_years <- mean(avg_probs_df$average_prob)
+print(avg_prob_all_years)
+```
+## Graph average probability by year (cumul temp):
+```{r}
+ggplot(avg_probs_df, aes(x = waterYear, y = average_prob)) +
+  geom_point(color = "red") +         # Add points for each year
+  labs(title = "Average Ice Probability Over Time",
+       x = "Year",
+       y = "Average Ice Probability")
+```
+# Accuracy Comparison
+Using value of average probability of all years within observed windows for imputed temp as threshold and comparing it to randomly chosen probability threshold of 0.5
+## 0.5 as Threshold
+```{r}
+# create a vector of predicted probabilities
+preds_05 <- predict(trimmed_imputed_reduced_final,
+  newdata = select(imputed_data_trimmed_14_23, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice IS on The Loch
+preds_outcome_05 <- ifelse(preds_05 < 0.5,
+  1,
+  0
+)
+
+# transform predictions into factor and set labels
+preds_outcome_05 <- factor(preds_outcome_05,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab_05 <- table(imputed_data_trimmed_14_23$ice_presence, preds_outcome_05,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab_05
+
+accuracy_05 <- sum(diag(tab_05)) / sum(tab_05)
+accuracy_05
+
+# sensitivity
+sensitivity_05 <- tab_05[2, 2] / (tab_05[2, 2] + tab_05[2, 1])
+sensitivity_05
+
+# specificity
+specificity_05<- tab_05[1, 1] / (tab_05[1, 1] + tab_05[1, 2])
+specificity_05
+```
+## Average Probability from imputed temp as threshold:
+```{r}
+# create a vector of predicted probabilities
+preds_avg <- predict(trimmed_imputed_reduced_final,
+  newdata = select(imputed_data_trimmed_14_23, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice IS on The Loch
+preds_outcome_avg <- ifelse(preds_avg < avg_prob_all_years,
+  1,
+  0
+)
+
+# transform predictions into factor and set labels
+preds_outcome_avg <- factor(preds_outcome_avg,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab_avg <- table(imputed_data_trimmed_14_23$ice_presence, preds_outcome_avg,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab_avg
+
+accuracy_avg <- sum(diag(tab_avg)) / sum(tab_avg)
+accuracy_avg
+
+# sensitivity
+sensitivity_avg <- tab_avg[2, 2] / (tab_avg[2, 2] + tab_avg[2, 1])
+sensitivity_avg
+
+# specificity
+specificity_avg<- tab_avg[1, 1] / (tab_avg[1, 1] + tab_avg[1, 2])
+specificity_avg
+```
+After performing these analyses, we can see that the chosen threshold of 0.5 is actually more accurate than the average probability across all years. So we will use 0.5 for our threshold.
+
+# Ice-Off Dates:
+Pulling out the first day each year when ice is "no ice" during the time period when we have observed ice-off dates.
+
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+probability_impute_0_1 <- ifelse(probabilities_impute < 0.5,
+  1,
+  0
+)
+# changing the labels of the probabilities
+probability_impute_factor <- factor(probability_impute_0_1, levels = c(1, 0),labels = c("ice", "no ice"))
+
+
+imputed_data_trimmed_prob$predicted_ice <- probability_impute_factor
+```
+
+```{r}
+# removing years with no data
+imputed_data_trimmed_prob_filter <- imputed_data_trimmed_prob %>% filter(waterYear<2021)
+
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_prob_filter$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_prob_filter %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs <- bind_rows(imputed_ice_off_dates_predicted_obs, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+imputed_ice_off_dates_predicted_obs$difference <- ((imputed_ice_off_dates_predicted_obs$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+View(imputed_ice_off_dates_predicted_obs)
+```
+Now that we have a threshold and we saw how our model performed, we can hindcast! Go to Rmd "03_Hindcasting.Rmd".
