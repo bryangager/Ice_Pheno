@@ -181,3 +181,12 @@ imputed_data_trimmed_14_23 <- imputed_data_trimmed %>% filter(waterYear >= 2014 
 # weekly trimmed:
 weekly_data_trimmed_14_23 <- weekly_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
+
+
+###### Final Models
+trimmed_daily_reduced_final <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23, family = binomial)
+
