@@ -501,7 +501,7 @@ Now we can calculate the average probability of each year within only the timefr
 ```{r}
 # calculate the average probability by year:
 avg_probs_df <- group_by(probs_df, waterYear) %>%
-  mutate(average_prob = mean(ice_probability))
+  summarize(average_prob = mean(ice_probability))
 # calculate the average probability across all years
 avg_prob_all_years <- mean(avg_probs_df$average_prob)
 print(avg_prob_all_years)
