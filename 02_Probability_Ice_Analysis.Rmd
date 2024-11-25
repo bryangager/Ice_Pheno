@@ -697,3 +697,30 @@ WY2014_all
 ggsave("Figures/WY2014_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
 
 ```
+
+## 2015:
+```{r echo=FALSE}
+
+plot2015 <- plot2015 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+plot2015_2 <- plot2015_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+plot2015_3 <- plot2015_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2015_all <- (plot2015 / plot2015_2 / plot2015_3) + plot_annotation(
+  title = 'WY 2015',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2015_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2015_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
