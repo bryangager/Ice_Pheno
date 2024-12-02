@@ -81,7 +81,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2014),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2014], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(200, 260), y = c(150, 750))+
@@ -95,7 +96,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2015),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2015], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2015], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(180, 260), y = c(130, 600))+
@@ -109,7 +111,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2016),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=195,xmax=251,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2016], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2016], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(180, 260), y = c(50, 700))+
@@ -123,7 +126,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2017),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=173,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2017], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2017], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(170, 255), y = c(50, 600))+
@@ -137,7 +141,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2018),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=214,xmax=235,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(210, 240), y = c(180, 750))+
@@ -151,7 +156,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2019),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=206,xmax=260,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2019], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2019], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(200, 270), y = c(180, 1000))+
@@ -165,7 +171,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2020),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=211,xmax=234,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2020], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2020], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(200, 250), y = c(50, 450))+
@@ -179,7 +186,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2021),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=210,xmax=255,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2021], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2021], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(200, 270), y = c(50, 900))+
@@ -193,7 +201,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2022),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=216,xmax=244,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2022], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2022], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(200, 250), y = c(50, 450))+
@@ -207,7 +216,8 @@ ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2023),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
-  geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  # geom_rect(aes(xmin=215,xmax=243,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2023], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2023], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark() +
   geom_line() +
   lims(x = c(205, 250), y = c(70, 600))+
@@ -232,50 +242,50 @@ ggplot(out_condTempDaily_long %>% filter(waterYear >= 2014 & waterYear <=2023), 
 ## 2014
 ```{r echo=FALSE}
 # water year 2014
-ggplot(out_condTempDaily_long %>% filter(waterYear==2014), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2014)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 247) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2014), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2014)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014]) # ice off date
 ```
 ## 2015
 ```{r echo=FALSE}
 # water year 2015
-ggplot(out_condTempDaily_long %>% filter(waterYear==2015), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2015)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 239) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2015), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2015)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2015]) # ice off date
 ```
 ## 2016
 ```{r echo=FALSE}
 # water year 2016
-ggplot(out_condTempDaily_long %>% filter(waterYear==2016), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2016)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 251) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2016), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2016)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2016]) # ice off date
 ```
 ## 2017
 ```{r echo=FALSE}
 # water year 2017
-ggplot(out_condTempDaily_long %>% filter(waterYear==2017), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2017)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 243) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2017), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2017)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2017]) # ice off date
 ```
 ## 2018
 ```{r echo=FALSE}
 # water year 2018
-ggplot(out_condTempDaily_long %>% filter(waterYear==2018), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2018)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 235) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2018), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2018)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018]) # ice off date
 ```
 ## 2019
 ```{r echo=FALSE}
 # water year 2019
-ggplot(out_condTempDaily_long %>% filter(waterYear==2019), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2019)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 260) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2019), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2019)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2019]) # ice off date
 ```
 ## 2020
 ```{r echo=FALSE}
 # water year 2020
-ggplot(out_condTempDaily_long %>% filter(waterYear==2020), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2020)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 234) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2020), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2020)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2020]) # ice off date
 ```
 ## 2021
 ```{r echo=FALSE}
 # water year 2021
-ggplot(out_condTempDaily_long %>% filter(waterYear==2021), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2021)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 255) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2021), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2021)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2021]) # ice off date
 ```
 ## 2022
 ```{r echo=FALSE}
 # water year 2022
-ggplot(out_condTempDaily_long %>% filter(waterYear==2022), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2022)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 244) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2022), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2022)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2022]) # ice off date
 ```
 ## 2023
 ```{r echo=FALSE}
 # water year 2023
-ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2023)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = 243) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2023)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2023]) # ice off date
 ```

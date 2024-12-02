@@ -7,7 +7,7 @@ date: "2024-11-23"
 ```{r}
 # load libraries
 library(pacman)
-p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,patchwork, stringr)
 # This is the file that combines and cleans data:
 source("Input_Files/01_Data_Input.R")
 ```
@@ -31,7 +31,7 @@ imputed_data_trimmed_prob$ice_probability <- probabilities_impute
 
 plot2014 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = ice_probability)) +
   geom_line(color = "blue") +
-  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2014], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   labs(title = "Predicted Probability of Ice Over Time",x = "Water Year Day of Year",y = "Probability of Ice")+ 
   theme_dark()+
   lims(x = c(200,265))+
@@ -39,21 +39,38 @@ plot2014 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(
 
 plot2014_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = cumulative_dis)) +
   geom_line(color = "blue") +
-  geom_rect(aes(xmin=205,xmax=247,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2014], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   labs(
     title = "Cumulative Discharge Over Time",
     x = "Water Year Day of Year",
     y = "Cumulative Discharge (cfs)")+ lims(x = c(200,265)) + 
     theme_dark()+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-grid.arrange(plot2014, plot2014_2, ncol = 1)
+
+plot2014_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = temperature_C_impute)) +
+  geom_line(color = "blue") +
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2014], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  theme_dark()+
+  labs(
+    title = "Temperature Over Time",
+    x = "Water Year Day of Year",
+    y = "Temperature (C)"
+  ) + lims(x = c(200,265))+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2014_all <- (plot2014 / plot2014_2 / plot2014_3) + plot_annotation(
+  title = 'WY 2014',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage)', width=50)
+)
+WY2014_all
 ```
 ## 2015:
 ```{r echo=FALSE}
 
 plot2015 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), aes(x = wy_doy, y = ice_probability)) +
   geom_line(color = "blue") +
-  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2015], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2015], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   labs(
     title = "Predicted Probability of Ice Over Time",
     x = "Water Year Day of Year",
@@ -64,7 +81,7 @@ plot2015 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), aes(
 
 plot2015_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), aes(x = wy_doy, y = cumulative_dis)) +
   geom_line(color = "blue") +
-  geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
+  geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2015], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2015], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   labs(
     title = "Cumulative Discharge Over Time",
     x = "Water Year Day of Year",
@@ -481,10 +498,17 @@ Now we can calculate the average probability of each year within only the timefr
 ```{r}
 # calculate the average probability by year:
 avg_probs_df <- group_by(probs_df, waterYear) %>%
-  mutate(average_prob = mean(ice_probability))
+  summarize(average_prob = mean(ice_probability))
 # calculate the average probability across all years
 avg_prob_all_years <- mean(avg_probs_df$average_prob)
 print(avg_prob_all_years)
+
+# calculate the max probability by year:
+max_probs_df <- group_by(probs_df, waterYear) %>%
+  summarize(max_prob = max(ice_probability))
+# calculate the median max probability across all years
+max_prob_all_years <- median(max_probs_df$max_prob)
+print(max_prob_all_years)
 ```
 ## Graph average probability by year (cumul temp):
 ```{r}
@@ -493,6 +517,12 @@ ggplot(avg_probs_df, aes(x = waterYear, y = average_prob)) +
   labs(title = "Average Ice Probability Over Time",
        x = "Year",
        y = "Average Ice Probability")
+
+ggplot(max_probs_df, aes(x = waterYear, y = max_prob)) +
+  geom_point(color = "red") +         # Add points for each year
+  labs(title = "Max Ice Probability Over Time",
+       x = "Year",
+       y = "Max Ice Probability")
 ```
 # Accuracy Comparison
 Using value of average probability of all years within observed windows for imputed temp as threshold and comparing it to randomly chosen probability threshold of 0.5
@@ -638,3 +668,59 @@ print(mean(imputed_ice_off_dates_predicted_obs$difference))
 View(imputed_ice_off_dates_predicted_obs)
 ```
 Now that we have a threshold and we saw how our model performed, we can hindcast! Go to Rmd "03_Hindcasting.Rmd".
+
+#Plot predicted ice-off dates as a line on the plots earlier in this document
+## 2014:
+```{r}
+
+plot2014 <- plot2014 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
+             linetype="dashed")
+
+plot2014_2 <- plot2014_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
+             linetype="dashed")
+
+
+plot2014_3 <- plot2014_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2014_all <- (plot2014 / plot2014_2 / plot2014_3) + plot_annotation(
+  title = 'WY 2014',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2014_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2014_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+
+## 2015:
+```{r echo=FALSE}
+
+plot2015 <- plot2015 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+plot2015_2 <- plot2015_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+plot2015_3 <- plot2015_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2015_all <- (plot2015 / plot2015_2 / plot2015_3) + plot_annotation(
+  title = 'WY 2015',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2015_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2015_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
