@@ -13,7 +13,7 @@ Training models will be built using data from 2014-2023, these are the years in 
 ```{r echo = FALSE}
 # load libraries
 library(pacman)
-p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,patchwork)
 # This is the file that combines and cleans data:
 source("Input_Files/01_Data_Input.R")
 

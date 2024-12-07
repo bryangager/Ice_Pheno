@@ -455,6 +455,263 @@ grid.arrange(plot2023, plot2023_3, ncol = 1)
 ```
 As you can see, there are no temperature data for 2021 - 2023, and there is a large gap in temperature data in 2019. These years will be left out of the function used to determine the threshold of probability to use when there is no ice on The Loch.
 
+# Plot predicted ice-off dates as a line on the plots earlier in this document
+## 2014:
+```{r}
+
+plot2014 <- plot2014 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
+             linetype="dashed")
+
+plot2014_2 <- plot2014_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
+             linetype="dashed")
+
+
+plot2014_3 <- plot2014_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2014_all <- (plot2014 / plot2014_2 / plot2014_3) + plot_annotation(
+  title = 'WY 2014',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2014_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2014_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+
+## 2015:
+```{r echo=FALSE}
+
+plot2015 <- plot2015 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+plot2015_2 <- plot2015_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+plot2015_3 <- plot2015_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2015_all <- (plot2015 / plot2015_2 / plot2015_3) + plot_annotation(
+  title = 'WY 2015',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2015_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2015_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+
+## 2016:
+```{r}
+plot2016 <- plot2016 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2016],
+             linetype="dashed")
+
+plot2016_2 <- plot2016_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2016],
+             linetype="dashed")
+
+plot2016_3 <- plot2016_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2016],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2016_all <- (plot2016 / plot2016_2 / plot2016_3) + plot_annotation(
+  title = 'WY 2016',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2016_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2016_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2017:
+```{r}
+plot2017 <- plot2017 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2017],
+             linetype="dashed")
+
+plot2017_2 <- plot2017_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2017],
+             linetype="dashed")
+
+plot2017_3 <- plot2017_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2017],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2017_all <- (plot2017 / plot2017_2 / plot2017_3) + plot_annotation(
+  title = 'WY 2017',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2017_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2017_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2018:
+```{r}
+plot2018 <- plot2018 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2018],
+             linetype="dashed")
+
+plot2018_2 <- plot2018_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2018],
+             linetype="dashed")
+
+plot2018_3 <- plot2018_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2018],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2018_all <- (plot2018 / plot2018_2 / plot2018_3) + plot_annotation(
+  title = 'WY 2018',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2018_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2018_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2019:
+```{r}
+plot2019 <- plot2019 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2019],
+             linetype="dashed")
+
+plot2019_2 <- plot2019_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2019],
+             linetype="dashed")
+
+plot2019_3 <- plot2019_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2019],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2019_all <- (plot2019 / plot2019_2 / plot2019_3) + plot_annotation(
+  title = 'WY 2019',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2019_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2019_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2020:
+```{r}
+plot2020 <- plot2020 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2020],
+             linetype="dashed")
+
+plot2020_2 <- plot2020_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2020],
+             linetype="dashed")
+
+plot2020_3 <- plot2020_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2020],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2020_all <- (plot2020 / plot2020_2 / plot2020_3) + plot_annotation(
+  title = 'WY 2020',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2020_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2020_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2021:
+```{r}
+plot2021 <- plot2021 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2021],
+             linetype="dashed")
+
+plot2021_2 <- plot2021_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2021],
+             linetype="dashed")
+
+plot2021_3 <- plot2021_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2021],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2021_all <- (plot2021 / plot2021_2 / plot2021_3) + plot_annotation(
+  title = 'WY 2021',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2021_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2021_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2022:
+```{r}
+plot2022 <- plot2022 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2022],
+             linetype="dashed")
+
+plot2022_2 <- plot2022_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2022],
+             linetype="dashed")
+
+plot2022_3 <- plot2022_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2022],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2022_all <- (plot2022 / plot2022_2 / plot2022_3) + plot_annotation(
+  title = 'WY 2022',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2022_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2022_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2023:
+```{r}
+plot2023 <- plot2023 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2023],
+             linetype="dashed")
+
+plot2023_2 <- plot2023_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2023],
+             linetype="dashed")
+
+plot2023_3 <- plot2023_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2023],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2023_all <- (plot2023 / plot2023_2 / plot2023_3) + plot_annotation(
+  title = 'WY 2023',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2023_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2023_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+
 # Average Probability in Observed Windows:
 ## Extracting only observations and predicted probabilities within observed ice windows:
 ```{r}
@@ -669,58 +926,75 @@ View(imputed_ice_off_dates_predicted_obs)
 ```
 Now that we have a threshold and we saw how our model performed, we can hindcast! Go to Rmd "03_Hindcasting.Rmd".
 
-#Plot predicted ice-off dates as a line on the plots earlier in this document
-## 2014:
+# Functional Ice-Off Dates:
+Pulling out the first day each year when ice is "no ice" during the time period when we have observed ice-off dates.
+
 ```{r}
+probabilities_impute_func <- predict(trimmed_imputed_reduced_final_func,
+  newdata = select(imputed_data_trimmed_14_23_func, -ice_presence), # remove real outcomes
+  type = "response")
 
-plot2014 <- plot2014 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
-             linetype="dashed")
-
-plot2014_2 <- plot2014_2 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
-             linetype="dashed")
-
-
-plot2014_3 <- plot2014_3 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2014],
-             linetype="dashed")
-
-#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
-WY2014_all <- (plot2014 / plot2014_2 / plot2014_3) + plot_annotation(
-  title = 'WY 2014',
-  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
-)
-WY2014_all
-
-#Export file to new plot to a new Figures folder
-ggsave("Figures/WY2014_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
-
+imputed_data_trimmed_prob_func <- imputed_data_trimmed_14_23_func
+imputed_data_trimmed_prob_func$ice_probability <- probabilities_impute_func
 ```
 
-## 2015:
-```{r echo=FALSE}
 
-plot2015 <- plot2015 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
-             linetype="dashed")
-
-plot2015_2 <- plot2015_2 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
-             linetype="dashed")
-
-plot2015_3 <- plot2015_3 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2015],
-             linetype="dashed")
-
-#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
-WY2015_all <- (plot2015 / plot2015_2 / plot2015_3) + plot_annotation(
-  title = 'WY 2015',
-  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+probability_impute_0_1_func <- ifelse(probabilities_impute_func < 0.5,
+  1,
+  0
 )
-WY2015_all
+# changing the labels of the probabilities
+probability_impute_factor_func <- factor(probability_impute_0_1_func, levels = c(1, 0),labels = c("ice", "no ice"))
 
-#Export file to new plot to a new Figures folder
-ggsave("Figures/WY2015_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
 
+imputed_data_trimmed_prob_func$predicted_ice <- probability_impute_factor_func
+```
+
+
+```{r}
+# removing years with no data
+imputed_data_trimmed_prob_filter_func <- imputed_data_trimmed_prob_func %>% filter(waterYear<2021)
+
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs_func <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_prob_filter_func$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_prob_filter_func %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs_func <- bind_rows(imputed_ice_off_dates_predicted_obs_func, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+imputed_ice_off_dates_predicted_obs_func$difference <- ((imputed_ice_off_dates_predicted_obs_func$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs_func$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs_func$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+View(imputed_ice_off_dates_predicted_obs_func)
 ```

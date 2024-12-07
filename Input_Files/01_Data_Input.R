@@ -114,9 +114,9 @@ obs_ice_off_dates <- read_xlsx("Input_Files/ice_off_dates20240918.xlsx")
 obs_ice_melt_windows <- read_xlsx("Input_Files/ice_100_to_0_dates_20241114.xlsx")
 #View(obs_ice_melt_windows)
 
-# Reading CSV
-ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
-#View(ice_off_binary)
+# Reading CSV for ice duration with 0% ice as ice-off
+ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv")  %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+# View(ice_off_binary)
 
 # recode ice_or_no into 2 classes
 ice_off_binary$ice_presence <- ifelse(ice_off_binary$ice_or_no == 0,
@@ -181,12 +181,9 @@ imputed_data_trimmed_14_23 <- imputed_data_trimmed %>% filter(waterYear >= 2014 
 # weekly trimmed:
 weekly_data_trimmed_14_23 <- weekly_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
-
-
 ###### Final Models
 trimmed_daily_reduced_final <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
 
 trimmed_weekly_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23, family = binomial)
 
-trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23, family = binomial)
-
+trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_
