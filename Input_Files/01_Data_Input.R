@@ -266,3 +266,4 @@ trimmed_daily_reduced_final_func <- glm(ice_presence~cumulative_dis+Temperature_
 trimmed_weekly_reduced_final_func <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23_func, family = binomial)
 
 trimmed_imputed_reduced_final_func <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23_func, family = binomial)
+

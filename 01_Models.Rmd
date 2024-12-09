@@ -98,6 +98,17 @@ tab_model(trimmed_daily_reduced_final, trimmed_imputed_reduced_final,trimmed_wee
 )
 ```
 
+# Functional Ice-off Dates
+```{r}
+# here, the model using the first date of observed 0% ice as the ice-off date in the training data is compared to the model using the date of "functional ice-off" in the training data.
+tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced_final_func,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+
+
 Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("01_Models.Rmd")
 ```{r}
 discharge_plot <- plot_model(trimmed_imputed_reduced_final,
