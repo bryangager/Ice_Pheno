@@ -668,4 +668,361 @@ plot2022 <- plot2022 +
              linetype="dashed")
 
 plot2022_2 <- plot2022_2 +
-  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear ==
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2022],
+             linetype="dashed")
+
+plot2022_3 <- plot2022_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2022],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2022_all <- (plot2022 / plot2022_2 / plot2022_3) + plot_annotation(
+  title = 'WY 2022',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2022_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2022_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+## 2023:
+```{r}
+plot2023 <- plot2023 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2023],
+             linetype="dashed")
+
+plot2023_2 <- plot2023_2 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2023],
+             linetype="dashed")
+
+plot2023_3 <- plot2023_3 +
+  geom_vline(xintercept=imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy[imputed_ice_off_dates_predicted_obs$waterYear == 2023],
+             linetype="dashed")
+
+#Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
+WY2023_all <- (plot2023 / plot2023_2 / plot2023_3) + plot_annotation(
+  title = 'WY 2023',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+)
+WY2023_all
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2023_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+
+```
+
+# Average Probability in Observed Windows:
+## Extracting only observations and predicted probabilities within observed ice windows:
+```{r}
+# Function to extract ice_probability between wy_doy_100_ice and wy_doy_0_ice, which are the dates of 100% ice and 0% ice obtained from the photos of The Loch. These dates are contained in the DF "obs_ice_melt_windows".
+extract_ice_probability <- function(imputed_data_trimmed_prob, obs_ice_melt_windows) {
+  
+  # Initialize an empty list to store the results
+  result_list <- list()
+  
+  # Loop through each unique waterYear
+  for (year in unique(obs_ice_melt_windows$waterYear)) {
+    
+    # Get the doy range for the current waterYear
+    doy_100 <- obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == year]
+    doy_0 <- obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == year]
+    
+    # Subset the imputed_data_trimmed_prob data frame for the current year
+    prob_data <- imputed_data_trimmed_prob[imputed_data_trimmed_prob$waterYear == year, ]
+    
+    # Filter the rows where wy_doy is between wy_doy_100_ice and wy_doy_0_ice
+    filtered_data <- prob_data[prob_data$wy_doy >= doy_100 & prob_data$wy_doy <= doy_0, ]
+    
+    # Store the filtered data in the result list
+    result_list[[as.character(year)]] <- filtered_data
+  }
+  
+  # Combine all the filtered data frames into one
+  probs_df <- do.call(rbind, result_list)
+  
+  return(probs_df)
+}
+
+# Applying the function to our data
+probs_df <- extract_ice_probability(imputed_data_trimmed_prob, obs_ice_melt_windows)
+# filtering to remove 2021-2023 and 2019:
+probs_df <- probs_df %>% filter(waterYear<2021 & waterYear != 2019)
+# View the result
+#View(probs_df)
+```
+Now we can calculate the average probability of each year within only the timeframe of observed ice melt.
+```{r}
+# calculate the average probability by year:
+avg_probs_df <- group_by(probs_df, waterYear) %>%
+  summarize(average_prob = mean(ice_probability))
+# calculate the average probability across all years
+avg_prob_all_years <- mean(avg_probs_df$average_prob)
+print(avg_prob_all_years)
+
+# calculate the max probability by year:
+max_probs_df <- group_by(probs_df, waterYear) %>%
+  summarize(max_prob = max(ice_probability))
+# calculate the median max probability across all years
+max_prob_all_years <- median(max_probs_df$max_prob)
+print(max_prob_all_years)
+```
+## Graph average probability by year (cumul temp):
+```{r}
+ggplot(avg_probs_df, aes(x = waterYear, y = average_prob)) +
+  geom_point(color = "red") +         # Add points for each year
+  labs(title = "Average Ice Probability Over Time",
+       x = "Year",
+       y = "Average Ice Probability")
+
+ggplot(max_probs_df, aes(x = waterYear, y = max_prob)) +
+  geom_point(color = "red") +         # Add points for each year
+  labs(title = "Max Ice Probability Over Time",
+       x = "Year",
+       y = "Max Ice Probability")
+```
+# Accuracy Comparison
+Using value of average probability of all years within observed windows for imputed temp as threshold and comparing it to randomly chosen probability threshold of 0.5
+## 0.5 as Threshold
+```{r}
+# create a vector of predicted probabilities
+preds_05 <- predict(trimmed_imputed_reduced_final,
+  newdata = select(imputed_data_trimmed_14_23, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice IS on The Loch
+preds_outcome_05 <- ifelse(preds_05 < 0.5,
+  1,
+  0
+)
+
+# transform predictions into factor and set labels
+preds_outcome_05 <- factor(preds_outcome_05,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab_05 <- table(imputed_data_trimmed_14_23$ice_presence, preds_outcome_05,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab_05
+
+accuracy_05 <- sum(diag(tab_05)) / sum(tab_05)
+accuracy_05
+
+# sensitivity
+sensitivity_05 <- tab_05[2, 2] / (tab_05[2, 2] + tab_05[2, 1])
+sensitivity_05
+
+# specificity
+specificity_05<- tab_05[1, 1] / (tab_05[1, 1] + tab_05[1, 2])
+specificity_05
+```
+## Average Probability from imputed temp as threshold:
+```{r}
+# create a vector of predicted probabilities
+preds_avg <- predict(trimmed_imputed_reduced_final,
+  newdata = select(imputed_data_trimmed_14_23, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice IS on The Loch
+preds_outcome_avg <- ifelse(preds_avg < avg_prob_all_years,
+  1,
+  0
+)
+
+# transform predictions into factor and set labels
+preds_outcome_avg <- factor(preds_outcome_avg,
+  levels = c(1, 0),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab_avg <- table(imputed_data_trimmed_14_23$ice_presence, preds_outcome_avg,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab_avg
+
+accuracy_avg <- sum(diag(tab_avg)) / sum(tab_avg)
+accuracy_avg
+
+# sensitivity
+sensitivity_avg <- tab_avg[2, 2] / (tab_avg[2, 2] + tab_avg[2, 1])
+sensitivity_avg
+
+# specificity
+specificity_avg<- tab_avg[1, 1] / (tab_avg[1, 1] + tab_avg[1, 2])
+specificity_avg
+```
+After performing these analyses, we can see that the chosen threshold of 0.5 is actually more accurate than the average probability across all years. So we will use 0.5 for our threshold.
+
+# Ice-Off Dates:
+Pulling out the first day each year when ice is "no ice" during the time period when we have observed ice-off dates.
+
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+probability_impute_0_1 <- ifelse(probabilities_impute < 0.5,
+  1,
+  0
+)
+# changing the labels of the probabilities
+probability_impute_factor <- factor(probability_impute_0_1, levels = c(1, 0),labels = c("ice", "no ice"))
+
+
+imputed_data_trimmed_prob$predicted_ice <- probability_impute_factor
+```
+
+```{r}
+# removing years with no data
+imputed_data_trimmed_prob_filter <- imputed_data_trimmed_prob %>% filter(waterYear<2021)
+
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_prob_filter$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_prob_filter %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs <- bind_rows(imputed_ice_off_dates_predicted_obs, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+imputed_ice_off_dates_predicted_obs$difference <- ((imputed_ice_off_dates_predicted_obs$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+View(imputed_ice_off_dates_predicted_obs)
+```
+Now that we have a threshold and we saw how our model performed, we can hindcast! Go to Rmd "03_Hindcasting.Rmd".
+
+# Functional Ice-Off Dates:
+Pulling out the first day each year when ice is "no ice" during the time period when we have observed ice-off dates.
+
+```{r}
+probabilities_impute_func <- predict(trimmed_imputed_reduced_final_func,
+  newdata = select(imputed_data_trimmed_14_23_func, -ice_presence), # remove real outcomes
+  type = "response")
+
+imputed_data_trimmed_prob_func <- imputed_data_trimmed_14_23_func
+imputed_data_trimmed_prob_func$ice_probability <- probabilities_impute_func
+```
+
+
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+probability_impute_0_1_func <- ifelse(probabilities_impute_func < 0.5,
+  1,
+  0
+)
+# changing the labels of the probabilities
+probability_impute_factor_func <- factor(probability_impute_0_1_func, levels = c(1, 0),labels = c("ice", "no ice"))
+
+
+imputed_data_trimmed_prob_func$predicted_ice <- probability_impute_factor_func
+```
+
+
+```{r}
+# removing years with no data
+imputed_data_trimmed_prob_filter_func <- imputed_data_trimmed_prob_func %>% filter(waterYear<2021)
+
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs_func <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_prob_filter_func$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_prob_filter_func %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs_func <- bind_rows(imputed_ice_off_dates_predicted_obs_func, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+imputed_ice_off_dates_predicted_obs_func$difference <- ((imputed_ice_off_dates_predicted_obs_func$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs_func$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs_func$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+View(imputed_ice_off_dates_predicted_obs_func)
+```
+
+
+
+## WY2016-2018 plot
+```{r}
+WY2016_2018 <- (WY2016_all | WY2017_all | WY2018_all) + plot_annotation(
+  title = 'WY 2016-2018',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=110)
+)
+WY2016_2018
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2016_2018_probability_models_temp_cumulQ.png", dpi=600, width=12, height=10, units="in")
+```
+```{r}
+WY2016_noProb <- (plot2016_2 / plot2016_3)
+WY2017_noProb <- (plot2017_2 / plot2017_3)
+WY2018_noProb <- (plot2018_2 / plot2018_3)
+
+WY2016_2018_noProb <- (WY2016_noProb | WY2017_noProb | WY2018_noProb) + plot_annotation(
+  title = 'WY 2016-2018',
+  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=110)
+)
+WY2016_2018_noProb
+
+#Export file to new plot to a new Figures folder
+ggsave("Figures/WY2016_2018_temp_cond.png", dpi=600, width=12, height=10, units="in")
+```

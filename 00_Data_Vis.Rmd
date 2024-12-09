@@ -287,4 +287,5 @@ ggplot(out_condTempDaily_long %>% filter(waterYear==2022), aes(wy_doy,temp_or_co
 ## 2023
 ```{r echo=FALSE}
 # water year 2023
-ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2023)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2023]) # ice of
+ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2023)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2023]) # ice off date
+```
