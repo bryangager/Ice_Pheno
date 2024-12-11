@@ -50,7 +50,7 @@ First, let's look at the observed dates of ice-off by year (±6 days) obtained f
 ```{r}
 obs_ice_off_plot <- ggplot(obs_ice_off_dates, aes(x = waterYear, y = wy_doy_ice_off)) +
   geom_point() +
-  geom_smooth()+
+  geom_smooth(method = 'lm', se=FALSE)+
   scale_x_continuous(
     breaks = seq(min(obs_ice_off_dates$waterYear), max(obs_ice_off_dates$waterYear), by = 1))+
   labs(
@@ -58,17 +58,20 @@ obs_ice_off_plot <- ggplot(obs_ice_off_dates, aes(x = waterYear, y = wy_doy_ice_
     x = "Year",
     y = "Water Year DOY of Ice-Off (± 6d)")
 obs_ice_off_plot
+ggsave("Figures/observed_ice_off_dates.png", dpi=600, width=6, height=4, units="in")
 ```
 
 Here's a low-resolution look at the cumulative flow for each year in which we have in-situ ice observations. Visually, between the water year day of year 200 - 250, flow usually begins to increase.
 ```{r echo=FALSE}
 ggplot(flow_temp_cond_daily_ice %>% filter(waterYear >= 2014 & waterYear < 2024), aes(x = wy_doy, y = cumulative_dis))+
-  geom_line() +  # Use geom_point() if you prefer points instead of lines
+  geom_line(color="darkturquoise") +
+  lims(x=c(200,270),y=c(20,1000))+# Use geom_point() if you prefer points instead of lines
   facet_wrap(~ waterYear) +  # Creates a separate plot for each water year
   labs(
     title = "Cumulative Discharge (cfs)",
     x = "Water Year Day of Year",
     y = "Cumulative Discharge") 
+ggsave("Figures/cumulative_discharge_allYears.png", dpi=600, width=6, height=4, units="in")
 ```
 # Cumalitve Discharge
 Now let's take a closer look at each year and compare the cumulative discharge to ice observations - the shaded area of each plot represents the observed time of ice beginning to melt to when there is 0 ice on The Loch.
@@ -103,6 +106,7 @@ ggplot(
   lims(x = c(180, 260), y = c(130, 600))+
   labs(x = "Water Year Day of Year (2015)", y = "Cumulative Discharge (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+ggsave("Figures/2015_discharge_with_window.png",width=6, height=4, units="in")
 ```
 ## 2016
 ```{r echo = FALSE}
@@ -225,7 +229,7 @@ ggplot(
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
 Now let's look at the daily observations of temperature and conductivity by year compared to the date of 0 ice on The Loch (represented by a vertical black line).
-
+# Temp and Cond
 Visually, temperature and conductivity seem to have less variation year-to-year.
 ```{r}
 # making a long format dataframe to visualize the two variables together.
@@ -234,11 +238,11 @@ out_condTempDaily_long <- pivot_longer(out_cond_temp_daily, -c(Date,wy_doy,water
 Every year:
 ```{r}
 
-ggplot(out_condTempDaily_long %>% filter(waterYear >= 2014 & waterYear <=2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year", y = "Temperature (C), Conductivity (uS/cm)")+facet_wrap(~ waterYear)
+ggplot(out_condTempDaily_long %>% filter(waterYear >= 2014 & waterYear <=2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + lims(x=c(180,270))+labs(x = "Water Year Day of Year", y = "Temperature (C), Conductivity (uS/cm)")+facet_wrap(~ waterYear)
+
+ggsave("Figures/temp&cond_allYears.png", dpi=600, width=6, height=4, units="in")
 
 ```
-
-# Temp and Cond
 ## 2014
 ```{r echo=FALSE}
 # water year 2014
@@ -247,7 +251,8 @@ ggplot(out_condTempDaily_long %>% filter(waterYear==2014), aes(wy_doy,temp_or_co
 ## 2015
 ```{r echo=FALSE}
 # water year 2015
-ggplot(out_condTempDaily_long %>% filter(waterYear==2015), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2015)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2015]) # ice off date
+ggplot(out_condTempDaily_long %>% filter(waterYear==2015), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2015)", y = "Temperature (C), Conductivity (uS/cm)") + geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2015]) + lims(x=c(190,250),y=c(-1,10)) # ice off date
+ggsave("Figures/2015_tempCond_with_window.png",width=6, height=4, units="in")
 ```
 ## 2016
 ```{r echo=FALSE}

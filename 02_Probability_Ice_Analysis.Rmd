@@ -786,7 +786,7 @@ Using value of average probability of all years within observed windows for impu
 ## 0.5 as Threshold
 ```{r}
 # create a vector of predicted probabilities
-preds_05 <- predict(trimmed_imputed_reduced_final,
+preds_05 <- predict(trimmed_imputed_all,
   newdata = select(imputed_data_trimmed_14_23, -ice_presence), # remove real outcomes
   type = "response"
 )

@@ -109,22 +109,4 @@ tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced_final_func,
 ```
 
 
-Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("01_Models.Rmd")
-```{r}
-discharge_plot <- plot_model(trimmed_imputed_reduced_final,
-  type = "pred",
-  terms = c("cumulative_dis [all]"),
-  ci.lvl = NA # remove confidence bands
-) +
-  labs(y = "Prob (no ice)")
-
-temp_plot <- plot_model(trimmed_imputed_reduced_final,
-  type = "pred",
-  terms = c("temperature_C_impute [all]"),
-  ci.lvl = NA # remove confidence bands
-) +
-  labs(y = "Prob (no ice)")
-
-discharge_plot
-temp_plot
-```
+Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("01_
