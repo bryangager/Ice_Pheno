@@ -58,7 +58,7 @@ obs_ice_off_plot <- ggplot(obs_ice_off_dates, aes(x = waterYear, y = wy_doy_ice_
     x = "Year",
     y = "Water Year DOY of Ice-Off (± 6d)")
 obs_ice_off_plot
-ggsave("Figures/observed_ice_off_dates.png", dpi=600, width=6, height=4, units="in")
+#ggsave("Figures/observed_ice_off_dates.png", dpi=600, width=6, height=4, units="in")
 ```
 
 Here's a low-resolution look at the cumulative flow for each year in which we have in-situ ice observations. Visually, between the water year day of year 200 - 250, flow usually begins to increase.
@@ -71,7 +71,7 @@ ggplot(flow_temp_cond_daily_ice %>% filter(waterYear >= 2014 & waterYear < 2024)
     title = "Cumulative Discharge (cfs)",
     x = "Water Year Day of Year",
     y = "Cumulative Discharge") 
-ggsave("Figures/cumulative_discharge_allYears.png", dpi=600, width=6, height=4, units="in")
+#ggsave("Figures/cumulative_discharge_allYears.png", dpi=600, width=6, height=4, units="in")
 ```
 # Cumalitve Discharge
 Now let's take a closer look at each year and compare the cumulative discharge to ice observations - the shaded area of each plot represents the observed time of ice beginning to melt to when there is 0 ice on The Loch.
