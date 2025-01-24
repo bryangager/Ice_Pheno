@@ -47,12 +47,12 @@ for(year in unique(hindcast_imputed_df$waterYear)) {
   # If there is any day where predicted_ice == "no ice"
   if (nrow(year_data) > 0) {
     # Get the first day (earliest day) in that year where predicted_ice == "no ice"
-    first_no_ice_day <- year_data %>% slice(1)
+    first_no_ice_wy_doy <- year_data %>% slice(1)
     
     # Create a new row with the waterYear and first wy_doy
     result_row <- data.frame(
       waterYear = year,
-      first_no_ice_doy = first_no_ice_day$wy_doy
+      first_no_ice_wy_doy = first_no_ice_wy_doy$wy_doy
     )
     
     # Append the result_row to the result_df
@@ -62,14 +62,15 @@ for(year in unique(hindcast_imputed_df$waterYear)) {
 
 # View the result data frame
 print(hindcasted_ice_off_dates)
+write.csv(hindcasted_ice_off_dates, "Input_Files/hindcasted_ice_off_dates.csv")
 ```
 Plot them!
 ```{r}
-hindcast_model <- lm(hindcasted_ice_off_dates$first_no_ice_doy~hindcasted_ice_off_dates$waterYear, data = hindcasted_ice_off_dates)
+hindcast_model <- lm(hindcasted_ice_off_dates$first_no_ice_wy_doy~hindcasted_ice_off_dates$waterYear, data = hindcasted_ice_off_dates)
 
 p_value <- summary(hindcast_model)$coefficients[2, 4]
 
-hindcast_plot <- ggplot(hindcasted_ice_off_dates %>% filter(waterYear<=2021), aes(x = waterYear, y = first_no_ice_doy)) +
+hindcast_plot <- ggplot(hindcasted_ice_off_dates %>% filter(waterYear<=2021), aes(x = waterYear, y = first_no_ice_wy_doy)) +
   geom_point() +
   geom_smooth(method='lm', size=0.5)+
   scale_x_continuous(
@@ -132,12 +133,12 @@ for(year in unique(hindcast_imputed_df_func$waterYear)) {
   # If there is any day where predicted_ice == "no ice"
   if (nrow(year_data) > 0) {
     # Get the first day (earliest day) in that year where predicted_ice == "no ice"
-    first_no_ice_day <- year_data %>% slice(1)
+    first_no_ice_wy_doy <- year_data %>% slice(1)
     
     # Create a new row with the waterYear and first wy_doy
     result_row_func <- data.frame(
       waterYear = year,
-      first_no_ice_doy = first_no_ice_day$wy_doy
+      first_no_ice_wy_doy = first_no_ice_wy_doy$wy_doy
     )
     
     # Append the result_row to the result_df
@@ -150,7 +151,7 @@ print(hindcasted_ice_off_dates_func)
 ```
 Plot them!
 ```{r}
-hindcast_plot_func <- ggplot(hindcasted_ice_off_dates_func %>% filter(waterYear<2021), aes(x = waterYear, y = first_no_ice_doy)) +
+hindcast_plot_func <- ggplot(hindcasted_ice_off_dates_func %>% filter(waterYear<2021), aes(x = waterYear, y = first_no_ice_wy_doy)) +
   geom_point() +
   geom_smooth()+
   scale_x_continuous(
