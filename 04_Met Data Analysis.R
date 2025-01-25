@@ -74,27 +74,59 @@ cumulativeAirTemp4 <- full_join(cumulativeAirTemp3,april_may_cumul_temp,by=c("Da
 cumulativeAirTempAll <- cumulativeAirTemp4 %>% mutate(year = as.integer(year))
 
 # hooray! now we have mean air temp and cumulative air temp for many different windows. Let's merge it all together:
-airTemp_hindcast_SWE <- full_join(cumulativeAirTempAll,hindcast_SWE,by="year") %>% rename(waterYear=waterYear.x)
+airTemp_hindcast_SWE <- full_join(cumulativeAirTempAll,hindcast_SWE,by="year") %>% rename(waterYear=waterYear.x) %>% select(-c(first_snow_acc,first_snow_acc_doy,cont_snow_acc,cont_snow_acc_doy,first_snow_melt,first_snow_melt_doy,last_snow_melt,last_snow_melt_doy,waterYear.y,first_snow_acc_wydoy,cont_snow_acc_wydoy,first_snow_melt_wydoy,last_snow_melt_wydoy,max_swe_date))
+airTemp_hindcast_SWE$month <- format(airTemp_hindcast_SWE$Date, "%m")
 
 # now we have a messy dataframe that has everything in it, let's run some models and see what happens.
-
+###### MODELS AND CORRELATIONS:
 tempModel <- lm(predicted_ice_off_wy_doy~T_air_2_m_mean, data = airTemp_hindcast_SWE)
 summary(tempModel)
 
+tempCumulMarchModel <- lm(predicted_ice_off_wy_doy~T_air_2_m_Marchcumul, data = airTemp_hindcast_SWE)
+summary(tempCumulMarchModel)
 
-View(cumulativeAirTempAll)
+# This doesn't work because of the NAs?
+ggpairs(airTemp_hindcast_SWE)+theme_bw()
 
+ggpairs(airTemp_hindcast_SWE, columns=c(4,14))+theme_bw()
 
+## Statistically significant correlations: April Cumulative Temp (-0.361***), May Cumulative Temp: (-0.299***),
+## March-April Cumulative Temp (-0.089***), March-May Cumulative Temperature (-0.227***), April-May Cumulative Temp (-0.474***)
+## Max SWE (0.406***), Max SWE doy (0.551***)
 
-weatherData %>% mutate(wy_doy = hydro.day(date_time))
+## The only variables that were not statistically correlated with the predicted date of ice-off 
+## were Mean 2m Air Temp and March Cumulative Temp
 
-cumulative_dat <- group_by(lv_dat, waterYear) %>%
-  mutate(cumulative_dis = cumsum(Flow), 
-         wy_doy = seq(1:n()))
+###### Change Over Time:
+# March Cumul Temp
+marchPlot <-
+  ggplot(airTemp_hindcast_SWE,aes(x=Date,y=T_air_2_m_Marchcumul))+
+  geom_point()+
+  geom_smooth(method=lm)
+marchPlot
+# April Cumul Temp
+aprilPlot <-
+  ggplot(airTemp_hindcast_SWE,aes(x=Date,y=T_air_2_m_Aprilcumul))+
+  geom_point()+
+  geom_smooth(method=lm)
+aprilPlot
+# May Cumul Temp
+mayPlot <-
+  ggplot(airTemp_hindcast_SWE,aes(x=Date,y=T_air_2_m_Maycumul))+
+  geom_point()+
+  geom_smooth(method=lm)
+mayPlot
+# March- May Cumul Temp:
+marchMayPlot <-
+  ggplot(airTemp_hindcast_SWE,aes(x=Date,y=T_air_2_m_MarchMaycumul))+
+  geom_point()+
+  geom_smooth(method=lm)
+marchMayPlot
+# Mean Daily Temp over time:
+weather_daily$month <- format(weather_daily$Date, "%m") %>% as.integer(weather_daily$month)
 
-
-
-
-
-# Now Put them all together
-hindcast_SWE <- full_join(SWE_stats,hindcasted_dates, by="waterYear") %>% rename(predicted_ice_off_wy_doy=first_no_ice_wy_doy)
+dailyTempPlot <- 
+  ggplot(weather_daily %>% filter(month>=3&month<=5),aes(x=month,y=T_air_2_m_mean))+
+  geom_point()+
+  facet_wrap(~waterYear)
+dailyTempPlot
