@@ -175,5 +175,7 @@ pierson_hindcast_dates <- left_join(pierson_dates,hindcasted_dates,by="waterYear
 
 # pierson vs. my model dates
 
-ggplot(pierson_hindcast_dates, aes(x=wy_doy_pierson_off,y=first_no_ice_wy_doy,color=waterYear))+
-  geom_point()
+ggplot(pierson_hindcast_dates, aes(x=first_no_ice_wy_doy,y=wy_doy_pierson_off))+
+  geom_point(aes(first_no_ice_wy_doy, color = waterYear))+
+  geom_point(aes(wy_doy_pierson_off, color = waterYear))+
+  scale_color_gradient(low="blue",high="red")
