@@ -130,3 +130,38 @@ dailyTempPlot <-
   geom_point()+
   facet_wrap(~waterYear)
 dailyTempPlot
+
+##### 20th Percentile Dates:
+
+# Function to find wy_doy for specific percentiles
+find_percentiles <- function(data, percentiles) {
+  total_dis <- max(data$cumulative_dis, na.rm = TRUE) # Total discharge for the waterYear
+  targets <- percentiles * total_dis                  # Target values for the percentiles
+  
+  # Find wy_doy for each target
+  data.frame(
+    percentile = percentiles,
+    wy_doy = sapply(targets, function(target) {
+      data$wy_doy[which.min(abs(data$cumulative_dis - target))]
+    })
+  )
+}
+
+# Apply the function for each waterYear
+cumul_dis_percentiles <- cumulative_dat_ungroup %>%
+  group_by(waterYear) %>%
+  group_modify(~ find_percentiles(.x, c(0.2, 0.5, 0.8)))
+
+percentile_hindcast_dates <- left_join(cumul_dis_percentiles,hindcasted_dates,by="waterYear") %>% rename(wy_doy_perc=wy_doy) %>% filter(waterYear!=2024)
+
+# Correlation plots
+ggpairs(percentile_hindcast_dates %>% filter(percentile==0.2) %>% select(-percentile)) # corr: 0.414**
+
+ggpairs(percentile_hindcast_dates %>% filter(percentile==0.5) %>% select(-percentile)) # corr: 0.288
+
+ggpairs(percentile_hindcast_dates %>% filter(percentile==0.8) %>% select(-percentile)) # corr: 0.023
+
+# Plot of 20th percentile wy_doy over time
+ggplot(percentile_hindcast_dates %>% filter(percentile==0.2), aes(x=waterYear,y=wy_doy_perc))+
+  geom_point()
+ 
