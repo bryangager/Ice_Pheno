@@ -164,4 +164,16 @@ ggpairs(percentile_hindcast_dates %>% filter(percentile==0.8) %>% select(-percen
 # Plot of 20th percentile wy_doy over time
 ggplot(percentile_hindcast_dates %>% filter(percentile==0.2), aes(x=waterYear,y=wy_doy_perc))+
   geom_point()
- 
+
+
+##### Pierson Dates:
+pierson_dates <- read_xlsx("Input_Files/Peirson_IcePhenoDates_AVG_20250120.xlsx")
+pierson_dates <- pierson_dates %>% mutate(Ice_Off_Peirson = as.Date(Ice_Off_Peirson)) %>%  mutate(wy_doy_pierson_off = hydro.day(Ice_Off_Peirson))
+pierson_dates <- pierson_dates %>% mutate(Ice_On_Peirson = as.Date(Ice_On_Peirson)) %>%  mutate(wy_doy_pierson_on = hydro.day(Ice_On_Peirson))
+
+pierson_hindcast_dates <- left_join(pierson_dates,hindcasted_dates,by="waterYear")
+
+# pierson vs. my model dates
+
+ggplot(pierson_hindcast_dates, aes(x=wy_doy_pierson_off,y=first_no_ice_wy_doy,color=waterYear))+
+  geom_point()
