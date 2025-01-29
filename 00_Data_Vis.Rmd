@@ -50,11 +50,9 @@ First, let's look at the observed dates of ice-off by year (±6 days) obtained f
 ```{r}
 obs_ice_off_plot <- ggplot(obs_ice_off_dates, aes(x = waterYear, y = wy_doy_ice_off)) +
   geom_point() +
-  geom_smooth(method = 'lm', se=FALSE)+
   scale_x_continuous(
     breaks = seq(min(obs_ice_off_dates$waterYear), max(obs_ice_off_dates$waterYear), by = 1))+
   labs(
-    title = "Observed Date of Ice-Off 2013-2023",
     x = "Year",
     y = "Water Year DOY of Ice-Off (± 6d)")
 obs_ice_off_plot
@@ -68,7 +66,6 @@ ggplot(flow_temp_cond_daily_ice %>% filter(waterYear >= 2014 & waterYear < 2024)
   lims(x=c(200,270),y=c(20,1000))+# Use geom_point() if you prefer points instead of lines
   facet_wrap(~ waterYear) +  # Creates a separate plot for each water year
   labs(
-    title = "Cumulative Discharge (cfs)",
     x = "Water Year Day of Year",
     y = "Cumulative Discharge") 
 #ggsave("Figures/cumulative_discharge_allYears.png", dpi=600, width=6, height=4, units="in")

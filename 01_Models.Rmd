@@ -43,7 +43,14 @@ trimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute
 How do they compare?
 The R^2 for the models using data trimmed to include only April 1 - July 15 increase by ~ 0.2 for each different temporal frequency. So from now on, we will be using the trimmed data.
 ```{r}
+# supplemental table with all models
 tab_model(untrimmed_daily_all,untrimmed_weekly_all,untrimmed_imputed_all,trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+# reduced table for main body of thesis
+tab_model(trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
   show.ci = FALSE, # remove CI
   show.aic = TRUE, # display AIC
   p.style = "numeric_stars" # display p-values and stars
@@ -92,6 +99,13 @@ trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_i
 Results: -0.011 change for weekly R^2, <0.01 change in daily and imputed R^2
 ```{r}
 tab_model(trimmed_daily_reduced_final, trimmed_imputed_reduced_final,trimmed_weekly_reduced_final, trimmed_daily_reduced2,trimmed_imputed_reduced2,trimmed_weekly_reduced2,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+
+# just imputed - used for thesis body
+tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced2,
   show.ci = FALSE, # remove CI
   show.aic = TRUE, # display AIC
   p.style = "numeric_stars" # display p-values and stars

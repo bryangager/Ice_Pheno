@@ -32,7 +32,7 @@ imputed_data_trimmed_prob$ice_probability <- probabilities_impute
 plot2014 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), aes(x = wy_doy, y = ice_probability)) +
   geom_line(color = "blue") +
   geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2014], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
-  labs(title = "Predicted Probability of Ice Over Time",x = "Water Year Day of Year",y = "Probability of Ice")+ 
+  labs(y = "Probability of Ice")+ 
   theme_dark()+
   lims(x = c(200,265))+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
@@ -41,8 +41,6 @@ plot2014_2 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2014), ae
   geom_line(color = "blue") +
   geom_rect(aes(xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2014], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2014], ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   labs(
-    title = "Cumulative Discharge Over Time",
-    x = "Water Year Day of Year",
     y = "Cumulative Discharge (cfs)")+ lims(x = c(200,265)) + 
     theme_dark()+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
@@ -326,7 +324,6 @@ plot2015_3 <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2015), ae
   geom_rect(aes(xmin=197,xmax=239,ymin=-Inf,ymax=Inf), fill="lightblue",alpha=0.01)+
   theme_dark()+
   labs(
-    title = "Temperature Over Time",
     x = "Water Year Day of Year",
     y = "Temperature (C)"
   ) + lims(x = c(195,265))+
@@ -474,13 +471,12 @@ plot2014_3 <- plot2014_3 +
 
 #Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
 WY2014_all <- (plot2014 / plot2014_2 / plot2014_3) + plot_annotation(
-  title = 'WY 2014',
-  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
+  title = 'WY 2014'
 )
 WY2014_all
 
 #Export file to new plot to a new Figures folder
-ggsave("Figures/WY2014_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+#ggsave("Figures/WY2014_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
 
 ```
 
@@ -501,13 +497,11 @@ plot2015_3 <- plot2015_3 +
 
 #Use patchwork library to annotate plots and combine -- I find it easier to use than gridExtra or cowplot
 WY2015_all <- (plot2015 / plot2015_2 / plot2015_3) + plot_annotation(
-  title = 'WY 2015',
-  subtitle = str_wrap('Shaded area indicates windows from weekly photographs (full cover to no coverage); dashed line is the predicted ice-off DOY from the logistical regression models', width=50)
-)
+  title = 'WY 2015')
 WY2015_all
 
 #Export file to new plot to a new Figures folder
-ggsave("Figures/WY2015_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
+#ggsave("Figures/WY2015_probability_models_temp_cumulQ.png", dpi=600, width=4, height=8, units="in")
 
 ```
 
