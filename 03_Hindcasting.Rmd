@@ -72,20 +72,19 @@ p_value <- summary(hindcast_model)$coefficients[2, 4]
 
 hindcast_plot <- ggplot(hindcasted_ice_off_dates %>% filter(waterYear<=2021), aes(x = waterYear, y = first_no_ice_wy_doy)) +
   geom_point() +
-  geom_smooth(method='lm', size=0.5)+
   scale_x_continuous(
     breaks = seq(min(hindcasted_ice_off_dates$waterYear), max(hindcasted_ice_off_dates$waterYear), by = 1))+
   labs(
-    title = "Hindcasted Date of Ice-Off 1984-2021",
     x = "Year",
     y = "Water Year DOY of Ice-Off")+
-   theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))+
-   annotate("text", x = 2019, y = 238, 
-           label = paste("p =", round(p_value, 3)), 
-           size = 3, color = "red", hjust = 0)
-hindcast_plot
+   theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))
 
-ggsave("Figures/hindcast_plot_with_regression.png", dpi=600, width=6, height=4, units="in")
+hindcast_plot
+#   annotate("text", x = 2019, y = 238, 
+#           label = paste("p =", round(p_value, 3)), 
+#           size = 3, color = "red", hjust = 0)
+
+ggsave("Figures/hindcast_plot_no_regression.png", dpi=600, width=6, height=4, units="in")
 ```
 As we saw in the analysis, 2021-2023 have a large amount of missing temperature values, so I exclude them from this plot until we can track down the missing temperature observations.
 
@@ -153,11 +152,9 @@ Plot them!
 ```{r}
 hindcast_plot_func <- ggplot(hindcasted_ice_off_dates_func %>% filter(waterYear<2021), aes(x = waterYear, y = first_no_ice_wy_doy)) +
   geom_point() +
-  geom_smooth()+
   scale_x_continuous(
     breaks = seq(min(hindcasted_ice_off_dates_func$waterYear), max(hindcasted_ice_off_dates_func$waterYear), by = 1))+
   labs(
-    title = "Hindcasted Date of Ice-Off 1984-2023",
     x = "Year",
     y = "Water Year DOY of Ice-Off")+
    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))

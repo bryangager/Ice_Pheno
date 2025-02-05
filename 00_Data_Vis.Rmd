@@ -86,7 +86,7 @@ ggplot(
   theme_dark() +
   geom_line() +
   lims(x = c(200, 260), y = c(150, 750))+
-  labs(x = "Water Year Day of Year (2014)", y = "Cumulative Discharge (cfs)")+
+  labs(x = "Date", y = "Cumulative Discharge (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
 ## 2015
@@ -291,3 +291,22 @@ ggplot(out_condTempDaily_long %>% filter(waterYear==2022), aes(wy_doy,temp_or_co
 # water year 2023
 ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_cond, group = waterYear, col = hydro_variables)) + geom_point(size = 0.5) + labs(x = "Water Year Day of Year (2023)", y = "Temperature (C), Conductivity (uS/cm)")+ geom_vline(xintercept = obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2023]) # ice off date
 ```
+# Making Plots Pretty:
+```{r}
+# plain plots for conductivity, temperature, and discharge (change the x variable and limits)
+labels_x<-c(120,160,200,240,280)
+
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2016),
+  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(124, 290), y = c(-3, 40))+
+  labs(x = "Date", y = "Conductivity (uS/cm)")+
+  scale_x_continuous(breaks=labels_x,labels=c("28-Jan","09-Mar","18-Apr","28-May","07-Jul"),limits=c(124,290))
+```
+
+
+
+
