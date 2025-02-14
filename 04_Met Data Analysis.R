@@ -132,8 +132,15 @@ pierson_dates <- pierson_dates %>% mutate(Ice_On_Peirson = as.Date(Ice_On_Peirso
 pierson_hindcast_dates <- left_join(pierson_dates,hindcasted_dates,by="waterYear")
 
 # pierson vs. my model dates
+labels_pier=c(232,242,252,262,272,282)
 
 ggplot(pierson_hindcast_dates, aes(x=first_no_ice_wy_doy,y=wy_doy_pierson_off))+
   geom_point()+
   scale_color_gradient(low="blue",high="red")+
-  geom_abline(intercept=0, slope=1)
+  geom_abline(intercept=0, slope=1)+
+  labs(y="Modified Pierson Ice-Off Date",x="Outlet Modelled Ice-Off Date")+
+  scale_y_continuous(breaks=labels_pier,labels=c(
+    "20-May","30-May","09-Jun","19-Jun", "29-Jun","09-Jul"),limits=c(230,290))+
+  scale_x_continuous(breaks=labels_pier,labels=c(
+    "20-May","30-May","09-Jun","19-Jun", "29-Jun","09-Jul"),limits=c(230,290))
+ggsave("Figures/pierson_mine_1:1.png", dpi=600, width=6, height=4, units="in")
