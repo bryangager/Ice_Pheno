@@ -95,8 +95,8 @@ out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all
 #View(out_condTemp_allDates)
 
 # Adding water year and water year doy to the daily data
-out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d") %>% ) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
-  distinct(Date, .keep_all = TRUE)
+out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
+                                                          distinct(Date, .keep_all = TRUE)
 #View(out_cond_temp_daily)
 
 
