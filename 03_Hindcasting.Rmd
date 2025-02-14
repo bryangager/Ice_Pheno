@@ -62,7 +62,7 @@ for(year in unique(hindcast_imputed_df$waterYear)) {
 
 # View the result data frame
 print(hindcasted_ice_off_dates)
-write.csv(hindcasted_ice_off_dates, "Input_Files/hindcasted_ice_off_dates.csv")
+#write.csv(hindcasted_ice_off_dates, "Input_Files/hindcasted_ice_off_dates.csv")
 ```
 Plot them!
 ```{r}
@@ -88,6 +88,25 @@ ggsave("Figures/hindcast_plot_no_regression.png", dpi=600, width=6, height=4, un
 ```
 As we saw in the analysis, 2021-2023 have a large amount of missing temperature values, so I exclude them from this plot until we can track down the missing temperature observations.
 
+
+## Pretty Hindcast Plot:
+```{r}
+
+labels_y=c(222,232,242,252,262,272,282)
+
+ggplot(hindcasted_ice_off_dates %>% filter(waterYear <= 2012), aes(x = waterYear, y = first_no_ice_wy_doy)) +
+  theme_bw()+
+  geom_point()+
+  geom_point(data=obs_ice_off_dates, inherit.aes = FALSE, aes(x=waterYear, y=wy_doy_ice_off), color = "purple")+
+  geom_errorbar(aes(ymin=first_no_ice_wy_doy-7, ymax=first_no_ice_wy_doy+7), width=.1,position=position_dodge(0.05))+
+  # geom_errorbar(data=obs_ice_off_dates, aes(ymin=wy_doy_ice_off-7, ymax=wy_doy_ice_off+7), width=.1,position=position_dodge(0.05))+
+  scale_x_continuous(
+    breaks = seq(min(hindcasted_ice_off_dates$waterYear), max(hindcasted_ice_off_dates$waterYear), by = 1))+
+  labs(x = "Year",y = "Ice-Off Date")+
+   theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))+
+  scale_y_continuous(breaks=labels_y,labels=c("10-May","20-May","30-May","09-Jun","19-Jun", "29-Jun","09-Jul"),limits=c(215,290))
+
+```
 
 
 
