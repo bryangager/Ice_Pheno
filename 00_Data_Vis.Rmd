@@ -297,6 +297,9 @@ ggplot(out_condTempDaily_long %>% filter(waterYear==2023), aes(wy_doy,temp_or_co
 # plots for temperature and discharge (change the x variable and limits)
 labels_x<-c(212,217,222,227,232,237,242)
 
+labels_y_cq<-c(176.573,353.147,529.72,706.293)
+#5,10,15,20
+
 # April 30 (212) to June 1 (244) for buoy plot below
 # labels: April 30: 212, May 5: 217, May 10: 222, May 15: 227, May 20: 232, May 25: 237, May 30: 242
 
@@ -322,6 +325,7 @@ outCQPlot <- ggplot(
   geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="red")+ # pierson ice-off
   lims(x = c(209, 244), y = c(100, 750))+
   labs(x="Date", y = "Cumulative Discharge (cms)")+
+  scale_y_continuous(breaks=labels_y_cq,labels=c("5","10","15","20"),limits=c(100,750))+
   scale_x_continuous(breaks=labels_x,labels=c("30-Apr","05-May","10-May","15-May","20-May", "25-May","30-May"),limits=c(209,244))+
   annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
 
