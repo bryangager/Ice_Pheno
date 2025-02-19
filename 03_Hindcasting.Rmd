@@ -112,13 +112,6 @@ ggsave("Figures/hindcast_plot_w_error.png", dpi=600, width=6, height=4, units="i
 ```
 
 
-
-
-
-
-
-
-
 # Hindcasting (Functional Ice-Off):
 ```{r}
 hindcast_preds_func <- predict(trimmed_imputed_reduced_final_func,
@@ -181,4 +174,134 @@ hindcast_plot_func <- ggplot(hindcasted_ice_off_dates_func %>% filter(waterYear<
     y = "Water Year DOY of Ice-Off")+
    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))
 hindcast_plot_func
+```
+
+# Wierd Years (really early and really late) - 0% (NOT functional)
+
+
+
+```{r}
+# 1987 (late): no temperature data until July 7 this year!
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 1987),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 295), y = c(100, 1500))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 1987),
+  aes(x = wy_doy, y = temperature_C_impute, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 244), y = c(0, 10))
+```
+
+```{r}
+# 1993 (late): missing almost all temp data
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 1993),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 295), y = c(100, 1500))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 1993),
+  aes(x = wy_doy, y = temperature_C_impute, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 244), y = c(0, 10))
+```
+
+```{r}
+# 1995 (late): lots of missing temp data, lots of repeated values
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 1995),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 295), y = c(100, 1500))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 1995),
+  aes(x = wy_doy, y = temperature_C_impute, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 244), y = c(0, 10))
+```
+
+```{r}
+# 2000 (early): temperature is wild
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 2000),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 295), y = c(100, 1500))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 2000),
+  aes(x = wy_doy, y = temperature_C_impute, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 244), y = c(0, 10))
+```
+
+```{r}
+# 2002 (early): missing temp
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 2002),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 295), y = c(100, 1500))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 2002),
+  aes(x = wy_doy, y = temperature_C_impute, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 244), y = c(0, 10))
+```
+
+```{r}
+# 2012 (early): temp is all over the place.
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 2012),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 295), y = c(100, 1500))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")
+
+ggplot(
+  imputed_data_trimmed %>%
+    filter(waterYear == 2012),
+  aes(x = wy_doy, y = temperature_C_impute, group = waterYear)) +
+  theme_bw() +
+  geom_line() +
+  lims(x = c(209, 244), y = c(0, 10))
 ```

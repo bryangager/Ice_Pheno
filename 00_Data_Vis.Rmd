@@ -313,7 +313,7 @@ outTempPlot <- ggplot(
   lims(x = c(209, 244), y = c(0, 10))+
   theme(axis.title.x = element_blank()) +
   labs(y = "Temperature (C)")+
-  scale_x_continuous(breaks=labels_x,labels=c("30-Apr","05-May","10-May","15-May","20-May", "25-May","30-May"),limits=c(209,244))+
+  scale_x_continuous(breaks=labels_x,labels=c("Apr-30","May-05","May-10","May-15","May-20", "May-25","May-30"),limits=c(209,244))+
   annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
 
 outCQPlot <- ggplot(
@@ -326,7 +326,7 @@ outCQPlot <- ggplot(
   lims(x = c(209, 244), y = c(100, 750))+
   labs(x="Date", y = "Cumulative Discharge (cms)")+
   scale_y_continuous(breaks=labels_y_cq,labels=c("5","10","15","20"),limits=c(100,750))+
-  scale_x_continuous(breaks=labels_x,labels=c("30-Apr","05-May","10-May","15-May","20-May", "25-May","30-May"),limits=c(209,244))+
+  scale_x_continuous(breaks=labels_x,labels=c("Apr-30","May-05","May-10","May-15","May-20", "May-25","May-30"),limits=c(209,244))+
   annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
 
 outTempPlot
@@ -379,6 +379,12 @@ probTempCQPlot <- probIcePlot / outTempPlot / outCQPlot + plot_layout(heights = 
 probTempCQPlot
 ggsave("Figures/probOutPlot.png", dpi=600, width=6, height=8, units="in")
 ```
+
+
+
+
+
+
 
 
 
