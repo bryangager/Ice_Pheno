@@ -7,8 +7,7 @@ p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibb
 
 # Sourcing functions needed for trimming data:
 source("Input_Files/00_functions.R")
-# randomly chosen things below
-set.seed(10)
+
 
 ######## Pulling in outlet flow from NWIS and adding cumulative flow:
 # LV Site Number:
@@ -66,7 +65,21 @@ lv_dat_outlet <- lv_dat_outlet_input %>%
   distinct(Date, .keep_all = TRUE) %>%
   as_tsibble(., key = waterYear, index = Date) %>% #time series tibble
   fill_gaps() #%>%  #makes the missing data implicit
-# View(lv_dat_outlet) # This is weekly data from 1982-2023, but missing temp & cond after 2019
+# View(lv_dat_outlet) # THIS IS WEEKLY DATA FOR THE WHOLE TIME SERIES
+
+# Imputed data:
+# Filling gaps in weekly data with a max gap of interpolation as 7 days
+lv_out_impute <- lv_dat_outlet %>%
+  mutate(cond_uScm_impute = imputeTS::na_interpolation(cond_uScm, maxgap = 7),
+         temperature_C_impute = imputeTS::na_interpolation(temperature_C_raw, maxgap = 7))
+
+# Binding the weekly data and imputed data with cumulative flow
+## Weekly:
+flow_temp_cond_weekly <- full_join(cumulative_flow_df, lv_dat_outlet, by = "Date")
+#View(flow_temp_cond_weekly)
+## Imputed:
+flow_temp_cond_impute <- full_join(cumulative_flow_df, lv_out_impute, by = "Date")
+#View(flow_temp_cond_impute)
 
 ######## Pulling in Daily Temp and Cond from Graham with USGS:
 # These CSVs contain data from 2019-2023
@@ -83,44 +96,11 @@ out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all
 
 # Adding water year and water year doy to the daily data
 out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
-  distinct(Date, .keep_all = TRUE)
+                                                          distinct(Date, .keep_all = TRUE)
 #View(out_cond_temp_daily)
 
 
-###### Subsetting weekly temp and cond observations from the daily observations to fill in gap from 2019 onwards
-# Create a weekly dataset from the WY2020-2024 data
-TLoch_weekly_19_23 <- out_cond_temp_daily %>% 
-  mutate(dayOfWeek = wday(Date, label = TRUE, abbr = FALSE)) %>% 
-  filter(dayOfWeek == "Tuesday")
-TLoch_weekly_19_23<- TLoch_weekly_19_23 %>% select(-dayOfWeek) %>% rename(temperature_C_raw = Temperature_C)
 
-# Joining weekly data from 2019-2023 with the weekly data from 1982-2023 to fill gaps:
-updated_lv_dat_outlet <- lv_dat_outlet %>%
-  left_join(TLoch_weekly_19_23, by = "Date", suffix = c("_old", "_new")) %>%
-  mutate(
-    # Replace missing values in lv_dat_outlet with values from TLoch_weekly_19_23
-    temperature_C_raw = ifelse(is.na(temperature_C_raw_old), temperature_C_raw_new, temperature_C_raw_old),
-    cond_uScm = ifelse(is.na(cond_uScm_old), cond_uScm_new, cond_uScm_old)
-  ) %>%
-  # Keep only original column names
-  select(Date, temperature_C_raw, cond_uScm)
-
-TCond_weekly_all <- updated_lv_dat_outlet %>% mutate(wy_doy = hydro.day(Date)) %>% rename(waterYear = waterYear_old, temperature_C_weekly = temperature_C_raw,cond_uScm_weekly=cond_uScm)
-##### THIS IS WEEKLY DATA WITH FILLED GAPS FOR THE ENTIRE TIME SERIES (1982-2023) - TCond_weekly_all
-
-# Filling gaps in weekly data with a max gap of interpolation as 7 days
-TCond_imputed_all <- TCond_weekly_all %>%
-  mutate(cond_uScm_impute = imputeTS::na_interpolation(cond_uScm_weekly, maxgap = 7),
-         temperature_C_impute = imputeTS::na_interpolation(temperature_C_weekly, maxgap = 7))
-#### THIS IS THE IMPUTED DATA FOR THE ENTIRE TIME SERIES (1982-2023) - TCond_imputed_all
-
-# Binding the weekly data and imputed data with cumulative flow
-## Weekly:
-flow_temp_cond_weekly <- full_join(cumulative_flow_df, TCond_weekly_all, by = "Date")
-#View(flow_temp_cond_weekly)
-## Imputed:
-flow_temp_cond_impute <- full_join(cumulative_flow_df, TCond_imputed_all, by = "Date")
-#View(flow_temp_cond_impute)
 
 
 
@@ -168,7 +148,7 @@ flow_temp_cond_daily_ice <- left_join(out_dat_and_ice_daily,cumulative_flow_df,b
 #View(flow_temp_cond_daily_ice)
 
 # combine weekly conductivity and temperature observations with ice presence (this includes cumulative flow already)
-flow_temp_cond_weekly_ice <- full_join(flow_temp_cond_weekly, ice_presence_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm_weekly, temperature_C_weekly, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x)
+flow_temp_cond_weekly_ice <- full_join(flow_temp_cond_weekly, ice_presence_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm, temperature_C_raw, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x)
 #View(flow_temp_cond_weekly_ice)
 
 # combine imputed conductivity and temperature observations with ice presence (this includes cumulative flow already)
@@ -201,38 +181,89 @@ imputed_data_trimmed_14_23 <- imputed_data_trimmed %>% filter(waterYear >= 2014 
 # weekly trimmed:
 weekly_data_trimmed_14_23 <- weekly_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
+###### Final Models
+trimmed_daily_reduced_final <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
 
-####### Randomly sampling 60% of the data with observed ice presence:
-# choosing random years for the training and validation datasets:
-obs_years_list <- as_tibble(unique(imputed_data_trimmed_14_23$waterYear))
-randomYears <- obs_years_list %>% slice_sample(n=6)
+trimmed_weekly_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23, family = binomial)
 
-# filtering imputed data into training dataset:
-imputed_test_df <- imputed_data_trimmed_14_23 %>% filter(waterYear %in% randomYears$value)
-#View(imputed_test_df)
-
-# filtering imputed data into validation dataset:
-imputed_validation_df <- imputed_data_trimmed_14_23 %>% filter(!(waterYear %in% randomYears$value))
-#View(imputed_validation_df)
-
-# filtering weekly data into training dataset:
-weekly_test_df <- weekly_data_trimmed_14_23 %>% filter(waterYear %in% randomYears$value)
+trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23, family = binomial)
 
 
-# filtering weekly data into validation dataset:
-weekly_validation_df <- weekly_data_trimmed_14_23 %>% filter(!(waterYear %in% randomYears$value))
+########### FUNCTIONAL ice-off: (the whole process but using dates of observed functional ice-off)
+# Reading CSV for ice duration with 0% ice as ice-off
+ice_off_binary_func <- read.csv("Input_Files/binary_iceOff_func.csv") %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+# View(ice_off_binary_func)
 
-# filtering daily data into training dataset
-daily_test_df <- daily_data_trimmed %>% filter(waterYear %in% randomYears$value)
+# recode ice_or_no into 2 classes
+ice_off_binary_func$ice_presence <- ifelse(ice_off_binary_func$ice_or_no == 0,
+                                           0,
+                                           1
+)
+# set labels for ice
+ice_off_binary_func$ice_presence <- factor(ice_off_binary_func$ice_presence,
+                                           levels = c(1, 0),
+                                           labels = c("ice", "no ice")
+)
 
-# filtering daily data into validation dataset:
-daily_validation_df <- daily_data_trimmed %>% filter(!(waterYear %in% randomYears$value))
+# View(ice_off_binary_func)
+# str(ice_off_binary_func$ice_presence)
+# levels(ice_off_binary_func$ice_presence)
 
-####### Final Models:
-daily_final_model_test <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_test_df, family = binomial)
 
-weekly_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_weekly, data = weekly_test_df, family = binomial)
 
-imputed_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_test_df, family = binomial)
+# making a df for only ice_presence and Date for simpler joining
+ice_presence_func_df <- ice_off_binary_func %>% select(Date, ice_or_no, ice_presence)
 
-  
+######## Combining Dfs - functional:
+# combine binary ice on or off with DAILY temp and conductivity
+out_dat_and_ice_daily_func <- full_join(out_cond_temp_daily,ice_presence_func_df, by = "Date")
+#View(out_dat_and_ice_daily_func)
+
+# combine daily conductivity and temperature with ice presence and cumulative flow
+## This df will be used in models for daily observations. It is trimmed to only include observations that are inside
+## the time frame of ice observations -> (drop_na(ice_or_no))
+flow_temp_cond_daily_ice_func <- left_join(out_dat_and_ice_daily_func,cumulative_flow_df,by="Date") %>% select(-c(wy_doy.y,waterYear.y)) %>% rename(c(wy_doy = wy_doy.x,waterYear = waterYear.x)) %>% drop_na(ice_or_no)
+#View(flow_temp_cond_daily_ice_func)
+
+# combine weekly conductivity and temperature observations with ice presence (this includes cumulative flow already)
+flow_temp_cond_weekly_ice_func <- full_join(flow_temp_cond_weekly, ice_presence_func_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm, temperature_C_raw, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x)
+#View(flow_temp_cond_weekly_ice_func)
+
+# combine imputed conductivity and temperature observations with ice presence (this includes cumulative flow already)
+flow_temp_cond_imputed_ice_func <- full_join(flow_temp_cond_impute, ice_presence_func_df, by = "Date") %>% select(Date, wy_doy.x, waterYear.x, Flow, cumulative_dis, cond_uScm_impute, temperature_C_impute, ice_or_no,ice_presence) %>% rename(wy_doy=wy_doy.x,waterYear=waterYear.x)
+#View(flow_temp_cond_imputed_ice_func)
+
+
+######## Trimming Dfs for the spring
+
+# trimming the data frames for windows:
+## 1982 - 2024
+imputed_data_trimmed_func <- filter_by_year_and_doy(flow_temp_cond_imputed_ice_func, c(170,288)) # March 18 - July 15
+## 1982-2024
+weekly_data_trimmed_func <- filter_by_year_and_doy(flow_temp_cond_weekly_ice_func, c(170,288)) # March 18 - July 15
+## 2014-2023
+daily_data_trimmed_func <- filter_by_year_and_doy(flow_temp_cond_daily_ice_func, c(170,288)) # March 18 - July 15
+
+
+
+
+####### Trimming Dfs again to match daily variables for model comparison (training time-frame)
+
+# imputed un-trimmed:
+flow_temp_cond_imputed_ice_14_23_func <- flow_temp_cond_imputed_ice_func %>% filter(waterYear >= 2014 & waterYear <= 2023)
+# weekly un-trimmed:
+flow_temp_cond_weekly_ice_14_23_func <- flow_temp_cond_weekly_ice_func %>% filter(waterYear >= 2014 & waterYear <= 2023)
+
+# imputed trimmed:
+imputed_data_trimmed_14_23_func <- imputed_data_trimmed_func %>% filter(waterYear >= 2014 & waterYear <= 2023)
+# weekly trimmed:
+weekly_data_trimmed_14_23_func <- weekly_data_trimmed_func %>% filter(waterYear >= 2014 & waterYear <= 2023)
+
+
+###### Final Models
+trimmed_daily_reduced_final_func <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed_func, family = binomial)
+
+trimmed_weekly_reduced_final_func <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23_func, family = binomial)
+
+trimmed_imputed_reduced_final_func <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23_func, family = binomial)
+

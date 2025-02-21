@@ -136,6 +136,7 @@ labels_pier=c(232,242,252,262,272,282)
 
 ggplot(pierson_hindcast_dates, aes(x=first_no_ice_wy_doy,y=wy_doy_pierson_off))+
   geom_point()+
+  theme_bw()+
   scale_color_gradient(low="blue",high="red")+
   geom_abline(intercept=0, slope=1)+
   labs(y="Modified Pierson Ice-Off Date",x="Outlet Modelled Ice-Off Date")+

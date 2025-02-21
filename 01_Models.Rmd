@@ -1,7 +1,7 @@
 ---
-title: "Models"
+title: "New Models"
 output: html_document
-date: "2024-11-23"
+date: "2025-02-20"
 ---
 ```{r}
 # load libraries
@@ -10,14 +10,6 @@ p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibb
 # This is the file that combines and cleans data:
 source("Input_Files/01_Data_Input.R")
 ```
-
-
-
-
-
-
-
-
 
 # Models:
 Here we start to make simple binary logistic regression models with different variables and compare their accuracy.
@@ -28,14 +20,14 @@ These models take into account all the variables: temperature, conductivity, flo
 # untrimmed data:
 untrimmed_daily_all <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = flow_temp_cond_daily_ice, family = binomial)
 
-untrimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = flow_temp_cond_weekly_ice_14_23, family = binomial)
+untrimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_weekly+cond_uScm_weekly+waterYear, data = flow_temp_cond_weekly_ice_14_23, family = binomial)
 
 untrimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = flow_temp_cond_imputed_ice_14_23, family = binomial)
 
 # trimmed data:
 trimmed_daily_all <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
 
-trimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
+trimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_weekly+cond_uScm_weekly+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
 
 trimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23, family = binomial)
 
@@ -56,17 +48,19 @@ tab_model(trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
   p.style = "numeric_stars" # display p-values and stars
 )
 ```
-Now that we know to use the trimmed data, we'll narrow down the variables used in the model. We'll start by removing flow because we have cumulative discharge had a lower p-value in the trimmed models.
+
+Now that we know to use the trimmed data, we'll narrow down the variables used in the model. We'll start by removing flow because cumulative discharge had a lower p-value in the trimmed models.
 ```{r}
-trimmed_daily_reduced1 <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
+trimmed_daily_reduced1a <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_test_df, family = binomial)
 
-trimmed_weekly_reduced1 <- glm(ice_presence~cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
+trimmed_weekly_reduced1a <- glm(ice_presence~cumulative_dis+temperature_C_weekly+cond_uScm_weekly+waterYear, data = weekly_test_df, family = binomial)
 
-trimmed_imputed_reduced1 <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23, family = binomial)
+trimmed_imputed_reduced1a <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_test_df, family = binomial)
 ```
 Results: <0.01 change in R^2
 ```{r}
-tab_model(trimmed_daily_reduced1, trimmed_imputed_reduced1,trimmed_weekly_reduced1, trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+tab_model(trimmed_daily_all, trimmed_imputed_all,trimmed_weekly_all, trimmed_daily_reduced1a,trimmed_imputed_reduced1a,trimmed_weekly_reduced1a,
+  show.intercept = FALSE,
   show.ci = FALSE, # remove CI
   show.aic = TRUE, # display AIC
   p.style = "numeric_stars" # display p-values and stars
@@ -74,65 +68,62 @@ tab_model(trimmed_daily_reduced1, trimmed_imputed_reduced1,trimmed_weekly_reduce
 ```
 Now we'll remove water year because it was not significant in any of the reduced models.
 ```{r}
-trimmed_daily_reduced2 <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm, data = daily_data_trimmed, family = binomial)
+trimmed_daily_reduced2a <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm, data = daily_test_df, family = binomial)
 
-trimmed_weekly_reduced2 <- glm(ice_presence~cumulative_dis+temperature_C_raw+cond_uScm, data = weekly_data_trimmed_14_23, family = binomial)
+trimmed_weekly_reduced2a <- glm(ice_presence~cumulative_dis+temperature_C_weekly+cond_uScm_weekly, data = weekly_test_df, family = binomial)
 
-trimmed_imputed_reduced2 <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute, data = imputed_data_trimmed_14_23, family = binomial)
+trimmed_imputed_reduced2a <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute, data = imputed_test_df, family = binomial)
 ```
 Results: No change in R^2
 ```{r}
-tab_model(trimmed_daily_reduced2, trimmed_imputed_reduced2,trimmed_weekly_reduced2, trimmed_daily_reduced1,trimmed_imputed_reduced1,trimmed_weekly_reduced1,
+tab_model(trimmed_daily_reduced2a, trimmed_imputed_reduced2a,trimmed_weekly_reduced2a, trimmed_daily_reduced1a,trimmed_imputed_reduced1a,trimmed_weekly_reduced1a,
+  show.intercept = FALSE,
   show.ci = FALSE, # remove CI
   show.aic = TRUE, # display AIC
   p.style = "numeric_stars" # display p-values and stars
 )
 ```
-Now we'll remove conductivity because its p-value was only <0.05 in one model
+Now we'll remove conductivity because its p-value was only <0.05 in one model. These are the final models:
 ```{r}
-trimmed_daily_reduced_final <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
+daily_final_model_test <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_test_df, family = binomial)
+# trimmed_daily_reduced_final
+weekly_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_weekly, data = weekly_test_df, family = binomial)
+#trimmed_weekly_reduced_final
+imputed_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_test_df, family = binomial)
+#trimmed_imputed_reduced_final
 
-trimmed_weekly_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23, family = binomial)
 
-trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23, family = binomial)
+# Also run the final model with the validation time period to be able to compare the R^2:
+imputed_validation_model <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_validation_df, family = binomial)
 ```
 Results: -0.011 change for weekly R^2, <0.01 change in daily and imputed R^2
 ```{r}
-tab_model(trimmed_daily_reduced_final, trimmed_imputed_reduced_final,trimmed_weekly_reduced_final, trimmed_daily_reduced2,trimmed_imputed_reduced2,trimmed_weekly_reduced2,
+tab_model(daily_final_model_test, imputed_final_model_test,weekly_final_model_test, trimmed_daily_reduced2a,trimmed_imputed_reduced2a,trimmed_weekly_reduced2a,
+  show.intercept = FALSE,
   show.ci = FALSE, # remove CI
   show.aic = TRUE, # display AIC
   p.style = "numeric_stars" # display p-values and stars
 )
 
-# just imputed - used for thesis body
-tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced2,
-  show.ci = FALSE, # remove CI
-  show.aic = TRUE, # display AIC
-  p.style = "numeric_stars" # display p-values and stars
-)
-```
-
-# Functional Ice-off Dates
-```{r}
-# here, the model using the first date of observed 0% ice as the ice-off date in the training data is compared to the model using the date of "functional ice-off" in the training data.
-tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced_final_func,
+# FOR THESIS DOCUMENT:
+# final three different temporal resolution models with the validation model:
+tab_model(daily_final_model_test, imputed_final_model_test,weekly_final_model_test,imputed_validation_model,
+  show.intercept = FALSE,
   show.ci = FALSE, # remove CI
   show.aic = TRUE, # display AIC
   p.style = "numeric_stars" # display p-values and stars
 )
 ```
-
-
-Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("01_Models.Rmd")
+Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("02_Probability_Ice_Analysis.Rmd")
 ```{r}
-discharge_plot <- plot_model(trimmed_imputed_reduced_final,
+discharge_plot <- plot_model(imputed_final_model_test,
   type = "pred",
   terms = c("cumulative_dis [all]"),
   ci.lvl = NA # remove confidence bands
 ) +
   labs(y = "Prob (no ice)")
 
-temp_plot <- plot_model(trimmed_imputed_reduced_final,
+temp_plot <- plot_model(imputed_final_model_test,
   type = "pred",
   terms = c("temperature_C_impute [all]"),
   ci.lvl = NA # remove confidence bands

@@ -1,0 +1,144 @@
+---
+title: "Models"
+output: html_document
+date: "2024-11-23"
+---
+```{r}
+# load libraries
+library(pacman)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary)
+# This is the file that combines and cleans data:
+source("Input_Files/01_Data_Input.R")
+```
+
+
+
+
+
+
+
+
+
+# Models:
+Here we start to make simple binary logistic regression models with different variables and compare their accuracy.
+
+April 1 - July 15 Trimmed vs. Un-Trimmed Data - all variables:
+These models take into account all the variables: temperature, conductivity, flow, cumulative discharge, and water year.
+```{r}
+# untrimmed data:
+untrimmed_daily_all <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = flow_temp_cond_daily_ice, family = binomial)
+
+untrimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = flow_temp_cond_weekly_ice_14_23, family = binomial)
+
+untrimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = flow_temp_cond_imputed_ice_14_23, family = binomial)
+
+# trimmed data:
+trimmed_daily_all <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_all <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23, family = binomial)
+
+```
+How do they compare?
+The R^2 for the models using data trimmed to include only April 1 - July 15 increase by ~ 0.2 for each different temporal frequency. So from now on, we will be using the trimmed data.
+```{r}
+# supplemental table with all models
+tab_model(untrimmed_daily_all,untrimmed_weekly_all,untrimmed_imputed_all,trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+# reduced table for main body of thesis
+tab_model(trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+Now that we know to use the trimmed data, we'll narrow down the variables used in the model. We'll start by removing flow because we have cumulative discharge had a lower p-value in the trimmed models.
+```{r}
+trimmed_daily_reduced1 <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced1 <- glm(ice_presence~cumulative_dis+temperature_C_raw+cond_uScm+waterYear, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced1 <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23, family = binomial)
+```
+Results: <0.01 change in R^2
+```{r}
+tab_model(trimmed_daily_reduced1, trimmed_imputed_reduced1,trimmed_weekly_reduced1, trimmed_daily_all,trimmed_imputed_all,trimmed_weekly_all,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+Now we'll remove water year because it was not significant in any of the reduced models.
+```{r}
+trimmed_daily_reduced2 <- glm(ice_presence~cumulative_dis+Temperature_C+cond_uScm, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced2 <- glm(ice_presence~cumulative_dis+temperature_C_raw+cond_uScm, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced2 <- glm(ice_presence~cumulative_dis+temperature_C_impute+cond_uScm_impute, data = imputed_data_trimmed_14_23, family = binomial)
+```
+Results: No change in R^2
+```{r}
+tab_model(trimmed_daily_reduced2, trimmed_imputed_reduced2,trimmed_weekly_reduced2, trimmed_daily_reduced1,trimmed_imputed_reduced1,trimmed_weekly_reduced1,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+Now we'll remove conductivity because its p-value was only <0.05 in one model
+```{r}
+trimmed_daily_reduced_final <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_data_trimmed, family = binomial)
+
+trimmed_weekly_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_raw, data = weekly_data_trimmed_14_23, family = binomial)
+
+trimmed_imputed_reduced_final <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_data_trimmed_14_23, family = binomial)
+```
+Results: -0.011 change for weekly R^2, <0.01 change in daily and imputed R^2
+```{r}
+tab_model(trimmed_daily_reduced_final, trimmed_imputed_reduced_final,trimmed_weekly_reduced_final, trimmed_daily_reduced2,trimmed_imputed_reduced2,trimmed_weekly_reduced2,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+
+# just imputed - used for thesis body
+tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced2,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+
+# Functional Ice-off Dates
+```{r}
+# here, the model using the first date of observed 0% ice as the ice-off date in the training data is compared to the model using the date of "functional ice-off" in the training data.
+tab_model(trimmed_imputed_reduced_final,trimmed_imputed_reduced_final_func,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+
+
+Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("01_Models.Rmd")
+```{r}
+discharge_plot <- plot_model(trimmed_imputed_reduced_final,
+  type = "pred",
+  terms = c("cumulative_dis [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+temp_plot <- plot_model(trimmed_imputed_reduced_final,
+  type = "pred",
+  terms = c("temperature_C_impute [all]"),
+  ci.lvl = NA # remove confidence bands
+) +
+  labs(y = "Prob (no ice)")
+
+discharge_plot
+temp_plot
+```

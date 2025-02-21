@@ -924,11 +924,85 @@ print(mean(imputed_ice_off_dates_predicted_obs$difference))
 
 
 # View the result data frame
-#View(imputed_ice_off_dates_predicted_obs)
+View(imputed_ice_off_dates_predicted_obs)
 ```
 Now that we have a threshold and we saw how our model performed, we can hindcast! Go to Rmd "03_Hindcasting.Rmd".
 
-# Prettier Plots
+# Functional Ice-Off Dates:
+Pulling out the first day each year when ice is "no ice" during the time period when we have observed ice-off dates.
+
+```{r}
+probabilities_impute_func <- predict(imputed_final_model_test_func,
+  newdata = select(imputed_data_trimmed_14_23_func, -ice_presence), # remove real outcomes
+  type = "response")
+
+imputed_data_trimmed_prob_func <- imputed_data_trimmed_14_23_func
+imputed_data_trimmed_prob_func$ice_probability <- probabilities_impute_func
+```
+
+
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+probability_impute_0_1_func <- ifelse(probabilities_impute_func < 0.5,
+  1,
+  0
+)
+# changing the labels of the probabilities
+probability_impute_factor_func <- factor(probability_impute_0_1_func, levels = c(1, 0),labels = c("ice", "no ice"))
+
+
+imputed_data_trimmed_prob_func$predicted_ice <- probability_impute_factor_func
+```
+
+
+```{r}
+# removing years with no data
+imputed_data_trimmed_prob_filter_func <- imputed_data_trimmed_prob_func %>% filter(waterYear<2021)
+
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs_func <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_prob_filter_func$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_prob_filter_func %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs_func <- bind_rows(imputed_ice_off_dates_predicted_obs_func, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+imputed_ice_off_dates_predicted_obs_func$difference <- ((imputed_ice_off_dates_predicted_obs_func$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs_func$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs_func$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+View(imputed_ice_off_dates_predicted_obs_func)
+```
+
+
+
 ## WY2016-2018 plot
 ```{r}
 WY2016_2018 <- (WY2016_all | WY2017_all | WY2018_all) + plot_annotation(
@@ -954,4 +1028,3 @@ WY2016_2018_noProb
 #Export file to new plot to a new Figures folder
 ggsave("Figures/WY2016_2018_temp_cond.png", dpi=600, width=12, height=10, units="in")
 ```
-
