@@ -308,10 +308,11 @@ outTempPlot <- ggplot(
     filter(waterYear == 2018),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
   theme_bw() +
-  geom_line() +
-  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="red")+ # pierson ice-off
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = Temperature_C, group = waterYear),size=1.5)+
+  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="#5D3A9B",size=1)+ # pierson ice-off
   lims(x = c(209, 244), y = c(0, 10))+
-  theme(axis.title.x = element_blank()) +
+  theme(axis.title.x = element_blank())+
   labs(y = "Temperature (C)")+
   scale_x_continuous(breaks=labels_x,labels=c("Apr-30","May-05","May-10","May-15","May-20", "May-25","May-30"),limits=c(209,244))+
   annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
@@ -321,8 +322,9 @@ outCQPlot <- ggplot(
     filter(waterYear == 2018),
   aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
   theme_bw() +
-  geom_line() +
-  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="red")+ # pierson ice-off
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = cumulative_dis, group = waterYear),size=1.5)+
+  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="#5D3A9B",size=1)+ # pierson ice-off
   lims(x = c(209, 244), y = c(100, 750))+
   labs(x="Date", y = "Cumulative Discharge (cms)")+
   scale_y_continuous(breaks=labels_y_cq,labels=c("5","10","15","20"),limits=c(100,750))+
@@ -347,8 +349,10 @@ buoyPlot <- ggplot(
   miniDot %>% filter(date_time > "2018-04-27" & date_time < "2018-06-01"),
   aes(x = date_time, y = temp, color = Depth_m,group = Depth_m))+
   theme_bw()+
-  geom_vline(xintercept=as_datetime("2018-05-21 01:39:00"),color="red")+ # pierson ice-off
-  geom_point(size=0.25,)+
+  geom_vline(xintercept=as_datetime("2018-05-21 01:39:00"),color="#5D3A9B",size=1)+ # pierson ice-off
+  geom_point(size=0.8,)+
+  geom_line(aes(x = date_time, y = temp, color = Depth_m,group = Depth_m))+
+  scale_color_manual(values = c("#1A85FF", "#D41159"))+
   labs(y="Temperature (C)")+
   theme(axis.title.x = element_blank()) +
   scale_x_datetime(date_labels = "%b-%d", breaks = "5 days")+
@@ -359,25 +363,76 @@ buoyPlot
 ```{r}
 buoyTempCQPlot <- buoyPlot / outTempPlot / outCQPlot + plot_layout(heights = c(20,20,20))
 buoyTempCQPlot
-ggsave("Figures/buoyOutPlot.png", dpi=600, width=6, height=8, units="in")
+#ggsave("Figures/buoyOutPlot.png", dpi=600, width=6, height=8, units="in")
 ```
 ## Outlet and Probability of No Ice:
 ```{r}
+# Bring in hindcasted ice-off dates:
+hindcasted_dates <- read.csv("Input_Files/hindcasted_ice_off_dates.csv") %>% select(-"X")
+
+# plots for temperature and discharge (change the x variable and limits)
+labels_x<-c(212,217,222,227,232,237,242)
+
+labels_y_cq<-c(176.573,353.147,529.72,706.293)
+#5,10,15,20
+
+# April 30 (212) to June 1 (244) for buoy plot below
+# labels: April 30: 212, May 5: 217, May 10: 222, May 15: 227, May 20: 232, May 25: 237, May 30: 242
+
+outTempPlot_preddate <- ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2018),
+  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = Temperature_C, group = waterYear),size=1.5)+
+  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="#5D3A9B",size=1)+ # pierson ice-off
+  geom_vline(xintercept=hindcasted_dates$first_no_ice_wy_doy[hindcasted_dates$waterYear==2018],color="#E66100",size=1)+ # hindcasted ice-off
+  lims(x = c(209, 244), y = c(0, 10))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "Temperature (C)")+
+  scale_x_continuous(breaks=labels_x,labels=c("Apr-30","May-05","May-10","May-15","May-20", "May-25","May-30"),limits=c(209,244))+
+  annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
+
+outCQPlot_preddate <- ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2018),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = cumulative_dis, group = waterYear),size=1.5)+
+  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="#5D3A9B",size=1)+ # pierson ice-off
+  geom_vline(xintercept=hindcasted_dates$first_no_ice_wy_doy[hindcasted_dates$waterYear==2018],color="#E66100",size=1)+
+  lims(x = c(209, 244), y = c(100, 750))+
+  labs(x="Date", y = "Cumulative Discharge (cms)")+
+  scale_y_continuous(breaks=labels_y_cq,labels=c("5","10","15","20"),limits=c(100,750))+
+  scale_x_continuous(breaks=labels_x,labels=c("Apr-30","May-05","May-10","May-15","May-20", "May-25","May-30"),limits=c(209,244))+
+  annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
+
+outTempPlot_preddate
+outCQPlot_preddate
+```
+
+
+
+```{r}
 probIcePlot <- ggplot(imputed_data_trimmed_prob %>% filter(waterYear == 2018), aes(x = wy_doy, y = ice_probability)) +
-  geom_line() +
-  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="red")+ # pierson ice-off
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = ice_probability),size=1.5)+
+  geom_vline(xintercept=pierson_dates$wy_doy_pierson_off[pierson_dates$waterYear==2018],color="#5D3A9B",size=1)+ # pierson ice-off
+  geom_hline(yintercept=0.5,linetype=2)+
   labs(y = "Probability of No Ice"
   )+ lims(x = c(209,244))+
   theme_bw()+
   theme(axis.title.x = element_blank()) +
-  scale_x_continuous(breaks=labels_x,labels=c("30-Apr","05-May","10-May","15-May","20-May", "25-May","30-May"),limits=c(209,244))+
+  scale_x_continuous(breaks=labels_x,labels=c("Apr-30","May-05","May-10","May-15","May-20", "May-25","May-30"),limits=c(209,244))+
   annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2018], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2018], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
 
 probIcePlot
 
-probTempCQPlot <- probIcePlot / outTempPlot / outCQPlot + plot_layout(heights = c(20,20,20))
+probTempCQPlot <- probIcePlot / outTempPlot_preddate / outCQPlot_preddate + plot_layout(heights = c(20,20,20))
 probTempCQPlot
-ggsave("Figures/probOutPlot.png", dpi=600, width=6, height=8, units="in")
+#ggsave("Figures/probOutPlot.png", dpi=600, width=6, height=8, units="in")
 ```
 
 

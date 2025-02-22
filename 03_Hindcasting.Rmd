@@ -62,6 +62,7 @@ for(year in unique(hindcast_imputed_df$waterYear)) {
 
 # View the result data frame
 print(hindcasted_ice_off_dates)
+# save the dates as a csv for met data analysis:
 #write.csv(hindcasted_ice_off_dates, "Input_Files/hindcasted_ice_off_dates.csv")
 ```
 Plot them!
@@ -193,6 +194,8 @@ hindcast_plot_func <- ggplot(hindcasted_ice_off_dates_func %>% filter(waterYear<
    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))
 hindcast_plot_func
 ```
+
+
 
 # Wierd Years (really early and really late) - 0% (NOT functional)
 
