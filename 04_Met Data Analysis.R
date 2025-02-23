@@ -125,7 +125,9 @@ cumul_dis_percentiles <- cumulative_dat_ungroup %>%
   group_by(waterYear) %>%
   group_modify(~ find_percentiles(.x, c(0.2, 0.5, 0.8)))
 
-twent_perc_dates <- twent_perc_dates %>% addWaterYear() %>% select(c(waterYear,wy_doy_20Percent))
+
+
+twent_perc_dates <- cumul_dis_percentiles %>% filter(percentile==0.2 & waterYear<2024) %>% rename(wy_doy_20Percent=wy_doy) %>% select(-percentile)
 
 #### Join 20th percentile of cumulative discharge dates with met_full data
 met_full <- left_join(met_full,twent_perc_dates,by="waterYear") 
@@ -257,7 +259,52 @@ maxSWEPlot <-
   scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
 maxSWEPlot
 
+new_y_again <- c(230,240,250,260)
+
+twenPercPlot <-
+  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=wy_doy_20Percent))+
+  geom_point(size=3)+
+  theme_bw()+
+  labs(y="Date 20th Percentile Cumul Discharge", x="Hindcasted Date of Ice-Off")+
+  scale_y_continuous(breaks=new_y_again,labels=c("May-17","May-27","Jun-06","Jun-16"),limits=c(229,260))+
+  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(212,281))
+twenPercPlot
+
 metScatterPlots <- (aprTempPlot | mayTempPlot | marAprTempPlot) /
   (aprMayTempPlot | marMayTempPlot | maxSWEDatePlot) / 
-  (plot_spacer()| maxSWEPlot | plot_spacer())
+  (maxSWEPlot | twenPercPlot | plot_spacer())
 metScatterPlots
+
+
+### Analysis of weird years:
+labels_x_newer<-c(222,232,242,252,262)
+
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2022),
+  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = Temperature_C, group = waterYear),size=1.5)+
+  geom_vline(xintercept=243, color="forestgreen")+ # observed
+  geom_vline(xintercept=252, color="brown")+ # hindcasted
+  lims(x=c(220,265))+
+  scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
+  labs(x="Date", y ="Temperature (C)" )
+#ggsave("Figures/2022_temp.png", dpi=600, width=6, height=8, units="in")
+
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2023),
+  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = Temperature_C, group = waterYear),size=1.5)+
+  geom_vline(xintercept=242, color="forestgreen")+ # observed
+  geom_vline(xintercept=253, color="brown")+ # hindcasted
+  lims(x=c(220,265))+
+  scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
+  labs(x="Date", y ="Temperature (C)" )
+#ggsave("Figures/2023_temp.png", dpi=600, width=6, height=8, units="in")
+
+

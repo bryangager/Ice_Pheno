@@ -7,7 +7,7 @@ date: "2024-11-23"
 ```{r}
 # load libraries
 library(pacman)
-p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,zyp)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,zyp,trend)
 # This is the file that combines and cleans data:
 source("Input_Files/01_Data_Input.R")
 ```
@@ -67,12 +67,19 @@ print(hindcasted_ice_off_dates)
 ```
 Plot them!
 ```{r}
-hindcast_model <- lm(hindcasted_ice_off_dates$first_no_ice_wy_doy~hindcasted_ice_off_dates$waterYear, data = hindcasted_ice_off_dates)
-
-hindcastMannKen <- MannKendall(hindcasted_ice_off_dates$first_no_ice_wy_doy)
+# Mann-Kendall Test
+hindcastMannKen <- mk.test(hindcasted_ice_off_dates$first_no_ice_wy_doy)
 print(hindcastMannKen)
+# Sens slope
+slope_result <- sens.slope(hindcasted_ice_off_dates$first_no_ice_wy_doy)
+# Extract slope estimate
+slope <- slope_result$estimates
+# Extract confidence intervals
+conf_int <- slope_result$conf.int
+# Print results
+print(slope)
+print(conf_int)
 
-p_value <- summary(hindcast_model)$coefficients[2, 4]
 
 hindcast_plot <- ggplot(hindcasted_ice_off_dates %>% filter(waterYear<=2021), aes(x = waterYear, y = first_no_ice_wy_doy)) +
   geom_point() +
@@ -84,9 +91,6 @@ hindcast_plot <- ggplot(hindcasted_ice_off_dates %>% filter(waterYear<=2021), ae
    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1))
 
 hindcast_plot
-#   annotate("text", x = 2019, y = 238, 
-#           label = paste("p =", round(p_value, 3)), 
-#           size = 3, color = "red", hjust = 0)
 
 #ggsave("Figures/hindcast_plot_no_regression.png", dpi=600, width=6, height=4, units="in")
 ```
