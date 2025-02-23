@@ -278,7 +278,7 @@ metScatterPlots
 
 ### Analysis of weird years:
 labels_x_newer<-c(222,232,242,252,262)
-
+# Temp
 ggplot(
   flow_temp_cond_daily_ice %>%
     filter(waterYear == 2022),
@@ -286,12 +286,12 @@ ggplot(
   theme_bw() +
   geom_line(size=1) +
   geom_point(aes(x = wy_doy, y = Temperature_C, group = waterYear),size=1.5)+
-  geom_vline(xintercept=243, color="forestgreen")+ # observed
-  geom_vline(xintercept=252, color="brown")+ # hindcasted
+  geom_vline(xintercept=243, color="forestgreen",size=1)+ # observed
+  geom_vline(xintercept=252, color="brown",size=1)+ # hindcasted
   lims(x=c(220,265))+
   scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
   labs(x="Date", y ="Temperature (C)" )
-#ggsave("Figures/2022_temp.png", dpi=600, width=6, height=8, units="in")
+#ggsave("Figures/2022_temp.png", dpi=600, width=8, height=5, units="in")
 
 ggplot(
   flow_temp_cond_daily_ice %>%
@@ -300,11 +300,38 @@ ggplot(
   theme_bw() +
   geom_line(size=1) +
   geom_point(aes(x = wy_doy, y = Temperature_C, group = waterYear),size=1.5)+
+  geom_vline(xintercept=242, color="forestgreen",size=1)+ # observed
+  geom_vline(xintercept=253, color="brown",size=1)+ # hindcasted
+  lims(x=c(220,265))+
+  theme(axis.title.y = element_blank())+
+  scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
+  labs(x="Date", y ="Temperature (C)" )
+#ggsave("Figures/2023_temp.png", dpi=600, width=8, height=5, units="in")
+
+# Cumul Dis
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2022),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = cumulative_dis, group = waterYear),size=1.5)+
+  geom_vline(xintercept=243, color="forestgreen")+ # observed
+  geom_vline(xintercept=252, color="brown")+ # hindcasted
+  lims(x=c(220,265))+
+  scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
+  labs(x="Date", y ="Temperature (C)" )
+
+
+ggplot(
+  flow_temp_cond_daily_ice %>%
+    filter(waterYear == 2023),
+  aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = cumulative_dis, group = waterYear),size=1.5)+
   geom_vline(xintercept=242, color="forestgreen")+ # observed
   geom_vline(xintercept=253, color="brown")+ # hindcasted
   lims(x=c(220,265))+
   scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
   labs(x="Date", y ="Temperature (C)" )
-#ggsave("Figures/2023_temp.png", dpi=600, width=6, height=8, units="in")
-
-
