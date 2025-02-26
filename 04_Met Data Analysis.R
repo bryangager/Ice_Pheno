@@ -171,103 +171,115 @@ ggsave("Figures/pierson_mine_1:1.png", dpi=600, width=6, height=4, units="in")
 
 ############# Correlation scatter plots:
 
-labels_x<-c(220,240,260,280)
-labels_y<-c(230,240,250,260,270)
+labels_y<-c(220,240,260,280)
+labels_x<-c(230,240,250,260,270)
 
 aprTempPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=T__Apr))+
+  ggplot(met_full, aes(x=T__Apr,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="April Cumul. Temperature (C)", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
+  theme(axis.title.y = element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="April Cumul. Temperature (C)")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
 aprTempPlot
 
 mayTempPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=T__May))+
+  ggplot(met_full, aes(x=T__May,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="May Cumul. Temperature (C)", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
+  theme(axis.title.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="May Cumul. Temperature (C)")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
 mayTempPlot
 
 marAprTempPlot <- 
-ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=T_MarAprcumul))+
+ggplot(met_full, aes(x=T_MarAprcumul,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="March-April Cumul. Temperature (C)", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
+  theme(axis.title.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="March-April Cumul. Temperature (C)")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
 marAprTempPlot
 
 marMayTempPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=T_MarMaycumul))+
+  ggplot(met_full, aes(x=T_MarMaycumul,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="March-May Cumul. Temperature (C)", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(220,281))
+  theme(axis.title.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="March-May Cumul. Temperature (C)")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(220,281))
 marMayTempPlot
 
 aprMayTempPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=T_AprMaycumul))+
+  ggplot(met_full, aes(x=T_AprMaycumul,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="April-May Cumul. Temperature (C)", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
+  theme(axis.title.y = element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="April-May Cumul. Temperature (C)")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
 aprMayTempPlot
 
 firstSnowPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=first_snow_melt_wydoy))+
+  ggplot(met_full, aes(x=first_snow_melt_wydoy,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="Date of First Snowmelt", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,280))+
-  scale_y_continuous(breaks=labels_y,labels=c("May-17","May-27","Jun-06","Jun-16","Jun-26"),limits=c(229,270))
+  theme(axis.title.y = element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="Date of First Snowmelt")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,280))+
+  scale_x_continuous(breaks=labels_x,labels=c("May-17","May-27","Jun-06","Jun-16","Jun-26"),limits=c(229,270))
 firstSnowPlot
 
 lastSnowPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=last_snow_melt_wydoy))+
+  ggplot(met_full, aes(x=last_snow_melt_wydoy,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="Date of Last Snowmelt", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,280))+
-  scale_y_continuous(breaks=labels_y,labels=c("May-17","May-27","Jun-06","Jun-16","Jun-26"),limits=c(229,270))
+  theme(axis.title.y = element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="Date of Last Snowmelt")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,280))+
+  scale_x_continuous(breaks=labels_x,labels=c("May-17","May-27","Jun-06","Jun-16","Jun-26"),limits=c(229,270))
 lastSnowPlot
 
 new_y <- c(170,190,210,230)
 
 maxSWEDatePlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=max_swe_wydoy))+
+  ggplot(met_full, aes(x=max_swe_wydoy,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  theme(axis.title.x = element_blank())+
-  labs(y="Date of Max Snow Water Equivalent", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(211,280))+
-  scale_y_continuous(breaks=new_y,labels=c("Mar-18","Apr-07","Apr-27","May-17"),limits=c(169,244))
+  theme(axis.title.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="Date of Max Snow Water Equivalent")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(211,280))+
+  scale_x_continuous(breaks=new_y,labels=c("Mar-18","Apr-07","Apr-27","May-17"),limits=c(169,244))
 maxSWEDatePlot
 
 maxSWEPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=max_swe))+
+  ggplot(met_full, aes(x=max_swe,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  labs(y="Max Snow Water Equivalent", x="Hindcasted Date of Ice-Off")+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
+  theme(axis.title.y = element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="Max Snow Water Equivalent")+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(210,281))
 maxSWEPlot
 
 new_y_again <- c(230,240,250,260)
 
 twenPercPlot <-
-  ggplot(met_full, aes(x=hindcast_ice_off_wy_doy,y=wy_doy_20Percent))+
+  ggplot(met_full, aes(x=wy_doy_20Percent,y=hindcast_ice_off_wy_doy))+
   geom_point(size=3)+
   theme_bw()+
-  labs(y="Date 20th Percentile Cumul Discharge", x="Hindcasted Date of Ice-Off")+
-  scale_y_continuous(breaks=new_y_again,labels=c("May-17","May-27","Jun-06","Jun-16"),limits=c(229,260))+
-  scale_x_continuous(breaks=labels_x,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(212,281))
+  theme(axis.title.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  labs(y="Hindcasted Date of Ice-Off", x="Date 20th Percentile Cumul Discharge")+
+  scale_x_continuous(breaks=new_y_again,labels=c("May-17","May-27","Jun-06","Jun-16"),limits=c(229,260))+
+  scale_y_continuous(breaks=labels_y,labels=c("May-07","May-27","Jun-16","Jul-06"),limits=c(212,281))
 twenPercPlot
 
 metScatterPlots <- (aprTempPlot | mayTempPlot | marAprTempPlot) /
