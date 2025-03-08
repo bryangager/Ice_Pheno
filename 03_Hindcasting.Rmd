@@ -26,9 +26,11 @@ hindcast_probs_0_1 <- ifelse(hindcast_preds < 0.5,
 # changing the labels of the probabilities
 hindcast_prob_factor <- factor(hindcast_probs_0_1, levels = c(1, 0),labels = c("ice", "no ice"))
 
-# adding the probabilities to the main df
+# adding the binary to the main df
 hindcast_imputed_df <- imputed_data_trimmed  
 hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
+# adding the daily probabilities to the main df
+hindcast_imputed_df$hindcasted_probability <- hindcast_preds
 ```
 
 Pulling out the first day each year when ice is "no ice" for hindcasted data
@@ -108,20 +110,45 @@ ggplot() +
   geom_errorbar(data = obs_ice_off_dates, aes(x = waterYear,y = wy_doy_ice_off,ymin = wy_doy_ice_off - 6,ymax = wy_doy_ice_off),width = .1,position = position_dodge(0.05))+
   geom_point(data = obs_ice_off_dates,inherit.aes = FALSE,aes(x = waterYear, y =wy_doy_ice_off), color = "magenta") +
   # geom_errorbar(data = hindcasted_ice_off_dates %>% filter(waterYear <= 2012),aes(x = waterYear,y = first_no_ice_wy_doy,ymin = first_no_ice_wy_doy-7,ymax = first_no_ice_wy_doy+7),width = .1,     position = position_dodge(0.05)) +
-  scale_x_continuous(breaks = seq(min(hindcasted_ice_off_dates$waterYear),     max(hindcasted_ice_off_dates$waterYear),by = 1)) +
+  scale_x_continuous(breaks = seq(min(hindcasted_ice_off_dates$waterYear),     max(hindcasted_ice_off_dates$waterYear),by = 2)) +
   labs(x = "Year", y = "Ice-Off Date") +
-  theme(axis.text.x = element_text(angle = 90,vjust = 1,hjust = 1)) +   
+  theme(axis.text.x = element_text(angle = 45,vjust = 1,hjust = 1)) +   
   scale_y_continuous(breaks = labels_y,labels = c("01-May","10-May","20-May","30-May",       "09-Jun","19-Jun","29-Jun","09-Jul"),limits = c(210, 290))
 #ggsave("Figures/hindcast_plot_w_error.png", dpi=600, width=6, height=4, units="in")
 
 ```
 
+## Hindcast vs observed plot
+```{r}
+#randomYears
+this_x <- c(232,237,242,247,252,257)
+
+obs_vs_hindcast_dates <- left_join(obs_ice_off_dates,hindcasted_ice_off_dates,by="waterYear") %>% rename(hindcast_iceoff_wydoy = first_no_ice_wy_doy)
+
+ggplot()+
+  geom_point(data = obs_vs_hindcast_dates %>% filter(waterYear %in% randomYears$value), aes(x = wy_doy_ice_off, y = hindcast_iceoff_wydoy), color = "purple")+
+  geom_point(data = obs_vs_hindcast_dates %>% filter(!waterYear %in% randomYears$value), aes(x = wy_doy_ice_off, y = hindcast_iceoff_wydoy), color = "red")+
+  geom_abline(intercept=0, slope=1)+
+  theme_bw()+
+  scale_x_continuous(breaks=this_x,labels=c("May-20","May-25","May-30","Jun-04","Jun-09","Jun-14"),limits=c(230,260))+
+  scale_y_continuous(breaks=this_x,labels=c("May-20","May-25","May-30","Jun-04","Jun-09","Jun-14"),limits=c(230,260))+
+  labs(x="Observed Date of Ice-Off",y="Hindcasted Date of Ice-off")
+#ggsave("Figures/hindcast_vs_obs_dates.png", dpi=600, width=6, height=4, units="in")
+```
+
+```{r}
+obs_vs_hindcast_dates$difference <- ((obs_vs_hindcast_dates$wy_doy_ice_off)-(obs_vs_hindcast_dates$hindcast_iceoff_wydoy))*-1
+print(obs_vs_hindcast_dates$difference)
+
+mean((4^2)+(5^2)+(6^2)+1+(3^2)+(5^2)+(2^2)+(2^2)+(9^2)+(11^2))
+```
+
+
+
 
 
 
 Note for bryan: 2012, temperature increased rapidly and early.
-
-
 
 
 

@@ -35,6 +35,19 @@ april_start <- "04-01"
 april_end <- "05-01"
 may_end <- "06-01"
 
+############################## Change this workflow to exclude NAs!!!!!! Only difference in code is the na.rm = TRUE
+march_may_cumul_temp_noNA <- weather_daily %>%
+  mutate(
+    year = format(Date, "%Y"),                     # Extract the year
+    month_day = format(Date, "%m-%d")              # Extract month and day
+  ) %>%
+  filter(month_day >= march_start & month_day < may_end) %>% # Filter by date window
+  group_by(waterYear) %>%                               # Group by year
+  summarize(
+    T_MarMaycumul = sum(T_air_2_m_mean, na.rm = TRUE))
+
+
+
 ### March - April
 # Add year-based grouping and calculate cumulative sums
 march_april_cumul_temp <- weather_daily %>%
@@ -347,3 +360,4 @@ ggplot(
   lims(x=c(220,265))+
   scale_x_continuous(breaks=labels_x_newer,labels=c("May-10","May-20", "May-30","Jun-09","Jun-19"),limits=c(220,265))+
   labs(x="Date", y ="Temperature (C)" )
+

@@ -114,6 +114,27 @@ tab_model(daily_final_model_test, imputed_final_model_test,weekly_final_model_te
   p.style = "numeric_stars" # display p-values and stars
 )
 ```
+
+# Writing the model formula
+```{r}
+# Extracting the coefficients
+
+coefficients <- coef(imputed_final_model_test) 
+
+# Construct the equation string
+
+equation <- paste("Ice Presence =", round(coefficients[1], 2), " +", 
+
+                 round(coefficients[2], 2), "* Cumulative Discharge +", 
+
+                 round(coefficients[3], 2), "* Water Temperature") 
+
+print(equation) 
+```
+
+
+
+
 Now that we have models that explain ~86% of the data (imputed model), we'll make some plots to determine the thresholds at which the models should determine ice-off - Now go to the Next Rmd ("02_Probability_Ice_Analysis.Rmd")
 ```{r}
 discharge_plot <- plot_model(imputed_final_model_test,
