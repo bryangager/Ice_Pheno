@@ -1,0 +1,149 @@
+---
+title: "Ice_On_Probability_Analysis"
+output: html_document
+date: "2025-04-14"
+---
+```{r}
+# load libraries
+library(pacman)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,patchwork, stringr)
+# This is the file that combines and cleans data:
+source("Input_Files/01_Data_Input.R")
+```
+
+# Plotting Probability
+Now we'll plot the probability of ice as a function of time.
+Here we make a new data frame with the imputed values, and add the probability of ice presence given by the model
+
+```{r echo=FALSE}
+
+trimmed_imputed_all_winter <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23_winter, family = binomial)
+
+probabilities_winter <- predict(trimmed_imputed_all_winter,
+  newdata = select(imputed_data_trimmed_14_23_winter, -ice_presence), # remove real outcomes
+  type = "response")
+imputed_data_trimmed_prob_winter <- imputed_data_trimmed_14_23_winter
+imputed_data_trimmed_prob_winter$ice_probability <- probabilities_winter
+
+```
+
+## 0.5 as Threshold
+```{r}
+# create a vector of predicted probabilities
+preds_winter <- predict(trimmed_imputed_all_winter,
+  newdata = select(imputed_data_trimmed_14_23_winter, -ice_presence), # remove real outcomes
+  type = "response"
+)
+
+# if probability < threshold, ice is not on The Loch
+preds_outcome_winter <- ifelse(preds_winter < 0.5,
+  0,
+  1
+)
+
+# transform predictions into factor and set labels
+preds_outcome_winter <- factor(preds_outcome_winter,
+  levels = c(0, 1),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab_winter <- table(imputed_data_trimmed_14_23_winter$ice_presence, preds_outcome_winter,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab_winter
+
+accuracy_winter <- sum(diag(tab_winter)) / sum(tab_winter)
+accuracy_winter
+
+# sensitivity
+sensitivity_winter <- tab_winter[2, 2] / (tab_winter[2, 2] + tab_winter[2, 1])
+sensitivity_winter
+
+# specificity
+specificity_winter<- tab_winter[1, 1] / (tab_winter[1, 1] + tab_winter[1, 2])
+specificity_winter
+```
+
+
+# Ice-On Dates:
+Pulling out the first day each year when ice is "ice"
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+winter_probs <- ifelse(probabilities_winter < 0.5,
+  1,
+  0
+)
+# changing the labels of the probabilities
+winter_probs_factor <- factor(winter_probs, levels = c(0, 1),labels = c("no ice", "ice"))
+
+
+imputed_data_trimmed_prob_winter$predicted_ice <- winter_probs_factor
+
+```
+# This is where I am
+```{r}
+# removing years with no data
+imputed_data_trimmed_prob_test_filter <- imputed_data_trimmed_prob_test %>% filter(waterYear!=2023)
+
+# Create an empty data frame to store the results
+imputed_ice_off_dates_predicted_obs <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(imputed_data_trimmed_prob_test_filter$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- imputed_data_trimmed_prob_test_filter %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_no_ice_presence <- year_data %>% 
+    filter(ice_presence == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_no_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "no ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_no_ice_presence_doy = first_no_ice_presence$wy_doy,
+    first_no_ice_predicted_doy = first_no_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  imputed_ice_off_dates_predicted_obs <- bind_rows(imputed_ice_off_dates_predicted_obs, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+imputed_ice_off_dates_predicted_obs$difference <- ((imputed_ice_off_dates_predicted_obs$first_no_ice_presence_doy)-(imputed_ice_off_dates_predicted_obs$first_no_ice_predicted_doy))*-1
+print(mean(imputed_ice_off_dates_predicted_obs$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+#View(imputed_ice_off_dates_predicted_obs)
+```
+
+
+
+```{r}
+# testing making datframes that have september to december
+test_01 <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(1,92))
+test_02 <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(336,365))
+test_03 <- rbind(test_01,test_02)
+
+test_04 <- test_03 %>% filter(waterYear >= 2014 & waterYear <= 2023)
+
+ordered_indices <- order(test_04$Date)
+test_05 <- test_04[ordered_indices, ]
+View(test_05)
+
+# WORKS
+```
+

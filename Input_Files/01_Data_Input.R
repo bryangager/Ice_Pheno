@@ -130,6 +130,10 @@ flow_temp_cond_impute <- full_join(cumulative_flow_df, TCond_imputed_all, by = "
 obs_ice_off_dates <- read_xlsx("Input_Files/ice_off_dates20240918.xlsx")
 #View(obs_ice_off_dates)
 
+# this is just the observed ice-on dates from 2013-2023 with date of ice-off, date, and waterYear
+obs_ice_on_dates <- read_xlsx("Input_Files/ice_on_dates_20250414.xlsx")
+#View(obs_ice_on_dates)
+
 # this is a df with the wy_doy date of 100% ice and the wy_doy date with 0% ice for 2013-2023
 obs_ice_melt_windows <- read_xlsx("Input_Files/ice_100_to_0_dates_20241114.xlsx")
 #View(obs_ice_melt_windows)
@@ -186,7 +190,37 @@ weekly_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(170,2
 ## 2014-2023
 daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(170,288)) # March 18 - July 15
 
+####### Trimming Dfs for winter
 
+## 1982 - 2024
+oct_dec_impute <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(1,92)) # October 1 - December 31
+## 1982-2024
+oct_dec_weekly <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(1,92)) # October 1 - December 31
+## 2014-2023
+oct_dec_daily <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(1,92)) # October 1 - December 31
+
+## 1982 - 2024
+sept_oct_impute <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(336,365)) # September 1- October 1
+## 1982-2024
+sept_oct_weekly <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(336,365)) # September 1- October 1
+## 2014-2023
+sept_oct_daily <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(336,365)) # September 1 - October 1
+
+# binding all dates
+sept_dec_impute <- rbind(sept_oct_impute,oct_dec_impute)
+
+sept_dec_weekly <- rbind(sept_oct_weekly,oct_dec_weekly)
+
+sept_dec_daily <- rbind(sept_oct_daily,oct_dec_daily)
+
+# sorting dates - creating ordered indices for dates
+ordered_indices_impute <- order(sept_dec_impute$Date)
+ordered_indices_weekly <- order(sept_dec_weekly$Date)
+ordered_indices_daily <- order(sept_dec_daily$Date)
+# applying indices to data frames:
+imputed_data_trimmed_winter <- sept_dec_impute[ordered_indices_impute, ]
+weekly_data_trimmed_winter <- sept_dec_weekly[ordered_indices_weekly, ]
+daily_data_trimmed_winter <- sept_dec_daily[ordered_indices_daily, ]
 
 
 ####### Trimming Dfs again to match daily variables for model comparison (training time-frame)
@@ -196,11 +230,15 @@ flow_temp_cond_imputed_ice_14_23 <- flow_temp_cond_imputed_ice %>% filter(waterY
 # weekly un-trimmed:
 flow_temp_cond_weekly_ice_14_23 <- flow_temp_cond_weekly_ice %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
-# imputed trimmed:
+# imputed spring trimmed:
 imputed_data_trimmed_14_23 <- imputed_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
-# weekly trimmed:
+# weekly spring trimmed:
 weekly_data_trimmed_14_23 <- weekly_data_trimmed %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
+# imputed winter trimmed:
+imputed_data_trimmed_14_23_winter <- imputed_data_trimmed_winter %>% filter(waterYear >= 2014 & waterYear <= 2023)
+# weekly winter trimmed:
+weekly_data_trimmed_14_23_winter <- weekly_data_trimmed_winter %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
 ####### Randomly sampling 60% of the data with observed ice presence:
 # choosing random years for the training and validation datasets:

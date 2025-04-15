@@ -11,7 +11,7 @@ p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibb
 source("Input_Files/01_Data_Input.R")
 ```
 
-# Models:
+# Ice-Off Models:
 Here we start to make simple binary logistic regression models with different variables and compare their accuracy.
 
 April 1 - July 15 Trimmed vs. Un-Trimmed Data - all variables:
@@ -153,4 +153,70 @@ temp_plot <- plot_model(imputed_final_model_test,
 
 discharge_plot
 temp_plot
+```
+
+
+
+
+
+# Ice-On Models:
+Here we start to make simple binary logistic regression models with different variables and compare their accuracy.
+
+October 1 - December 31 Trimmed
+These models take into account all the variables: temperature, conductivity, flow, cumulative discharge, and water year.
+```{r}
+
+# trimmed for winter data:
+trimmed_daily_all_winter <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed_winter, family = binomial)
+
+trimmed_weekly_all_winter <- glm(ice_presence~Flow+cumulative_dis+temperature_C_weekly+cond_uScm_weekly+waterYear, data = weekly_data_trimmed_14_23_winter, family = binomial)
+
+trimmed_imputed_all_winter <- glm(ice_presence~Flow+cumulative_dis+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23_winter, family = binomial)
+
+```
+How do they compare?
+The R^2 for the models using data trimmed to include only April 1 - July 15 increase by ~ 0.2 for each different temporal frequency. So from now on, we will be using the trimmed data.
+```{r}
+# supplemental table with all models
+tab_model(trimmed_daily_all_winter,trimmed_imputed_all_winter,trimmed_weekly_all_winter,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  show.intercept = FALSE,
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+
+Now that we know to use the trimmed data, we'll narrow down the variables used in the model. We'll start by removing flow because cumulative discharge had a lower p-value in the trimmed models.
+```{r}
+trimmed_daily_reduced1a_winter <- glm(ice_presence~Flow+Temperature_C+cond_uScm+waterYear, data = daily_data_trimmed_winter, family = binomial)
+
+trimmed_weekly_reduced1a_winter <- glm(ice_presence~Flow+temperature_C_weekly+cond_uScm_weekly+waterYear, data = weekly_data_trimmed_14_23_winter, family = binomial)
+
+trimmed_imputed_reduced1a_winter <- glm(ice_presence~Flow+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23_winter, family = binomial)
+```
+
+```{r}
+tab_model(trimmed_daily_all_winter, trimmed_imputed_all_winter,trimmed_weekly_all_winter, trimmed_daily_reduced1a_winter,trimmed_imputed_reduced1a_winter,trimmed_weekly_reduced1a_winter,
+  show.intercept = FALSE,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+
+```{r}
+trimmed_daily_reduced2a_winter <- glm(ice_presence~Flow+Temperature_C+waterYear, data = daily_data_trimmed_winter, family = binomial)
+
+trimmed_weekly_reduced2a_winter <- glm(ice_presence~Flow+temperature_C_weekly+waterYear, data = weekly_data_trimmed_14_23_winter, family = binomial)
+
+trimmed_imputed_reduced2a_winter <- glm(ice_presence~Flow+temperature_C_impute+waterYear, data = imputed_data_trimmed_14_23_winter, family = binomial)
+```
+
+```{r}
+tab_model(trimmed_daily_all_winter, trimmed_imputed_all_winter,trimmed_weekly_all_winter, trimmed_daily_reduced1a_winter,trimmed_imputed_reduced1a_winter,trimmed_weekly_reduced1a_winter,trimmed_daily_reduced2a_winter,trimmed_imputed_reduced2a_winter,trimmed_weekly_reduced2a_winter,
+  show.intercept = FALSE,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
 ```
