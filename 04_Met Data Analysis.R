@@ -24,9 +24,13 @@ weather_daily <- weatherData %>%
   group_by(Date) %>% # Group by date
   summarise(
     T_air_2_m_mean = mean(T_air_2_m, na.rm = TRUE),
-    T_air_6_m_mean = mean(T_air_6_m, na.rm = TRUE),
+    # T_air_6_m_mean = mean(T_air_6_m, na.rm = TRUE),
+    T_air_2_m_max = max(T_air_2_m, na.rm = TRUE),
+    T_air_2_m_min = min(T_air_2_m, na.rm = TRUE),
+    # T_air_6_m_max = max(T_air_6_m, na.rm = TRUE),
+    # T_air_6_m_min = min(T_air_6_m, na.rm = TRUE),
     WSpd_2_m_mean = mean(WSpd_2_m, na.rm = TRUE),
-    WSpd_6_m_mean = mean(WSpd_6_m, na.rm = TRUE),
+    # WSpd_6_m_mean = mean(WSpd_6_m, na.rm = TRUE),
     SWin_2m6m_daily_mean = mean(SWin_2m6m_mean, na.rm = TRUE)
   ) %>% addWaterYear()
 ## Now I'll calculate the cumulative temperature of different time windows

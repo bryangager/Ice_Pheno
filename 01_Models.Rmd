@@ -220,3 +220,46 @@ tab_model(trimmed_daily_all_winter, trimmed_imputed_all_winter,trimmed_weekly_al
   p.style = "numeric_stars" # display p-values and stars
 )
 ```
+## Met Models
+```{r}
+# 2 meter air temp daily min
+daily_winter_met_2m_min <- glm(ice_presence~T_air_2_m_min+WSpd_2_m_mean+waterYear, data = met_and_hydro_winter, family = binomial)
+
+tab_model(daily_winter_met_2m_min,
+  show.intercept = FALSE,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+
+# 2  meter air temp daily max
+daily_winter_met_2m_max <- glm(ice_presence~T_air_2_m_max+WSpd_2_m_mean+waterYear, data = met_and_hydro_winter, family = binomial)
+
+tab_model(daily_winter_met_2m_max,
+  show.intercept = FALSE,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+
+# 2  meter air temp daily mean
+daily_winter_met_2m_mean <- glm(ice_presence~T_air_2_m_mean+WSpd_2_m_mean+waterYear, data = met_and_hydro_winter, family = binomial)
+
+tab_model(daily_winter_met_2m_mean,
+  show.intercept = FALSE,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+
+# 2  meter air temp daily min and conductivity
+daily_winter_met_2m_min_cond <- glm(ice_presence~T_air_2_m_min+WSpd_2_m_mean+cond_uScm+Flow+waterYear, data = met_and_hydro_winter, family = binomial)
+
+tab_model(daily_winter_met_2m_min_cond,
+  show.intercept = FALSE,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+```
+

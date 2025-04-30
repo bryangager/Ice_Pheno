@@ -138,4 +138,123 @@ ggplot(
   lims(x=c(18,55),y=c(18,55))
 ```
 
+# Adding Met data
+# Plotting Probability
+Now we'll plot the probability of ice as a function of time.
+Here we make a new data frame with the imputed values, and add the probability of ice presence given by the model
 
+```{r echo=FALSE}
+
+probabilities_winter_met <- predict(daily_winter_met_2m_min_cond_flow,
+  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+prob_winter_daily_data <- met_and_hydro_winter
+prob_winter_daily_data$ice_probability <- probabilities_winter_met
+
+```
+
+## 0.5 as Threshold
+```{r}
+
+# if probability < threshold, ice is not on The Loch
+preds_outcome_winter_met <- ifelse(probabilities_winter_met < 0.5,
+  0,
+  1
+)
+
+# transform predictions into factor and set labels
+preds_outcome_winter_met <- factor(preds_outcome_winter_met,
+  levels = c(0, 1),
+  labels = c("ice", "no ice")
+)
+
+# compare observed vs. predicted outcome
+tab_winter_met <- table(prob_winter_daily_data$ice_presence, preds_outcome_winter_met,
+  dnn = c("observed", "predicted")
+)
+
+# print results
+tab_winter_met
+
+accuracy_winter_met <- sum(diag(tab_winter_met)) / sum(tab_winter_met)
+accuracy_winter_met
+
+# sensitivity
+sensitivity_winter_met <- tab_winter_met[2, 2] / (tab_winter_met[2, 2] + tab_winter_met[2, 1])
+sensitivity_winter_met
+
+# specificity
+specificity_winter_met<- tab_winter_met[1, 1] / (tab_winter_met[1, 1] + tab_winter_met[1, 2])
+specificity_winter_met
+```
+
+
+# Ice-On Dates:
+Pulling out the first day each year when ice is "ice"
+First we have to factor the predicted probability of ice to "ice" and "no ice"
+```{r}
+winter_probs_met <- ifelse(probabilities_winter_met < 0.5,
+  1,
+  0
+)
+# changing the labels of the probabilities
+winter_probs_factor_met <- factor(winter_probs_met, levels = c(0, 1),labels = c("no ice", "ice"))
+
+
+prob_winter_daily_data$predicted_ice <- winter_probs_factor_met
+
+```
+# This is where I am, and it's broken
+```{r}
+prob_winter_daily_data <- prob_winter_daily_data %>% filter(waterYear!=2023)
+# Create an empty data frame to store the results
+ice_on_dates_met <- data.frame()
+
+# Iterate through each unique waterYear
+for(year in unique(prob_winter_daily_data$waterYear)) {
+  
+  # Filter the data for the current year
+  year_data <- prob_winter_daily_data %>% filter(waterYear == year)
+  
+  # Find the first day when ice_presence == "no ice"
+  first_ice_presence <- year_data %>% 
+    filter(ice_presence == "ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Find the first day when predicted_ice == "no ice"
+  first_ice_predicted <- year_data %>% 
+    filter(predicted_ice == "ice") %>%
+    arrange(wy_doy) %>%
+    slice(1)
+  
+  # Create a new row with the results
+  result_row <- data.frame(
+    waterYear = year,
+    first_ice_presence_doy = first_ice_presence$wy_doy,
+    first_ice_predicted_doy = first_ice_predicted$wy_doy
+  )
+  
+  # Append the row to the result data frame
+  ice_on_dates_met <- bind_rows(ice_on_dates, result_row)
+}
+
+# find the difference between predicted and observed and print the mean of this difference across all years
+ice_on_dates_met$difference <- ((ice_on_dates_met$first_ice_presence_doy)-(ice_on_dates_met$first_ice_predicted_doy))*-1
+print(mean(ice_on_dates_met$difference))
+# negative means the predicted ice-ff date was EARLIER than the observed
+
+
+# View the result data frame
+#View(imputed_ice_off_dates_predicted_obs)
+```
+
+```{r}
+ggplot(
+  ice_on_dates_met,
+  aes(x = first_ice_presence_doy, y = first_ice_predicted_doy)) +
+  theme_bw() +
+  geom_point()+
+  geom_abline(slope=1,intercept=0)+
+  lims(x=c(18,55),y=c(18,55))
+```
