@@ -559,12 +559,11 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2014),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2014], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(10, 50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  lims(x = c(0,50), y = c(0, 5))+
+  labs(x = "Date", y = "Flow (cfs)", title="2014")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
 
@@ -573,12 +572,11 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2015),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2015], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(10, 60), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  lims(x = c(0, 60), y = c(0, 5))+
+  labs(x = "Date", y = "Flow (cfs)", title="2015")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
 
@@ -587,11 +585,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2016),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2016], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(40, 50), y = c(0, 5))+
+  lims(x = c(0, 50), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -601,11 +598,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2017),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2017], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 60), y = c(0, 5))+
+  lims(x = c(0, 60), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -615,11 +611,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2018),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2018], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 50), y = c(0, 5))+
+  lims(x = c(0, 50), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -629,11 +624,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2019),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2019], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(0, 5))+
+  lims(x = c(0,50), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -643,11 +637,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2020),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2020], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 40), y = c(0, 5))+
+  lims(x = c(0, 40), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -657,11 +650,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2021),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2021], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 40), y = c(0, 5))+
+  lims(x = c(0, 40), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -671,11 +663,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2022),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2022], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(0, 5))+
+  lims(x = c(0, 50), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -685,11 +676,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2023),
   aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2023], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(0, 5))+
+  lims(x = c(0, 50), y = c(0, 5))+
   labs(x = "Date", y = "Flow (cfs)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -699,11 +689,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2014),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2014], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(10, 50), y = c(20, 30))+
+  lims(x = c(0, 50), y = c(20, 30))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -713,11 +702,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2015),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2015], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 60), y = c(10, 30))+
+  lims(x = c(0, 60), y = c(10, 30))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -727,11 +715,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2016),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2016], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(40, 50), y = c(15, 25))+
+  lims(x = c(0, 50), y = c(15, 25))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -741,8 +728,7 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2017),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2017], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
   lims(x = c(30, 60), y = c(15, 25))+
@@ -755,11 +741,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2018),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2018], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 50), y = c(15, 25))+
+  lims(x = c(0,50), y = c(15, 25))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -769,11 +754,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2019),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2019], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(20, 30))+
+  lims(x = c(0, 50), y = c(20, 30))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -783,11 +767,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2020),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2020], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 40), y = c(20, 30))+
+  lims(x = c(0, 40), y = c(20, 30))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -797,11 +780,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2021),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2021], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 40), y = c(20, 30))+
+  lims(x = c(0, 40), y = c(20, 30))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -811,11 +793,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2022),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2022], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(20, 30))+
+  lims(x = c(0, 50), y = c(20, 30))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -825,11 +806,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2023),
   aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2023], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(25, 35))+
+  lims(x = c(0, 50), y = c(25, 35))+
   labs(x = "Date", y = "Conductivity (uS/cm)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -839,11 +819,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2014),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2014], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(10, 50), y = c(-1, 5))+
+  lims(x = c(0, 50), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -853,11 +832,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2015),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2015], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 60), y = c(-1, 5))+
+  lims(x = c(0, 60), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -867,11 +845,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2016),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2016], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(40, 50), y = c(-1, 5))+
+  lims(x = c(0, 50), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -881,11 +858,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2017),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2017], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 60), y = c(-1, 5))+
+  lims(x = c(0, 60), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -895,11 +871,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2018),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2018], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 50), y = c(-1, 5))+
+  lims(x = c(0, 50), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -909,11 +884,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2019),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2019], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(-1, 5))+
+  lims(x = c(0, 50), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -923,11 +897,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2020),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2020], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 40), y = c(-1, 5))+
+  lims(x = c(0, 40), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -937,11 +910,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2021),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2021], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(20, 40), y = c(-1, 5))+
+  lims(x = c(0, 40), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -951,11 +923,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2022),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2022], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(-1, 5))+
+  lims(x = c(0, 50), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
@@ -965,11 +936,10 @@ ggplot(
   daily_data_trimmed_winter %>%
     filter(waterYear == 2023),
   aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
-  geom_vline(xintercept = ice_on_dates$first_ice_predicted_doy[ice_on_dates$waterYear == 2023], color="orange", size=1.5)+ # hindcasted ice-on date
+  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(30, 50), y = c(-1, 5))+
+  lims(x = c(0, 50), y = c(-1, 5))+
   labs(x = "Date", y = "Temperature (°C)")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
 ```
