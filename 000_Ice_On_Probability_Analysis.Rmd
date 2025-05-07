@@ -258,3 +258,199 @@ ggplot(
   geom_abline(slope=1,intercept=0)+
   lims(x=c(18,55),y=c(18,55))
 ```
+
+# Getting probabilities for the ONLY met model:
+```{r}
+##### These probabilities are backwards: 1 still represents 100% probability that there's NO ice.. Not sure how to fix this yet
+
+max_met_only_probs <- predict(daily_winter_met_2m_max,
+  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+max_met_probs_data <- met_and_hydro_winter
+max_met_probs_data$ice_probability <- max_met_only_probs
+
+
+min_met_only_probs <- predict(daily_winter_met_2m_min,
+  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+min_met_probs_data <- met_and_hydro_winter
+min_met_probs_data$ice_probability <- min_met_only_probs
+
+mean_met_only_probs <- predict(daily_winter_met_2m_mean,
+  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+mean_met_probs_data <- met_and_hydro_winter
+mean_met_probs_data$ice_probability <- mean_met_only_probs
+```
+### Max air temp plots
+```{r}
+# plots for air temperature and wind speed (change the x variable and limits)
+labels_x<-c(1,20,40,60,80)
+
+
+TempPlot_preddate <- ggplot(
+  max_met_probs_data %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = T_air_2_m_max, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = T_air_2_m_max, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 10))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "2m Max Daily Air Temperature (°C)")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+windPlot_preddate <- ggplot(
+  max_met_probs_data %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 15))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "2m Average Daily Wind Speed m/s")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+
+probIcePlot <- ggplot(
+  max_met_probs_data %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = ice_probability, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = ice_probability, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 1))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "Probability of No Ice")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+
+TempPlot_preddate
+windPlot_preddate
+probIcePlot
+
+
+probTempWindPlot <- probIcePlot / TempPlot_preddate / windPlot_preddate + plot_layout(heights = c(20,20,20))
+probTempWindPlot
+
+ggsave("Figures/MAXprobTempWind2017.png", dpi=600, width=6, height=8, units="in")
+```
+### Min air temp plots
+
+```{r}
+# plots for air temperature and wind speed (change the x variable and limits)
+labels_x<-c(1,20,40,60,80)
+
+
+TempPlot_preddate <- ggplot(
+  min_met_probs_data %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = T_air_2_m_min, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = T_air_2_m_max, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 10))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "2m Min Daily Air Temperature (°C)")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+windPlot_preddate <- ggplot(
+  min_met_probs_data %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 15))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "2m Average Daily Wind Speed m/s")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+
+probIcePlot <- ggplot(
+  min_met_probs_data %>%
+    filter(waterYear == 2017),
+  aes(x = wy_doy, y = ice_probability, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = ice_probability, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 1))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "Probability of No Ice")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+
+TempPlot_preddate
+windPlot_preddate
+probIcePlot
+
+
+probTempWindPlot <- probIcePlot / TempPlot_preddate / windPlot_preddate + plot_layout(heights = c(20,20,20))
+probTempWindPlot
+
+ggsave("Figures/MINprobTempWind2017.png", dpi=600, width=6, height=8, units="in")
+```
+### Mean air temp plots
+```{r}
+# plots for air temperature and wind speed (change the x variable and limits)
+labels_x<-c(1,20,40,60,80)
+
+
+TempPlot_preddate <- ggplot(
+  mean_met_probs_data %>%
+    filter(waterYear == 2014),
+  aes(x = wy_doy, y = T_air_2_m_mean, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = T_air_2_m_max, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 10))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "2m Mean Daily Air Temperature (°C)")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+windPlot_preddate <- ggplot(
+  mean_met_probs_data %>%
+    filter(waterYear == 2014),
+  aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 15))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "2m Average Daily Wind Speed m/s")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+
+probIcePlot <- ggplot(
+  mean_met_probs_data %>%
+    filter(waterYear == 2014),
+  aes(x = wy_doy, y = ice_probability, group = waterYear)) +
+  theme_bw() +
+  geom_line(size=1) +
+  geom_point(aes(x = wy_doy, y = ice_probability, group = waterYear),size=1.5)+
+  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1)+ # observed ice-on date
+  lims(x = c(1, 92), y = c(0, 1))+
+  theme(axis.title.x = element_blank())+
+  labs(y = "Probability of No Ice")+
+  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
+
+
+TempPlot_preddate
+windPlot_preddate
+probIcePlot
+
+
+probTempWindPlot <- probIcePlot / TempPlot_preddate / windPlot_preddate + plot_layout(heights = c(20,20,20))
+probTempWindPlot
+
+ggsave("Figures/MEANprobTempWind2014.png", dpi=600, width=6, height=8, units="in")
+```
