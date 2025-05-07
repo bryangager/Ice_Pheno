@@ -139,7 +139,7 @@ obs_ice_melt_windows <- read_xlsx("Input_Files/ice_100_to_0_dates_20241114.xlsx"
 #View(obs_ice_melt_windows)
 
 # Reading CSV for ice duration with 0% ice as ice-off
-ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv")  %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+ice_off_binary <- read.csv("Input_Files/binary_iceOff_20241001.csv")  %>% select(c(Date,ice.0.1.,wy_doy)) %>% rename(ice_or_no=ice.0.1.) %>% mutate(Date = mdy(Date))
 # View(ice_off_binary)
 
 # recode ice_or_no into 2 classes
@@ -193,18 +193,18 @@ daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(170,288
 ####### Trimming Dfs for winter
 
 ## 1982 - 2024
-oct_dec_impute <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(1,92)) # October 1 - December 31
+oct_dec_impute <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(1,76)) # October 1 - December 15
 ## 1982-2024
-oct_dec_weekly <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(1,92)) # October 1 - December 31
+oct_dec_weekly <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(1,76)) # October 1 - December 15
 ## 2014-2023
-oct_dec_daily <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(1,92)) # October 1 - December 31
+oct_dec_daily <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(1,76)) # October 1 - December 15
 
 ## 1982 - 2024
-sept_oct_impute <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(336,365)) # September 1- October 1
+sept_oct_impute <- filter_by_year_and_doy(flow_temp_cond_imputed_ice, c(349,365)) # September 15 - October 1
 ## 1982-2024
-sept_oct_weekly <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(336,365)) # September 1- October 1
+sept_oct_weekly <- filter_by_year_and_doy(flow_temp_cond_weekly_ice, c(349,365)) # September 15 - October 1
 ## 2014-2023
-sept_oct_daily <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(336,365)) # September 1 - October 1
+sept_oct_daily <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(349,365)) # September 15 - October 1
 
 # binding all dates
 sept_dec_impute <- rbind(sept_oct_impute,oct_dec_impute)
@@ -279,5 +279,36 @@ pierson_dates <- pierson_dates %>% mutate(Ice_Off_Peirson = as.Date(Ice_Off_Peir
 pierson_dates <- pierson_dates %>% mutate(Ice_On_Peirson = as.Date(Ice_On_Peirson)) %>%  mutate(wy_doy_pierson_on = hydro.day(Ice_On_Peirson))
   
 
-met_and_hydro_winter <- left_join(oct_dec_daily,weather_daily,by="Date") %>% select(-waterYear.y) %>% rename(waterYear=waterYear.x)
+##### Daily Weather Stuff:
 
+# Bear Lake Snow Telemetry Data:
+SWE_stats <- read.csv("Input_Files/Bear_SWE_stats.csv")
+
+# Weather station data (temp, wind):
+weatherData <- read.csv("Input_Files/subdaily_met_1991to2022.csv") %>% select(date_time, waterYear, T_air_2_m, T_air_6_m, WSpd_2_m, WSpd_6_m, SWin_2m6m_mean)
+
+# hindcasted dates of ice-off
+hindcasted_dates <- read.csv("Input_Files/hindcasted_ice_off_dates.csv") %>% select(-"X")
+
+# hindcasted dates and SWE
+hindcast_SWE <- full_join(SWE_stats,hindcasted_dates, by="waterYear") %>% rename(predicted_ice_off_wy_doy=first_no_ice_wy_doy)
+
+## Weather needs to be daily - here I find the mean daily air temp and wind speed
+weather_daily <- weatherData %>%
+  mutate(Date = as.Date(date_time)) %>% # Extract the date part
+  group_by(Date) %>% # Group by date
+  summarise(
+    T_air_2_m_mean = mean(T_air_2_m, na.rm = TRUE),
+    # T_air_6_m_mean = mean(T_air_6_m, na.rm = TRUE),
+    T_air_2_m_max = max(T_air_2_m, na.rm = TRUE),
+    T_air_2_m_min = min(T_air_2_m, na.rm = TRUE),
+    # T_air_6_m_max = max(T_air_6_m, na.rm = TRUE),
+    # T_air_6_m_min = min(T_air_6_m, na.rm = TRUE),
+    WSpd_2_m_mean = mean(WSpd_2_m, na.rm = TRUE),
+    # WSpd_6_m_mean = mean(WSpd_6_m, na.rm = TRUE),
+    SWin_2m6m_daily_mean = mean(SWin_2m6m_mean, na.rm = TRUE)
+  ) %>% addWaterYear()
+
+
+met_and_hydro_winter <- left_join(oct_dec_daily,weather_daily,by="Date") %>% select(-waterYear.y) %>% rename(waterYear=waterYear.x)
+met_and_hydro_sep_dec <- left_join(daily_data_trimmed_winter,weather_daily,by="Date") %>% select(-waterYear.y) %>% rename(waterYear=waterYear.x)
