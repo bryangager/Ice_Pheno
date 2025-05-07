@@ -131,7 +131,8 @@ obs_ice_off_dates <- read_xlsx("Input_Files/ice_off_dates20240918.xlsx")
 #View(obs_ice_off_dates)
 
 # this is just the observed ice-on dates from 2013-2023 with date of ice-off, date, and waterYear
-obs_ice_on_dates <- read_xlsx("Input_Files/ice_on_dates_20250414.xlsx")
+obs_ice_on_dates <- read_xlsx("Input_Files/ice_on_dates_20250414.xlsx") %>%
+  mutate(doy = yday(Date))
 #View(obs_ice_on_dates)
 
 # this is a df with the wy_doy date of 100% ice and the wy_doy date with 0% ice for 2013-2023
