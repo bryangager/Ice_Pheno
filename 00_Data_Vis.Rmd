@@ -551,396 +551,513 @@ ggplot(
   annotate('rect', xmin=obs_ice_melt_windows$wy_doy_100_ice[obs_ice_melt_windows$waterYear == 2020], xmax=obs_ice_melt_windows$wy_doy_0_ice[obs_ice_melt_windows$waterYear == 2020], ymin=-Inf, ymax=Inf, alpha=0.4, fill='lightblue')
 ```
 
-# ICE ON!
-## Flow
+# ICE ON! PLOTS
+
+```{r}
+# Create a 'year' column for filtering
+
+daily_data_trimmed_winter <- daily_data_trimmed_winter %>%
+  mutate(year = year(Date),
+         doy = yday(Date))
+
+```
+## WY 2014
 ```{r}
 # water year 2014
-ggplot(
+WY2014_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2014),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2013 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0,50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)", title="2014")+
+  # lims(x = c(265,400))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2014")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2014_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2013 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2014")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2014_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2013 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2014")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2014_iceon_flow /
+WY2014_iceon_cond /
+WY2014_iceon_temp
+
+ggsave("Figures/WY2014_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+## WY 2015
 ```{r}
-ggplot(
+# water year 2015
+WY2015_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2015),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2014 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 60), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)", title="2015")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2015")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2015_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2014 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2015")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2015_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2014 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2015")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2015_iceon_flow /
+WY2015_iceon_cond /
+WY2015_iceon_temp
+
+ggsave("Figures/WY2015_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+## WY 2016
 ```{r}
-ggplot(
+# water year 2016
+WY2016_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2016),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2015 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2016")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2016_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2015 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2016")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2016_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2015 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2016")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2016_iceon_flow /
+WY2016_iceon_cond /
+WY2016_iceon_temp
+
+ggsave("Figures/WY2016_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+## WY 2017
 ```{r}
-ggplot(
+# water year 2017
+WY2017_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2016 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 60), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2017")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2017_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2016 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2017")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2017_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2016 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2017")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2017_iceon_flow /
+WY2017_iceon_cond /
+WY2017_iceon_temp
+
+ggsave("Figures/WY2017_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+
+## WY 2018
 ```{r}
-ggplot(
+# water year 2018
+WY2018_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2018),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2017 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2018")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2018_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2017 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2018")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2018_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2017 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2018")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2018_iceon_flow /
+WY2018_iceon_cond /
+WY2018_iceon_temp
+
+ggsave("Figures/WY2018_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+
+## WY 2019
 ```{r}
-ggplot(
+# water year 2019
+WY2019_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2019),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2018 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0,50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2019")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2019_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2018 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2019")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2019_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2018 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2019")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2019_iceon_flow /
+WY2019_iceon_cond /
+WY2019_iceon_temp
+
+ggsave("Figures/WY2019_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+
+
+## WY 2020
 ```{r}
-ggplot(
+# water year 2020
+WY2020_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2020),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2019 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 40), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2020")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2020_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2019 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2020")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2020_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2019 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2020")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2020_iceon_flow /
+WY2020_iceon_cond /
+WY2020_iceon_temp
+
+ggsave("Figures/WY2020_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+
+## WY 2021
 ```{r}
-ggplot(
+# water year 2021
+WY2021_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2021),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2020 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 40), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2021")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2021_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2020 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2021")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2021_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2020 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2021")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2021_iceon_flow /
+WY2021_iceon_cond /
+WY2021_iceon_temp
+
+ggsave("Figures/WY2021_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+
+## WY 2022
 ```{r}
-ggplot(
+# water year 2022
+WY2022_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2022),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2021 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2022")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2022_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2021 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2022")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2022_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2021 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2022")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2022_iceon_flow /
+WY2022_iceon_cond /
+WY2022_iceon_temp
+
+ggsave("Figures/WY2022_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+
+## WY 2023
 ```{r}
-ggplot(
+# water year 2023
+WY2023_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2023),
-  aes(x = wy_doy, y = Flow, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2022 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 50), y = c(0, 5))+
-  labs(x = "Date", y = "Flow (cfs)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2023")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-## Conductivity
-```{r}
-ggplot(
+
+WY2023_iceon_cond <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2014),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2022 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 50), y = c(20, 30))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2023")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2023_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2022 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2023")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2023_iceon_flow /
+WY2023_iceon_cond /
+WY2023_iceon_temp
+
+ggsave("Figures/WY2023_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
+
+## WY 2024
 ```{r}
-ggplot(
+# water year 2024
+WY2024_iceon_flow <- ggplot(
   daily_data_trimmed_winter %>%
-    filter(waterYear == 2015),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
+    filter(year == 2023 & doy >=258),
+  aes(x = doy, y = Flow, group = year)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2024], color="forestgreen", size=1.5)+ # observed ice-on date
   theme_dark() +
   geom_line() +
-  lims(x = c(0, 60), y = c(10, 30))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Flow (cfs)", title="WY2024")+
   theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+WY2024_iceon_cond <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2023 & doy >=258),
+  aes(x = doy, y = cond_uScm, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2024], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Conductivity (uS/cm)", title="WY2024")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA)) 
+
+WY2024_iceon_temp <- ggplot(
+  daily_data_trimmed_winter %>%
+    filter(year == 2023 & doy >=258),
+  aes(x = doy, y = Temperature_C, group = waterYear)) +
+  geom_vline(xintercept = obs_ice_on_dates$doy[obs_ice_on_dates$waterYear == 2024], color="forestgreen", size=1.5)+ # observed ice-on date
+  theme_dark() +
+  geom_line() +
+  # lims(x = c(265,330))+
+  labs(x = "Date", y = "Temperature (°C)", title="WY2024")+
+  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
+
+
+WY2024_iceon_flow /
+WY2024_iceon_cond /
+WY2024_iceon_temp
+
+ggsave("Figures/WY2024_iceon_flow_cond_temp.png", width=3, height=5, units="in",dpi=600)
 ```
 
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2016),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(15, 25))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(30, 60), y = c(15, 25))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2018),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0,50), y = c(15, 25))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2019),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(20, 30))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2020),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 40), y = c(20, 30))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2021),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 40), y = c(20, 30))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2022),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(20, 30))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2023),
-  aes(x = wy_doy, y = cond_uScm, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(25, 35))+
-  labs(x = "Date", y = "Conductivity (uS/cm)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-## Temperature
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2014),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2014], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2015),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2015], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 60), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2016),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2016], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2017], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 60), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2018),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2018], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2019),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2019], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2020),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2020], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 40), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2021),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2021], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 40), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2022),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2022], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
-
-```{r}
-ggplot(
-  daily_data_trimmed_winter %>%
-    filter(waterYear == 2023),
-  aes(x = wy_doy, y = Temperature_C, group = waterYear)) +
-  geom_vline(xintercept = obs_ice_on_dates$wy_doy_ice_on[obs_ice_on_dates$waterYear == 2023], color="forestgreen", size=1.5)+ # observed ice-on date
-  theme_dark() +
-  geom_line() +
-  lims(x = c(0, 50), y = c(-1, 5))+
-  labs(x = "Date", y = "Temperature (°C)")+
-  theme(panel.ontop=TRUE,panel.background = element_rect(fill = NA))
-```
 
