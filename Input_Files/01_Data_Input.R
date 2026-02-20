@@ -19,7 +19,7 @@ param <- '00060'
 
 # get daily values from NWIS
 lv_dat <- readNWISdv(siteNumbers = lv_no, parameterCd = param,
-                     startDate = '1983-10-01', endDate = '2024-09-30')
+                     startDate = '1983-10-01', endDate = '2025-09-30')
 
 # rename columns using renameNWISColumns from package dataRetrieval
 # this renames the column for Flow from the parameter ID to "Flow"
@@ -43,7 +43,9 @@ cumulative_dat_ungroup <- cumulative_dat %>%
   as.data.frame()
 
 # rename the df, remove the site number column, make sure dates are in date format. This is the final df
-cumulative_flow_df <- cumulative_dat_ungroup %>% select(-site_no) %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
+cumulative_flow_df <- cumulative_dat_ungroup %>% 
+  select(-site_no) %>% 
+  mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d"))
 
 
 
@@ -82,7 +84,8 @@ out_condTemp_allDates <- merge(out_condTemp_dat11_19, out_condTemp_dat19_23, all
 #View(out_condTemp_allDates)
 
 # Adding water year and water year doy to the daily data
-out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
+out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% 
+  mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
   distinct(Date, .keep_all = TRUE)
 #View(out_cond_temp_daily)
 
@@ -286,7 +289,7 @@ pierson_dates <- pierson_dates %>% mutate(Ice_On_Peirson = as.Date(Ice_On_Peirso
 SWE_stats <- read.csv("Input_Files/Bear_SWE_stats.csv")
 
 # Weather station data (temp, wind):
-weatherData <- read.csv("Input_Files/subdaily_met_1991to2022.csv") %>% select(date_time, waterYear, T_air_2_m, T_air_6_m, WSpd_2_m, WSpd_6_m, SWin_2m6m_mean)
+weatherData <- read.csv("Input_Files/lvws_met_19911217_20240909.csv")
 
 # hindcasted dates of ice-off
 hindcasted_dates <- read.csv("Input_Files/hindcasted_ice_off_dates.csv") %>% select(-"X")
@@ -296,20 +299,21 @@ hindcast_SWE <- full_join(SWE_stats,hindcasted_dates, by="waterYear") %>% rename
 
 ## Weather needs to be daily - here I find the mean daily air temp and wind speed
 weather_daily <- weatherData %>%
-  mutate(Date = as.Date(date_time)) %>% # Extract the date part
+  mutate(Date = as.Date(datetime)) %>% # Extract the date part
   group_by(Date) %>% # Group by date
   summarise(
-    T_air_2_m_mean = mean(T_air_2_m, na.rm = TRUE),
+    airT_mean = mean(airt, na.rm = TRUE),
     # T_air_6_m_mean = mean(T_air_6_m, na.rm = TRUE),
-    T_air_2_m_max = max(T_air_2_m, na.rm = TRUE),
-    T_air_2_m_min = min(T_air_2_m, na.rm = TRUE),
+    airT_max = max(airt, na.rm = TRUE),
+    airT_min = min(airt, na.rm = TRUE),
     # T_air_6_m_max = max(T_air_6_m, na.rm = TRUE),
     # T_air_6_m_min = min(T_air_6_m, na.rm = TRUE),
-    WSpd_2_m_mean = mean(WSpd_2_m, na.rm = TRUE),
+    wind_10m_mean = mean(wnd_10, na.rm = TRUE),
+    wind_10m_max = max(wnd_10, na.rm = TRUE),
     # WSpd_6_m_mean = mean(WSpd_6_m, na.rm = TRUE),
-    SWin_2m6m_daily_mean = mean(SWin_2m6m_mean, na.rm = TRUE)
+    #SWin_2m6m_daily_mean = mean(SWin_2m6m_mean, na.rm = TRUE)
   ) %>% addWaterYear()
 
 
-met_and_hydro_winter <- left_join(oct_dec_daily,weather_daily,by="Date") %>% select(-waterYear.y) %>% rename(waterYear=waterYear.x)
+met_hydro_winter <- left_join(oct_dec_daily,weather_daily,by="Date") %>% select(-waterYear.y) %>% rename(waterYear=waterYear.x)
 met_and_hydro_sep_dec <- left_join(daily_data_trimmed_winter,weather_daily,by="Date") %>% select(-waterYear.y) %>% rename(waterYear=waterYear.x)

@@ -3,20 +3,128 @@ title: "Ice_On_Probability_Analysis"
 output: html_document
 date: "2025-04-14"
 ---
+# Load Packages
 ```{r}
 # load libraries
 library(pacman)
-p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,patchwork, stringr)
+p_load(dplyr,dataRetrieval,lubridate,tidyr,ggplot2,viridis,readxl,imputeTS,tsibble,sjPlot,pROC,gridExtra,broom,gtsummary,patchwork, stringr, zoo, slider)
 # This is the file that combines and cleans data:
 source("Input_Files/01_Data_Input.R")
 ```
+# Mutating
+## Water Temp Variables
+```{r}
+# Cumulative water temperature variable:
+met_hydro_winter <- met_hydro_winter %>% 
+  group_by(waterYear) %>%
+  mutate(cumulative_water_temp = cumsum(Temperature_C), 
+         wy_doy = seq(1:n())) %>%
+  ungroup() %>%
+  as.data.frame()
 
-# Plotting Probability
-Now we'll plot the probability of ice as a function of time.
-Here we make a new data frame with the imputed values, and add the probability of ice presence given by the model
+# A rolling slope calculation for the cumulative water temperature variable:
+met_hydro_winter <- met_hydro_winter %>%
+  group_by(waterYear) %>% 
+  arrange(Date) %>%
+  mutate(cumulWaterTemp_3day_slope =
+           rollapply(cumulative_water_temp,
+                     width = 3,
+                     FUN = function(x) coef(lm(x ~ seq_along(x)))[2],
+                     fill = NA,
+                     align = "right")) %>% 
+  ungroup() %>% 
+  as.data.frame()
 
+met_hydro_winter <- met_hydro_winter %>%
+  group_by(waterYear) %>% 
+  arrange(Date) %>%
+  mutate(cumulWaterTemp_5day_slope =
+           rollapply(cumulative_water_temp,
+                     width = 5,
+                     FUN = function(x) coef(lm(x ~ seq_along(x)))[2],
+                     fill = NA,
+                     align = "right")) %>% 
+  ungroup() %>% 
+  as.data.frame()
+```
+## Air Temp Variables
+```{r}
+# Create a cumulative freezing degree day variable (CFDD) - cumulative days below 0° using 2m mean air temp
+met_hydro_winter <- met_hydro_winter %>%
+  group_by(waterYear) %>%
+  mutate(
+    CFDD = ifelse(
+      airT_mean < 0,
+      ave(airT_mean < 0,
+          cumsum(!(airT_mean < 0) | is.na(airT_mean)),
+          FUN = cumsum),
+      0
+    )
+  ) %>%
+  ungroup()
+
+# Create a 5-day rolling mean air temperature variable:
+met_hydro_winter <- met_hydro_winter %>%
+  arrange(Date) %>%  # make sure it's sorted
+  mutate(temp_5day_mean = rollmean(airT_mean,
+                                    k = 5,
+                                    fill = NA,
+                                    align = "right"))
+# Create a 7-day rolling mean air temperature variable:
+met_hydro_winter <- met_hydro_winter %>%
+  arrange(Date) %>%  # make sure it's sorted
+  mutate(temp_7day_mean = rollmean(airT_mean,
+                                    k = 7,
+                                    fill = NA,
+                                    align = "right"))
+ggplot(met_hydro_winter, aes(x = wy_doy, y = temp_7day_mean, color=ice_presence)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  theme_minimal()
+```
+## Conductivity
+```{r}
+# Adding z score of conductivity to the mix
+  met_hydro_winter <- met_hydro_winter %>% 
+    group_by(waterYear) %>% 
+    mutate(z_cond_uScm=scale(cond_uScm)) %>% 
+    ungroup() %>% 
+    as.data.frame()
+ggplot(met_hydro_winter, aes(x = wy_doy, y = z_cond_uScm, color=ice_presence)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  theme_minimal()
+```
+
+## Wind Variables
+```{r}
+# Create a cumulative days with average 10m wind speed below 10mph CLWD (cumulative low wind days)
+met_hydro_winter <- met_hydro_winter %>%
+  group_by(waterYear) %>%
+  mutate(
+    CLWD = ifelse(
+      wind_10m_mean < 10,
+      ave(wind_10m_mean < 10,
+          cumsum(!(wind_10m_mean < 10) | is.na(wind_10m_mean)),
+          FUN = cumsum),
+      0
+    )
+  ) %>%
+  ungroup()
+
+# Create a 2-day rolling mean wind speed variable:
+met_hydro_winter <- met_hydro_winter %>%
+  arrange(Date) %>%  # make sure it's sorted
+  mutate(wind_2day_mean = rollmean(wind_10m_mean,
+                                    k = 2,
+                                    fill = NA,
+                                    align = "right"))
+
+```
+# Models
+## All and CFDD
 ```{r echo=FALSE}
-
+# hydro variables stuff
 trimmed_imputed_all_winter <- glm(ice_presence~Flow+temperature_C_impute+cond_uScm_impute+waterYear, data = imputed_data_trimmed_14_23_winter, family = binomial)
 
 probabilities_winter <- predict(trimmed_imputed_all_winter,
@@ -25,117 +133,411 @@ probabilities_winter <- predict(trimmed_imputed_all_winter,
 imputed_data_trimmed_prob_winter <- imputed_data_trimmed_14_23_winter
 imputed_data_trimmed_prob_winter$ice_probability <- probabilities_winter
 
+# same thing but with CFDD and CLWD
+
+CFDD_CLWD_model <- glm(ice_presence~CFDD+CLWD+wind_10m_mean+SWin_2m6m_daily_mean+cumulative_dis, data = met_hydro_winter, family = binomial)
+
+CFDD_CLWD_probs <- predict(CFDD_CLWD_model,
+  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+
+met_hydro_winter_probs <- met_hydro_winter
+met_hydro_winter_probs$ice_probability <- round(CFDD_CLWD_probs,4)
+
+justprobandice <- met_hydro_winter_probs %>% select(c(ice_probability,ice_presence))
+View(justprobandice)
+
+# Table of stats n things:
+tab_model(CFDD_CLWD_model,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+
+```
+## Rolling variables
+```{r}
+# Rolling mean air temp and cumulative discharge model
+rollingAirTemp_cumulDis_model <- glm(ice_presence~temp_7day_mean+cumulative_dis, data = met_hydro_winter, family = binomial)
+# Table of stats n things:
+tab_model(rollingAirTemp_cumulDis_model,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+# Add those probabilities to the data frame
+rollAir_cumDis_probs <- predict(rollingAirTemp_cumulDis_model,
+  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+
+met_hydro_winter_probs$ice_probability_rollAir_cumDis <- round(rollAir_cumDis_probs,4)
+
+# Plot the model probabilities
+ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAir_cumDis)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  geom_vline(data = ice_on_dates,
+             aes(xintercept = first_ice_presence_doy),
+             colour = "red",
+             linetype = "dashed")+
+  theme_minimal()
+
+
+# Rolling mean air temp model
+rollingAirTemp_model <- glm(ice_presence~temp_7day_mean, data = met_hydro_winter, family = binomial)
+# Table of stats n things:
+tab_model(rollingAirTemp_model,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+# Add those probabilities to the data frame
+rollAir_probs <- predict(rollingAirTemp_model,
+  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+
+met_hydro_winter_probs$ice_probability_rollAir <- round(rollAir_probs,4)
+
+# Plot the model probabilities
+ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAir, color=ice_presence)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  # geom_vline(data = ice_on_dates,
+  #            aes(xintercept = first_ice_presence_doy),
+  #            colour = "red",
+  #            linetype = "dashed")+
+  geom_point(aes(y=))
+  theme_minimal()
+  
+  # Rolling mean air temp and z score cond model
+rollingAirTempCond_model <- glm(ice_presence~temp_7day_mean+z_cond_uScm, data = met_hydro_winter, family = binomial)
+# Table of stats n things:
+tab_model(rollingAirTempCond_model,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
+# Add those probabilities to the data frame
+rollAirCond_probs <- predict(rollingAirTempCond_model,
+  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
+  type = "response")
+
+met_hydro_winter_probs$ice_probability_rollAirCond <- round(rollAirCond_probs,4)
+
+# Plot the model probabilities
+ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAirCond, color=ice_presence)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  # geom_vline(data = ice_on_dates,
+  #            aes(xintercept = first_ice_presence_doy),
+  #            colour = "red",
+  #            linetype = "dashed")+
+  geom_point(aes(y=))
+  theme_minimal()
+  
 ```
 
-## 0.5 as Threshold
+
 ```{r}
 # create a vector of predicted probabilities
-preds_winter <- predict(trimmed_imputed_all_winter,
-  newdata = select(imputed_data_trimmed_14_23_winter, -ice_presence), # remove real outcomes
+preds_ice_on <- predict(rollingAirTemp_model,
+  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
   type = "response"
 )
 
-# if probability < threshold, ice is not on The Loch
-preds_outcome_winter <- ifelse(preds_winter < 0.5,
-  0,
-  1
+# if probability < threshold, ice IS on The Loch
+preds_outcome_ice_on <- ifelse(preds_ice_on < 0.5,
+  1,
+  0
 )
 
 # transform predictions into factor and set labels
-preds_outcome_winter <- factor(preds_outcome_winter,
-  levels = c(0, 1),
+preds_outcome_ice_on <- factor(preds_outcome_ice_on,
+  levels = c(1, 0),
   labels = c("ice", "no ice")
 )
 
 # compare observed vs. predicted outcome
-tab_winter <- table(imputed_data_trimmed_14_23_winter$ice_presence, preds_outcome_winter,
+tab_ice_on <- table(met_hydro_winter$ice_presence, preds_outcome_ice_on,
   dnn = c("observed", "predicted")
 )
 
 # print results
-tab_winter
+tab_ice_on
 
-accuracy_winter <- sum(diag(tab_winter)) / sum(tab_winter)
-accuracy_winter
-
-# sensitivity
-sensitivity_winter <- tab_winter[2, 2] / (tab_winter[2, 2] + tab_winter[2, 1])
-sensitivity_winter
-
-# specificity
-specificity_winter<- tab_winter[1, 1] / (tab_winter[1, 1] + tab_winter[1, 2])
-specificity_winter
+# accuracy_05 <- sum(diag(tab_05)) / sum(tab_05)
+# accuracy_05
+# 
+# # sensitivity
+# sensitivity_05 <- tab_05[2, 2] / (tab_05[2, 2] + tab_05[2, 1])
+# sensitivity_05
+# 
+# # specificity
+# specificity_05<- tab_05[1, 1] / (tab_05[1, 1] + tab_05[1, 2])
+# specificity_05
 ```
-
-
-# Ice-On Dates:
-Pulling out the first day each year when ice is "ice"
-First we have to factor the predicted probability of ice to "ice" and "no ice"
+#Plots
+## Daily Air Temp
 ```{r}
-winter_probs <- ifelse(probabilities_winter < 0.5,
-  1,
-  0
-)
-# changing the labels of the probabilities
-winter_probs_factor <- factor(winter_probs, levels = c(0, 1),labels = c("no ice", "ice"))
-
-
-imputed_data_trimmed_prob_winter$predicted_ice <- winter_probs_factor
-
-```
-# This is where I am, and it's broken
-```{r}
-imputed_data_trimmed_prob_winter <- imputed_data_trimmed_prob_winter %>% filter(waterYear!=2023)
-# Create an empty data frame to store the results
-ice_on_dates <- data.frame()
-
-# Iterate through each unique waterYear
-for(year in unique(imputed_data_trimmed_prob_winter$waterYear)) {
+plot_meanAirTemp_year <- function(year) {
   
-  # Filter the data for the current year
-  year_data <- imputed_data_trimmed_prob_winter %>% filter(waterYear == year)
-  
-  # Find the first day when ice_presence == "no ice"
-  first_ice_presence <- year_data %>% 
-    filter(ice_presence == "ice") %>%
-    arrange(wy_doy) %>%
-    slice(1)
-  
-  # Find the first day when predicted_ice == "no ice"
-  first_ice_predicted <- year_data %>% 
-    filter(predicted_ice == "ice") %>%
-    arrange(wy_doy) %>%
-    slice(1)
-  
-  # Create a new row with the results
-  result_row <- data.frame(
-    waterYear = year,
-    first_ice_presence_doy = first_ice_presence$wy_doy,
-    first_ice_predicted_doy = first_ice_predicted$wy_doy
-  )
-  
-  # Append the row to the result data frame
-  ice_on_dates <- bind_rows(ice_on_dates, result_row)
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = airT_mean, color = factor(waterYear))
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    ) +
+    labs(title = paste("Water Year", year),
+         x = "Water Year DOY",
+         y = "Mean 2m Air Temp",
+         color = "Water Year")
 }
 
-# find the difference between predicted and observed and print the mean of this difference across all years
-ice_on_dates$difference <- ((ice_on_dates$first_ice_presence_doy)-(ice_on_dates$first_ice_predicted_doy))*-1
-print(mean(ice_on_dates$difference))
-# negative means the predicted ice-ff date was EARLIER than the observed
+plot_meanAirTemp_year(2017)
+```
+## Rolling Air Temp
+```{r}
+plot_rollingAirTemp_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = temp_5day_mean, color = factor(waterYear))
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    ) +
+    labs(title = paste("Water Year", year),
+         x = "Water Year DOY",
+         y = "Rolling 5 Day Mean 2m Air Temp",
+         color = "Water Year")
+}
 
-
-# View the result data frame
-#View(imputed_ice_off_dates_predicted_obs)
+plot_rollingAirTemp_year(2015)
 ```
 
 ```{r}
-ggplot(
-  ice_on_dates,
-  aes(x = first_ice_presence_doy, y = first_ice_predicted_doy)) +
-  theme_bw() +
-  geom_point()+
-  geom_abline(slope=1,intercept=0)+
-  lims(x=c(18,55),y=c(18,55))
+plot_rolling7AirTemp_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = temp_7day_mean)
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    )+
+    labs(y = "Rolling 7 Day Mean 2m Air Temp",
+         color = "Water Year")+
+    theme(axis.title.x = element_blank())
+}
+
+
+plot_rolling7AirTemp_year(2014)
+```
+## Z Conductivity
+```{r}
+plot_z_cond_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = z_cond_uScm)
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    )+
+    labs(y = "Z Score Conductivity",
+         x = "Water Year DOY",
+         color = "Water Year")+
+    geom_hline(yintercept = 0,
+               linetype = "dashed")
+}
+
+
+plot_z_cond_year(2023)
+```
+
+## Rolling Wind Sp
+```{r}
+plot_rollingWndSpd_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = wind_7day_mean, color = factor(waterYear))
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    ) +
+    labs(title = paste("Water Year", year),
+         x = "Water Year DOY",
+         y = "Rolling 7 Day Mean 10m Wind Speed",
+         color = "Water Year")
+}
+
+plot_rollingWndSpd_year(2016)
+```
+
+## Daily Wind Speed
+```{r}
+
+plot_wndSpd_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = wind_10m_mean, color = factor(waterYear))
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    ) +
+    labs(title = paste("Water Year", year),
+         x = "Water Year DOY",
+         y = "Mean 10m Wind Speed",
+         color = "Water Year")
+}
+
+plot_wndSpd_year(2017)
+```
+```{r}
+plot_CFDD_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = CFDD, color = factor(waterYear))
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    ) +
+    labs(title = paste("Water Year", year),
+         x = "Water Year DOY",
+         y = "Cumulative Freezing Degree Days",
+         color = "Water Year")
+}
+
+plot_CFDD_year(2015)
+```
+## Water Temp
+```{r}
+plot_waterTemp_year <- function(year) {
+  
+  ggplot(
+    met_hydro_winter %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = Temperature_C, color = factor(waterYear))
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    ) +
+    labs(title = paste("Water Year", year),
+         x = "Water Year DOY",
+         y = "Mean Daily Water Temperature",
+         color = "Water Year")
+}
+
+plot_waterTemp_year(2016)
+
+# All years of cumulative water temp
+ggplot(met_hydro_winter, aes(x = wy_doy, y = cumulative_water_temp)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  geom_vline(data = ice_on_dates,
+             aes(xintercept = first_ice_presence_doy),
+             colour = "red",
+             linetype = "dashed")+
+  theme_minimal()
+
+# All years of a 3 day slope of cumulative water temp
+ggplot(met_hydro_winter, aes(x = wy_doy, y = cumulWaterTemp_3day_slope)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  geom_vline(data = ice_on_dates,
+             aes(xintercept = first_ice_presence_doy),
+             colour = "red",
+             linetype = "dashed")+
+  theme_minimal()
+# All years of a 5 day slope of cumulative water temp
+ggplot(met_hydro_winter, aes(x = wy_doy, y = cumulWaterTemp_5day_slope)) +
+  geom_point() +
+  facet_wrap(~ waterYear, scales = "free_x") +
+  geom_vline(data = ice_on_dates,
+             aes(xintercept = first_ice_presence_doy),
+             colour = "red",
+             linetype = "dashed")+
+  theme_minimal()
+# All years of rolling 7 day air temp
+
+```
+## Probability ice-on
+```{r}
+plot_probability_year <- function(year) {
+  
+  ggplot(
+    prob_winter_daily_data %>% 
+      filter(waterYear == year, wy_doy > 0),
+    aes(x = wy_doy, y = ice_probability)
+  ) +
+    theme_bw() +
+    geom_point() +
+    geom_vline(
+      xintercept = ice_on_dates$first_ice_presence_doy[
+        ice_on_dates$waterYear == year
+      ]
+    )+
+    labs(title = paste("Water Year", year),
+         y = "Probability of No Ice Cover")+
+    theme(axis.title.x = element_blank())+
+    geom_hline(yintercept = 0.5,
+               linetype = "dashed")
+}
+
+
+prob2023 <- plot_probability_year(2023)
+```
+
+
+
+# Stacked Probability, Rolling Temp, Z Conductivity
+```{r}
+probTempCondPlot <- prob2023 / rollAir2023 / zCond2023 + plot_layout(heights = c(20,20,20))
+probTempCondPlot
+ggsave("Figures/Ice_On/probTempCondPlot2023.png", dpi=600, width=6, height=8, units="in")
 ```
 
 # Adding Met data
@@ -145,10 +547,10 @@ Here we make a new data frame with the imputed values, and add the probability o
 
 ```{r echo=FALSE}
 
-probabilities_winter_met <- predict(daily_winter_met_2m_min_cond_flow,
-  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
+probabilities_winter_met <- predict(rollingAirTempCond_model,
+  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
   type = "response")
-prob_winter_daily_data <- met_and_hydro_winter
+prob_winter_daily_data <- met_hydro_winter
 prob_winter_daily_data$ice_probability <- probabilities_winter_met
 
 ```
@@ -206,9 +608,9 @@ prob_winter_daily_data$predicted_ice <- winter_probs_factor_met
 ```
 # This is where I am, and it's broken
 ```{r}
-prob_winter_daily_data <- prob_winter_daily_data %>% filter(waterYear!=2023)
+prob_winter_daily_data
 # Create an empty data frame to store the results
-ice_on_dates_met <- data.frame()
+ice_on_dates <- data.frame()
 
 # Iterate through each unique waterYear
 for(year in unique(prob_winter_daily_data$waterYear)) {
@@ -236,12 +638,12 @@ for(year in unique(prob_winter_daily_data$waterYear)) {
   )
   
   # Append the row to the result data frame
-  ice_on_dates_met <- bind_rows(ice_on_dates, result_row)
+  ice_on_dates <- bind_rows(ice_on_dates, result_row)
 }
 
 # find the difference between predicted and observed and print the mean of this difference across all years
-ice_on_dates_met$difference <- ((ice_on_dates_met$first_ice_presence_doy)-(ice_on_dates_met$first_ice_predicted_doy))*-1
-print(mean(ice_on_dates_met$difference))
+ice_on_dates$difference <- ((ice_on_dates$first_ice_presence_doy)-(ice_on_dates$first_ice_predicted_doy))*-1
+print(mean(ice_on_dates$difference))
 # negative means the predicted ice-ff date was EARLIER than the observed
 
 
@@ -251,208 +653,10 @@ print(mean(ice_on_dates_met$difference))
 
 ```{r}
 ggplot(
-  ice_on_dates_met,
+  ice_on_dates,
   aes(x = first_ice_presence_doy, y = first_ice_predicted_doy)) +
   theme_bw() +
   geom_point()+
   geom_abline(slope=1,intercept=0)+
   lims(x=c(18,55),y=c(18,55))
 ```
-
-# Getting probabilities for the ONLY met model:
-```{r}
-##### These probabilities are backwards: 1 still represents 100% probability that there's NO ice.. Not sure how to fix this yet
-
-max_met_only_probs <- predict(daily_winter_met_2m_max,
-  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
-  type = "response")
-max_met_probs_data <- met_and_hydro_winter
-max_met_probs_data$ice_probability <- max_met_only_probs
-
-
-min_met_only_probs <- predict(daily_winter_met_2m_min,
-  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
-  type = "response")
-min_met_probs_data <- met_and_hydro_winter
-min_met_probs_data$ice_probability <- min_met_only_probs
-
-mean_met_only_probs <- predict(daily_winter_met_2m_mean,
-  newdata = select(met_and_hydro_winter, -ice_presence), # remove real outcomes
-  type = "response")
-mean_met_probs_data <- met_and_hydro_winter
-mean_met_probs_data$ice_probability <- mean_met_only_probs
-
-```
-### Max air temp plots
-```{r}
-# plots for air temperature and wind speed (change the x variable and limits)
-labels_x<-c(1,20,40,60,80)
-
-
-TempPlot_preddate <- ggplot(
-  max_met_probs_data %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = T_air_2_m_max, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = T_air_2_m_max, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 10))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "2m Max Daily Air Temperature (°C)")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-windPlot_preddate <- ggplot(
-  max_met_probs_data %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 15))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "2m Average Daily Wind Speed m/s")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-
-probIcePlot <- ggplot(
-  max_met_probs_data %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = ice_probability, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = ice_probability, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 1))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "Probability of No Ice")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-
-TempPlot_preddate
-windPlot_preddate
-probIcePlot
-
-
-probTempWindPlot <- probIcePlot / TempPlot_preddate / windPlot_preddate + plot_layout(heights = c(20,20,20))
-probTempWindPlot
-
-ggsave("Figures/MAXprobTempWind2017.png", dpi=600, width=6, height=8, units="in")
-```
-### Min air temp plots
-```{r}
-# plots for air temperature and wind speed (change the x variable and limits)
-labels_x<-c(1,20,40,60,80)
-
-
-TempPlot_preddate <- ggplot(
-  min_met_probs_data %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = T_air_2_m_min, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = T_air_2_m_max, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 10))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "2m Min Daily Air Temperature (°C)")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-windPlot_preddate <- ggplot(
-  min_met_probs_data %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 15))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "2m Average Daily Wind Speed m/s")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-
-probIcePlot <- ggplot(
-  min_met_probs_data %>%
-    filter(waterYear == 2017),
-  aes(x = wy_doy, y = ice_probability, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = ice_probability, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2017], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 1))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "Probability of No Ice")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-
-TempPlot_preddate
-windPlot_preddate
-probIcePlot
-
-
-probTempWindPlot <- probIcePlot / TempPlot_preddate / windPlot_preddate + plot_layout(heights = c(20,20,20))
-probTempWindPlot
-
-ggsave("Figures/MINprobTempWind2017.png", dpi=600, width=6, height=8, units="in")
-```
-### Mean air temp plots
-```{r}
-# plots for air temperature and wind speed (change the x variable and limits)
-labels_x<-c(1,20,40,60,80)
-
-
-TempPlot_preddate <- ggplot(
-  met_and_hydro_sep_dec %>%
-    filter(waterYear == 3013 & 2014),
-  aes(x = Date, y = T_air_2_m_max)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = Date, y = T_air_2_m_max),size=1.5)+
-  #geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1)+ # observed ice-on date
-  lims(y = c(0, 10))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "2m Mean Daily Air Temperature (°C)")
-  #scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-windPlot_preddate <- ggplot(
-  mean_met_probs_data %>%
-    filter(waterYear == 2014),
-  aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = WSpd_2_m_mean, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 15))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "2m Average Daily Wind Speed m/s")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-
-probIcePlot <- ggplot(
-  mean_met_probs_data %>%
-    filter(waterYear == 2014),
-  aes(x = wy_doy, y = ice_probability, group = waterYear)) +
-  theme_bw() +
-  geom_line(size=1) +
-  geom_point(aes(x = wy_doy, y = ice_probability, group = waterYear),size=1.5)+
-  geom_vline(xintercept = ice_on_dates$first_ice_presence_doy[ice_on_dates$waterYear == 2014], color="forestgreen", size=1)+ # observed ice-on date
-  lims(x = c(1, 92), y = c(0, 1))+
-  theme(axis.title.x = element_blank())+
-  labs(y = "Probability of No Ice")+
-  scale_x_continuous(breaks=labels_x,labels=c("Oct-01","Oct-20","Nov-09","Nov-29","Dec-19"),limits=c(1,92))
-
-
-TempPlot_preddate
-windPlot_preddate
-probIcePlot
-
-
-probTempWindPlot <- probIcePlot / TempPlot_preddate / windPlot_preddate + plot_layout(heights = c(20,20,20))
-probTempWindPlot
-
-ggsave("Figures/MEANprobTempWind2014.png", dpi=600, width=6, height=8, units="in")
-```
-
-# Met variables data vis:
