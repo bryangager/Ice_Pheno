@@ -135,7 +135,7 @@ imputed_data_trimmed_prob_winter$ice_probability <- probabilities_winter
 
 # same thing but with CFDD and CLWD
 
-CFDD_CLWD_model <- glm(ice_presence~CFDD+CLWD+wind_10m_mean+SWin_2m6m_daily_mean+cumulative_dis, data = met_hydro_winter, family = binomial)
+CFDD_CLWD_model <- glm(ice_presence~CFDD+CLWD+wind_10m_mean+cumulative_dis, data = met_hydro_winter, family = binomial)
 
 CFDD_CLWD_probs <- predict(CFDD_CLWD_model,
   newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
@@ -145,7 +145,7 @@ met_hydro_winter_probs <- met_hydro_winter
 met_hydro_winter_probs$ice_probability <- round(CFDD_CLWD_probs,4)
 
 justprobandice <- met_hydro_winter_probs %>% select(c(ice_probability,ice_presence))
-View(justprobandice)
+#View(justprobandice)
 
 # Table of stats n things:
 tab_model(CFDD_CLWD_model,
@@ -240,7 +240,7 @@ ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAirCond, 
 
 ```{r}
 # create a vector of predicted probabilities
-preds_ice_on <- predict(rollingAirTemp_model,
+preds_ice_on <- predict(rollingAirTempCond_model,
   newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
   type = "response"
 )
@@ -265,16 +265,16 @@ tab_ice_on <- table(met_hydro_winter$ice_presence, preds_outcome_ice_on,
 # print results
 tab_ice_on
 
-# accuracy_05 <- sum(diag(tab_05)) / sum(tab_05)
-# accuracy_05
-# 
-# # sensitivity
-# sensitivity_05 <- tab_05[2, 2] / (tab_05[2, 2] + tab_05[2, 1])
-# sensitivity_05
-# 
-# # specificity
-# specificity_05<- tab_05[1, 1] / (tab_05[1, 1] + tab_05[1, 2])
-# specificity_05
+accuracy_05 <- sum(diag(tab_ice_on)) / sum(tab_ice_on)
+accuracy_05
+
+# sensitivity
+sensitivity_05 <- tab_ice_on[2, 2] / (tab_ice_on[2, 2] + tab_ice_on[2, 1])
+sensitivity_05
+
+# specificity
+specificity_05<- tab_ice_on[1, 1] / (tab_ice_on[1, 1] + tab_ice_on[1, 2])
+specificity_05
 ```
 #Plots
 ## Daily Air Temp
@@ -347,7 +347,7 @@ plot_rolling7AirTemp_year <- function(year) {
 }
 
 
-plot_rolling7AirTemp_year(2014)
+plot_rolling7AirTemp_year(2024)
 ```
 ## Z Conductivity
 ```{r}
@@ -373,7 +373,7 @@ plot_z_cond_year <- function(year) {
 }
 
 
-plot_z_cond_year(2023)
+plot_z_cond_year(2024)
 ```
 
 ## Rolling Wind Sp
@@ -528,16 +528,17 @@ plot_probability_year <- function(year) {
 }
 
 
-prob2023 <- plot_probability_year(2023)
+plot_probability_year(2014)
 ```
 
 
 
 # Stacked Probability, Rolling Temp, Z Conductivity
 ```{r}
-probTempCondPlot <- prob2023 / rollAir2023 / zCond2023 + plot_layout(heights = c(20,20,20))
-probTempCondPlot
-ggsave("Figures/Ice_On/probTempCondPlot2023.png", dpi=600, width=6, height=8, units="in")
+# I went through each year with the plot functions above and made these plot objects, so this won't work unless you do the same
+# probTempCondPlot <- prob2014 / rollAir2014 / zcond2014 + plot_layout(heights = c(20,20,20))
+# probTempCondPlot
+# ggsave("Figures/Ice_On/probTempCondPlot2014.png", dpi=600, width=6, height=8, units="in")
 ```
 
 # Adding Met data
