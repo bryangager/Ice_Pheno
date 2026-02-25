@@ -236,46 +236,6 @@ ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAirCond, 
   theme_minimal()
   
 ```
-
-
-```{r}
-# create a vector of predicted probabilities
-preds_ice_on <- predict(rollingAirTempCond_model,
-  newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
-  type = "response"
-)
-
-# if probability < threshold, ice IS on The Loch
-preds_outcome_ice_on <- ifelse(preds_ice_on < 0.5,
-  1,
-  0
-)
-
-# transform predictions into factor and set labels
-preds_outcome_ice_on <- factor(preds_outcome_ice_on,
-  levels = c(1, 0),
-  labels = c("ice", "no ice")
-)
-
-# compare observed vs. predicted outcome
-tab_ice_on <- table(met_hydro_winter$ice_presence, preds_outcome_ice_on,
-  dnn = c("observed", "predicted")
-)
-
-# print results
-tab_ice_on
-
-accuracy_05 <- sum(diag(tab_ice_on)) / sum(tab_ice_on)
-accuracy_05
-
-# sensitivity
-sensitivity_05 <- tab_ice_on[2, 2] / (tab_ice_on[2, 2] + tab_ice_on[2, 1])
-sensitivity_05
-
-# specificity
-specificity_05<- tab_ice_on[1, 1] / (tab_ice_on[1, 1] + tab_ice_on[1, 2])
-specificity_05
-```
 #Plots
 ## Daily Air Temp
 ```{r}
@@ -533,7 +493,7 @@ plot_probability_year(2014)
 
 
 
-# Stacked Probability, Rolling Temp, Z Conductivity
+## Stacked Probability, Rolling Temp, Z Conductivity
 ```{r}
 # I went through each year with the plot functions above and made these plot objects, so this won't work unless you do the same
 # probTempCondPlot <- prob2014 / rollAir2014 / zcond2014 + plot_layout(heights = c(20,20,20))
@@ -541,25 +501,20 @@ plot_probability_year(2014)
 # ggsave("Figures/Ice_On/probTempCondPlot2014.png", dpi=600, width=6, height=8, units="in")
 ```
 
-# Adding Met data
-# Plotting Probability
-Now we'll plot the probability of ice as a function of time.
-Here we make a new data frame with the imputed values, and add the probability of ice presence given by the model
+# Model Outcomes
+## Summary Stats
+Here's some stats from the model using a rolling 7-day cumulative air temperature and the z score of daily conductivity
 
 ```{r echo=FALSE}
-
+# Pulling out probabilies of ice or no ice using the model
 probabilities_winter_met <- predict(rollingAirTempCond_model,
   newdata = select(met_hydro_winter, -ice_presence), # remove real outcomes
   type = "response")
+# Adding these probabilities to the main data under a new variable name "prob_winter_daily_data"
 prob_winter_daily_data <- met_hydro_winter
 prob_winter_daily_data$ice_probability <- probabilities_winter_met
 
-```
-
-## 0.5 as Threshold
-```{r}
-
-# if probability < threshold, ice is not on The Loch
+# Factoring the probabilities for summary stats using 0.5 as the threshold
 preds_outcome_winter_met <- ifelse(probabilities_winter_met < 0.5,
   0,
   1
@@ -575,27 +530,40 @@ preds_outcome_winter_met <- factor(preds_outcome_winter_met,
 tab_winter_met <- table(prob_winter_daily_data$ice_presence, preds_outcome_winter_met,
   dnn = c("observed", "predicted")
 )
+# table of model stats - R^2 and p-value - R^2 = 0.731
+tab_model(rollingAirTempCond_model,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
 
-# print results
+# print matrix of daily predictions vs observed
 tab_winter_met
 
+# accuracy
 accuracy_winter_met <- sum(diag(tab_winter_met)) / sum(tab_winter_met)
-accuracy_winter_met
+accuracy_winter_met # 0.9035
 
 # sensitivity
 sensitivity_winter_met <- tab_winter_met[2, 2] / (tab_winter_met[2, 2] + tab_winter_met[2, 1])
-sensitivity_winter_met
+sensitivity_winter_met # 0.9025
 
 # specificity
 specificity_winter_met<- tab_winter_met[1, 1] / (tab_winter_met[1, 1] + tab_winter_met[1, 2])
-specificity_winter_met
+specificity_winter_met # 0.9045
+
+# matrix of daily predictions:
+#           predicted
+# observed ice no ice
+#   ice    341     36
+#   no ice  38    352
 ```
 
 
-# Ice-On Dates:
-Pulling out the first day each year when ice is "ice"
-First we have to factor the predicted probability of ice to "ice" and "no ice"
+## Ice-On Dates
+Pulling out the first day each year when ice is "ice" according to the model predictions
 ```{r}
+#Factoring the probabilities to create a predicted ice presence variable populated by "ice" or "no ice" using 0.5 as a threshold
 winter_probs_met <- ifelse(probabilities_winter_met < 0.5,
   1,
   0
@@ -606,9 +574,9 @@ winter_probs_factor_met <- factor(winter_probs_met, levels = c(0, 1),labels = c(
 
 prob_winter_daily_data$predicted_ice <- winter_probs_factor_met
 
-```
-# This is where I am, and it's broken
-```{r}
+
+
+# creating a dat frame with the observed and predicted ice-on dates and the difference between them
 prob_winter_daily_data
 # Create an empty data frame to store the results
 ice_on_dates <- data.frame()
@@ -619,13 +587,13 @@ for(year in unique(prob_winter_daily_data$waterYear)) {
   # Filter the data for the current year
   year_data <- prob_winter_daily_data %>% filter(waterYear == year)
   
-  # Find the first day when ice_presence == "no ice"
+  # Find the first day when ice_presence == "ice"
   first_ice_presence <- year_data %>% 
     filter(ice_presence == "ice") %>%
     arrange(wy_doy) %>%
     slice(1)
   
-  # Find the first day when predicted_ice == "no ice"
+  # Find the first day when predicted_ice == "ice"
   first_ice_predicted <- year_data %>% 
     filter(predicted_ice == "ice") %>%
     arrange(wy_doy) %>%
@@ -645,11 +613,6 @@ for(year in unique(prob_winter_daily_data$waterYear)) {
 # find the difference between predicted and observed and print the mean of this difference across all years
 ice_on_dates$difference <- ((ice_on_dates$first_ice_presence_doy)-(ice_on_dates$first_ice_predicted_doy))*-1
 print(mean(ice_on_dates$difference))
-# negative means the predicted ice-ff date was EARLIER than the observed
-
-
-# View the result data frame
-#View(imputed_ice_off_dates_predicted_obs)
 ```
 
 ```{r}
