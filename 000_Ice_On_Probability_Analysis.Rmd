@@ -236,7 +236,7 @@ ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAirCond, 
   theme_minimal()
   
 ```
-#Plots
+# Plots
 ## Daily Air Temp
 ```{r}
 plot_meanAirTemp_year <- function(year) {
