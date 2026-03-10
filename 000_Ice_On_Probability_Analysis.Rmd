@@ -232,7 +232,6 @@ ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAirCond, 
   #            aes(xintercept = first_ice_presence_doy),
   #            colour = "red",
   #            linetype = "dashed")+
-  geom_point(aes(y=))
   theme_minimal()
   
 ```
@@ -546,7 +545,7 @@ plot_probability_year <- function(year) {
 }
 
 
-plot_probability_year(2014)
+plot_probability_year(2019)
 ```
 
 
