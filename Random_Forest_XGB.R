@@ -157,56 +157,6 @@
     #         facet_wrap(~waterYear, scales = "free")
 
 # __________________________________________________
-# Leave one Year out Accuracy for Logistic Regresssion 
-# __________________________________________________
-
-  # initialize i to step through for loop 
-  i <- 3 
-
-
-  # create an object that holds all of the waterYears in the full dataset 
-    years <- unique(loch_out$waterYear) 
-
-# Create an obect to hold the out of sample accuracy for each year 
-    accuracy_rf <- rep(NA, length(years))
-    ice_off_diff_rf <- rep(NA, length(years))
-
-# for each year in your list of years 
-    for (i in 1:length(years)){
-
-       # seperate into train and test data 
-        test_year <- years[i]
-        training_data <- loch_out[loch_out$waterYear != test_year, ]
-        test_data <- loch_out[loch_out$waterYear == test_year, ]
-      
-      # Train a logistic regression model on training data 
-      model_1 <- glm( ice ~ Flow + cumulative_dis + temperature_C_impute + cond_uScm_impute, 
-        data = test_data, 
-        family = binomial)
-      mod1_sum <- summary(model_1)
-
-    }
-
-# Why is this different from when bryan ran it? 
-# untrimmed data:
-
-# Bryan's model code that gives things as significant 
-untrimmed_daily_all <- glm(ice_presence ~ Flow + cumulative_dis + Temperature_C + cond_uScm+waterYear, 
-  data = flow_temp_cond_daily_ice, 
-  family = binomial)
-summary(untrimmed_daily_all)
-
-# Katie taking out the test year 
-sand <- flow_temp_cond_daily_ice %>%
-  filter(waterYear != test_year )
-
-castle <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm, data = sand, family = binomial)
-summary(castle)
-
-
-
-
-# __________________________________________________
 # Leave one Year out Accuracy for Random Forest 
 # __________________________________________________
 
