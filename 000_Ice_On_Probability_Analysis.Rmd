@@ -234,6 +234,15 @@ ggplot(met_hydro_winter_probs, aes(x = wy_doy, y = ice_probability_rollAirCond, 
   #            linetype = "dashed")+
   geom_point(aes(y=))
   theme_minimal()
+
+  # z score conductivity only model
+  zscoreCond_model <- glm(ice_presence~z_cond_uScm, data = met_hydro_winter, family = binomial)
+# Table of stats n things:
+tab_model(zscoreCond_model,
+  show.ci = FALSE, # remove CI
+  show.aic = TRUE, # display AIC
+  p.style = "numeric_stars" # display p-values and stars
+)
   
 ```
 
