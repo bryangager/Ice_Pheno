@@ -16,14 +16,17 @@
         library(xgboost)
         library(precrec) #for AUC
 
-        source("source/random_partitions.R")
+        source("Input_Files/random_partitions.R")
+        source("Input_Files/01_Data_Input.R")
 
     # Load in data from BDG  
-        loch_raw <- read.csv("data/derived_data/imputed_data_trimmed_14_23.csv") # 2014 - 2023 imputed daily data trimmed to only spring (ice off)
+        # loch_raw <- read.csv("data/derived_data/imputed_data_trimmed_14_23.csv") # 2014 - 2023 imputed daily data trimmed to only spring (ice off)
+        
+        loch_raw <- imputed_data_trimmed_14_23
         loch_raw$Date <- as.POSIXct(loch_raw$Date)
         str(loch_raw)
 
-        full_timeseries <- read.csv("data/derived_data/flow_temp_cond_impute_full.csv")
+        full_timeseries <- imputed_data_trimmed
 
         # Data for fall (to predict ice on )
             # imputed_data_trimmed_14_23_winter <- read.csv( "data/derived_data/imputed_data_trimmed_14_23_winter.csv")
@@ -31,28 +34,28 @@
     # Looking at data 
 
         # plot individual predictors 
-        # loch_out %>%
+        # loch_raw %>%
         #     ggplot(aes(x = wy_doy, y = temperature_C_impute)) + 
         #     geom_point(alpha = 0.5) + 
         #     theme_minimal() + 
         #     facet_wrap(~waterYear,scales = "free_x")
 
     # plot all together 
-        # loch_raw %>%
-        #     mutate(
-        #     cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_or_no, na.rm = TRUE)),
-        #     temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_or_no, na.rm = TRUE)), 
-        #     cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
-        #     q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
-        #     ) %>%
-        #     ggplot(aes(x= Date)) +
-        #     geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
-        #     geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
-        #     geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
-        #     geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
-        #     geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
-        #     theme_minimal() + 
-        # facet_wrap(~waterYear, scales = "free")
+        loch_raw %>%
+            mutate(
+            cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_or_no, na.rm = TRUE)),
+            temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_or_no, na.rm = TRUE)), 
+            cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
+            q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
+            ) %>%
+            ggplot(aes(x= Date)) +
+            geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
+            geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
+            geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
+            geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
+            geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+            theme_minimal() + 
+        facet_wrap(~waterYear, scales = "free")
 
 # __________________________________________________
 # Feature Engineering 
@@ -123,15 +126,14 @@
     tidyr::drop_na()
 
 
-
     # check for class imbalance 
     # --> need to deal with slight class imbalance  in the modeling, we have fewer data points with no ice than with ice  
     balance_count <- loch_out %>%
-    count(waterYear, ice) %>%
-    tidyr::pivot_wider(
-        names_from = ice,
-        values_from = n,
-        names_prefix = "ice_"
+      count(waterYear, ice) %>%
+      tidyr::pivot_wider(
+          names_from = ice,
+          values_from = n,
+          names_prefix = "ice_"
     )
     balance_count$proportion_0 <- balance_count$ice_0 /(balance_count$ice_0 + balance_count$ice_1)
 
@@ -155,14 +157,64 @@
     #         facet_wrap(~waterYear, scales = "free")
 
 # __________________________________________________
+# Leave one Year out Accuracy for Logistic Regresssion 
+# __________________________________________________
+
+  # initialize i to step through for loop 
+  i <- 3 
+
+
+  # create an object that holds all of the waterYears in the full dataset 
+    years <- unique(loch_out$waterYear) 
+
+# Create an obect to hold the out of sample accuracy for each year 
+    accuracy_rf <- rep(NA, length(years))
+    ice_off_diff_rf <- rep(NA, length(years))
+
+# for each year in your list of years 
+    for (i in 1:length(years)){
+
+       # seperate into train and test data 
+        test_year <- years[i]
+        training_data <- loch_out[loch_out$waterYear != test_year, ]
+        test_data <- loch_out[loch_out$waterYear == test_year, ]
+      
+      # Train a logistic regression model on training data 
+      model_1 <- glm( ice ~ Flow + cumulative_dis + temperature_C_impute + cond_uScm_impute, 
+        data = test_data, 
+        family = binomial)
+      mod1_sum <- summary(model_1)
+
+    }
+
+# Why is this different from when bryan ran it? 
+# untrimmed data:
+
+# Bryan's model code that gives things as significant 
+untrimmed_daily_all <- glm(ice_presence ~ Flow + cumulative_dis + Temperature_C + cond_uScm+waterYear, 
+  data = flow_temp_cond_daily_ice, 
+  family = binomial)
+summary(untrimmed_daily_all)
+
+# Katie taking out the test year 
+sand <- flow_temp_cond_daily_ice %>%
+  filter(waterYear != test_year )
+
+castle <- glm(ice_presence~Flow+cumulative_dis+Temperature_C+cond_uScm, data = sand, family = binomial)
+summary(castle)
+
+
+
+
+# __________________________________________________
 # Leave one Year out Accuracy for Random Forest 
 # __________________________________________________
 
     # initialize i to step through for loop 
-    i <- 3 
+   i <- 3 
 
-    # Seperate your data into partitions <-- you don't actually need to do this becase your data is already in years and that is what you want to use
-        # create an object that holds all of the waterYears in the full dataset 
+    
+      # create an object that holds all of the waterYears in the full dataset 
         years <- unique(loch_out$waterYear) 
 
     # Create an obect to hold the out of sample accuracy for each year 
@@ -171,6 +223,7 @@
 
     # for each year in your list of years 
     for (i in 1:length(years)){
+
         # seperate into train and test data 
         test_year <- years[i]
         training_data <- loch_out[loch_out$waterYear != test_year, ]
@@ -180,14 +233,14 @@
         n_abs <- sum(training_data$ice == 0) # get the number of days when ice was absence to use to account for class imbalance 
         trained_rf_model <- randomForest(ice ~ ., data=training_data[, -c(1:3)], ntree = 500, sampsize=c(n_abs, n_abs))
       
-        # use the trained andom forest model to predict the presence or absence of ice in the test data 
+        # use the trained random forest model to predict the presence or absence of ice in the test data 
         predicted_ice_prob_rf <- predict(trained_rf_model, newdata=test_data[, -c(1:4)], type="prob")[,2] # the 2 is because we only want the probability of ice presence (2nd column) not the probability of absence 
       
         # Convert the probability into a prediction 
         threshold <- 0.5 # Set the threshold probability of when you call ice presence present 
         predicted_ice_rf <- 1 * (predicted_ice_prob_rf > threshold) # if predicted probability is greater than the threshold then set to present 
       
-        # Calculate the accuract of those predictions and save into the object you made to hold accuracy
+        # Calculate the accuracy of those predictions and save into the object you made to hold accuracy
         accuracy_rf[i] <-  mean(predicted_ice_rf == test_data$ice)
       
         # Calculate the number of days away from observed ice off the 
@@ -218,7 +271,8 @@
     mean(accuracy_rf)
 
     # Take a look at accuracy over each year for rf models 
-    accuracy_yr_summary <- cbind(years, accuracy_rf) %>% as.data.frame()
+    accuracy_yr_summary <- cbind(years, accuracy_rf) %>% 
+      as.data.frame()
     accuracy_yr_summary %>%
       ggplot(aes(x = years, y = accuracy_rf)) + 
       geom_point(color = "forestgreen", size = 3) + 
