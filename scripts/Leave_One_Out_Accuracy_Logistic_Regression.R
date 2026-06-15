@@ -23,7 +23,7 @@
 
 
   # initialize i to step through for loop 
-  i <- 5 
+  i <- 3 
 
 
   # create an object that holds all of the waterYears in the full dataset 
@@ -48,7 +48,7 @@
           family = binomial)
         
       # use the trained logistic regression model to predict the presence or absence of ice in the test data 
-        predicted_ice_prob_log <- predict(trained_log_model, newdata = test_data, type = "response")  
+        predicted_ice_prob_log <- predict(trained_log_model, newdata = test_data, type = "response")  # do I need something here that selects the column for ice presence like in Katie's code? (column 2)
         
         # Convert the probability into a prediction 
         predicted_ice_log <- ifelse(predicted_ice_prob_log > 0.5, 1, 0)
@@ -89,7 +89,7 @@
       as.data.frame()
     accuracy_yr_summary %>%
       ggplot(aes(x = years, y = accuracy_log)) + 
-      geom_point(color = "goldenrod", size = 3) + 
+      geom_point(color = "forestgreen", size = 3) + 
       theme_minimal(base_size = 16) + 
       labs(
         x = "Year Held Out", 
@@ -102,8 +102,6 @@
     # __________________________________________________
     # 02. For loop for Leave one Year out Accuracy for Logistic Regression -- Ice ON
     # __________________________________________________
-
-      
     
     # Pull in ice on data:
     ice_on_data <- read.csv("Input_Files/met_hydro_winter_ice_on.csv")
