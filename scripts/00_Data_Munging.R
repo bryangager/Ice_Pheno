@@ -298,7 +298,7 @@ head(flow_temp_cond_imputed_ice)
 
     # plot to sanity check 
     snotel %>%
-      ggplot(aes(x = date, y = temperature_max)) + 
+      ggplot(aes(x = date, y = precipitation)) + 
       geom_line() + 
       theme_minimal() + 
       facet_wrap(~waterYear, scales = "free_x")
@@ -312,10 +312,11 @@ head(flow_temp_cond_imputed_ice)
 
     # Weather station data (temp, wind):
     weatherData <- read.csv("raw_data/lvws_met_19911217_20240909.csv")
+    weatherData$datetime <- as.POSIXct(weatherData$datetime)
 
     # Aggregate to air temp and wind speed
     weather_daily <- weatherData %>%
-      mutate(Date = as.Date(datetime)) %>% # Extract the date part
+      mutate(Date = as.POSIXct(datetime)) %>% # Extract the date part
       group_by(Date) %>% # Group by date
       summarise(
         airT_mean = mean(airt, na.rm = TRUE),
@@ -332,7 +333,7 @@ head(flow_temp_cond_imputed_ice)
 
     # plot to sanity check 
     weather_daily %>%
-      ggplot(aes(x = Date, y = wind_10m_mean)) + 
+      ggplot(aes(x = Date, y = airT_mean)) + 
       geom_line() + 
       theme_minimal() + 
       facet_wrap(~waterYear, scales = "free_x")

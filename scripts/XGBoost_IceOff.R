@@ -1,64 +1,53 @@
 #######################################
-# Random Forest and XGB Modeling  
+# XG Boost Ice OFF  
 #######################################
 
 # __________________________________________________
-# 0. Set Up R Environment and data munging 
+# 0. Set Up R Environment and data munging (Same as Random Forest)
 # __________________________________________________
 
-    # Load any necessary packages 
-        library(dplyr) 
-        library(ggplot2)
-        library(dplyr)
-        library(tree)
-        library(randomForest)
-        library(gbm)
-        library(xgboost)
-        library(precrec) #for AUC
+    # Load any necessary packages amd functions 
+        source("source/00_libraries.R")
+        source("source/random_partitions.R")
+       
+    # Load in data   
 
-        source("Input_Files/random_partitions.R")
-        source("Input_Files/01_Data_Input.R")
+        # Ice presence, conductivity, water temperature, and flow for full time series 
+        full_timeseries <- read.csv("derived_data/00_imputed_data_trimmed_spring.csv")
+        full_timeseries$Date <- as.POSIXct(full_timeseries$Date)
 
-    # Load in data from BDG  
-        # loch_raw <- read.csv("data/derived_data/imputed_data_trimmed_14_23.csv") # 2014 - 2023 imputed daily data trimmed to only spring (ice off)
-        
-        loch_raw <- imputed_data_trimmed_14_23
-        loch_raw$Date <- as.POSIXct(loch_raw$Date)
-        str(loch_raw)
+        # Create another data frame that contains just the years for which we also have ice observations 
+        loch_raw <- full_timeseries %>%
+            filter(waterYear >= 2014)
 
-        full_timeseries <- imputed_data_trimmed
-
-        # Data for fall (to predict ice on )
-            # imputed_data_trimmed_14_23_winter <- read.csv( "data/derived_data/imputed_data_trimmed_14_23_winter.csv")
-            
     # Looking at data 
 
-        # plot individual predictors 
-        # loch_raw %>%
-        #     ggplot(aes(x = wy_doy, y = temperature_C_impute)) + 
-        #     geom_point(alpha = 0.5) + 
-        #     theme_minimal() + 
-        #     facet_wrap(~waterYear,scales = "free_x")
-
-    # plot all together 
-        loch_raw %>%
-            mutate(
-            cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_or_no, na.rm = TRUE)),
-            temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_or_no, na.rm = TRUE)), 
-            cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
-            q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
-            ) %>%
-            ggplot(aes(x= Date)) +
-            geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
-            geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
-            geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
-            geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
-            geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+        # individual predictors to sanity check 
+          full_timeseries   %>%
+            ggplot(aes(x = wy_doy, y = temperature_C_impute)) + 
+            geom_point(alpha = 0.5) + 
             theme_minimal() + 
-        facet_wrap(~waterYear, scales = "free")
+            facet_wrap(~waterYear,scales = "free_x")
+
+        # plot all together 
+            loch_raw %>%
+                mutate(
+                cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_or_no, na.rm = TRUE)),
+                temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_or_no, na.rm = TRUE)), 
+                cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
+                q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
+                ) %>%
+                ggplot(aes(x= Date)) +
+                geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
+                geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
+                geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
+                geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
+                geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+                theme_minimal() + 
+            facet_wrap(~waterYear, scales = "free")
 
 # __________________________________________________
-# Feature Engineering 
+# Feature Engineering (Same as Random Forest)
 # __________________________________________________
 
     # Organize columns a bit first 
@@ -140,98 +129,21 @@
     loch_out %>%
     count(ice)
 
-    # loch_out %>%
-    #         mutate(
-    #         cond_scaled = scales::rescale(cond_uScm_impute, to = range(c(1,2), na.rm = TRUE)),
-    #         temp_scaled = scales::rescale(temperature_C_impute, to = range(c(1,2), na.rm = TRUE)), 
-    #         cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(c(1,2), na.rm = TRUE)), 
-    #         q_scaled = scales::rescale(Flow, to = range(c(1,2), na.rm = TRUE))
-    #         ) %>%
-    #         ggplot(aes(x= Date)) +
-    #         geom_point(aes(y = as.numeric(ice)), color = "skyblue3", alpha = 0.75) + 
-    #         geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
-    #         geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
-    #         geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
-    #         geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
-    #         theme_minimal() + 
-    #         facet_wrap(~waterYear, scales = "free")
-
-# __________________________________________________
-# Leave one Year out Accuracy for Random Forest 
-# __________________________________________________
-
-    # initialize i to step through for loop 
-   i <- 3 
-
-    
-      # create an object that holds all of the waterYears in the full dataset 
-        years <- unique(loch_out$waterYear) 
-
-    # Create an obect to hold the out of sample accuracy for each year 
-        accuracy_rf <- rep(NA, length(years))
-        ice_off_diff_rf <- rep(NA, length(years))
-
-    # for each year in your list of years 
-    for (i in 1:length(years)){
-
-        # seperate into train and test data 
-        test_year <- years[i]
-        training_data <- loch_out[loch_out$waterYear != test_year, ]
-        test_data <- loch_out[loch_out$waterYear == test_year, ]
-      
-        # train a random forest model on training data
-        n_abs <- sum(training_data$ice == 0) # get the number of days when ice was absence to use to account for class imbalance 
-        trained_rf_model <- randomForest(ice ~ ., data=training_data[, -c(1:3)], ntree = 500, sampsize=c(n_abs, n_abs))
-      
-        # use the trained random forest model to predict the presence or absence of ice in the test data 
-        predicted_ice_prob_rf <- predict(trained_rf_model, newdata=test_data[, -c(1:4)], type="prob")[,2] # the 2 is because we only want the probability of ice presence (2nd column) not the probability of absence 
-      
-        # Convert the probability into a prediction 
-        threshold <- 0.5 # Set the threshold probability of when you call ice presence present 
-        predicted_ice_rf <- 1 * (predicted_ice_prob_rf > threshold) # if predicted probability is greater than the threshold then set to present 
-      
-        # Calculate the accuracy of those predictions and save into the object you made to hold accuracy
-        accuracy_rf[i] <-  mean(predicted_ice_rf == test_data$ice)
-      
-        # Calculate the number of days away from observed ice off the 
-      
-            # extract the day when we first observed no ice 
-            ice_off_obs <- which(test_data$ice == 0)[1]
-      
-            # extract the day when the model first predicted no ice 
-            ice_off_pred <- which(predicted_ice_rf == 0)[1] %>% 
-              as.numeric()
-      
-            # take the difference betweent those two days and save it in the days_off_rf 
-            ice_off_diff_rf[i] <- ice_off_obs -  ice_off_pred
-      
-    }
-
-    # Look at the number of days off from predicted ice off each of your predictions are 
-    ice_off_diff_rf_df <- as.data.frame(ice_off_diff_rf)
-    ggplot(data = ice_off_diff_rf_df, aes(x = ice_off_diff_rf)) + 
-        geom_histogram(binwidth = 1, fill = "#69b3a2", color = "white") +
-        labs(
-            x = "Observed - Predicted Ice Off Day"
-        ) +
-        theme_minimal()
-    mean(ice_off_diff_rf)
-    mean(abs(ice_off_diff_rf)) # on average how far away from zero are you
-
-    mean(accuracy_rf)
-
-    # Take a look at accuracy over each year for rf models 
-    accuracy_yr_summary <- cbind(years, accuracy_rf) %>% 
-      as.data.frame()
-    accuracy_yr_summary %>%
-      ggplot(aes(x = years, y = accuracy_rf)) + 
-      geom_point(color = "forestgreen", size = 3) + 
-      theme_minimal(base_size = 16) + 
-      labs(
-        x = "Year Held Out", 
-        y = "Accuracy", 
-        title = "Random Forest Out of Sample Accuracy for each Year"
-      )
+    loch_out %>%
+            mutate(
+            cond_scaled = scales::rescale(cond_uScm_impute, to = range(c(1,2), na.rm = TRUE)),
+            temp_scaled = scales::rescale(temperature_C_impute, to = range(c(1,2), na.rm = TRUE)), 
+            cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(c(1,2), na.rm = TRUE)), 
+            q_scaled = scales::rescale(Flow, to = range(c(1,2), na.rm = TRUE))
+            ) %>%
+            ggplot(aes(x= Date)) +
+            geom_point(aes(y = as.numeric(ice)), color = "skyblue3", alpha = 0.75) + 
+            geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
+            geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
+            geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
+            geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+            theme_minimal() + 
+            facet_wrap(~waterYear, scales = "free")
 
 # __________________________________________________
 # Leave one Year out Accuracy for XGBoost 
@@ -598,9 +510,11 @@
 
     # Then I think use the optimal parameters for the year with the maximum accuracy (in this case 2017 )
 
+
 # __________________________________________________
 # Hindcast   
 # __________________________________________________
+# (Data set up for hindcasting with XGB is the same as for Random Forest)
 
 # Trim data for hindcasting  ---------------------
 
@@ -687,25 +601,6 @@
     hind_data <- hind_data %>%
         tidyr::drop_na()
 
-# Random Forest Hindcast model ----------------------------------------------
-
-        # to account for a slight class imbalance we want to make that when training the model, it is grabbing the same number as days with ice and without ice 
-        n_abs <- sum(loch_out$ice == 0) # get the number of days when ice was absence 
-
-        # Train the random forest model using all the data we have ice presence data for 
-        trained_hind_rf_model <- randomForest(ice ~ ., data=loch_out[, -c(1:3)], ntree = 500, sampsize=c(n_abs, n_abs))
-                # input the training data but remove the first 3 columns (date, water year, and day of water year)
-                # this says rpredict ice based on every other column in this data, run an ensamble of 500 trees and give me the outcome
-
-        # Use the trained random forest model to predict the probability of ice on for each day in the test dataset
-            predicted_hind_prob_rf <- predict( trained_hind_rf_model, newdata=hind_data[, -c(1:3)], type="prob")[,2] # the 2 is because we only want the probability of ice presence (2nd column) not the probability of absence 
-
-        # Set the threshold probability of when you call ice presence present 
-            threshold <- 0.5
-
-        # The output of all of these models is the probability of presence, in order to get a charcterization of presence absence set a threshold 
-            hind_ice_rf <- 1 * (predicted_hind_prob_rf > threshold)
-
 # XGBoost Hindcast model ----------------------------------------------
 
         # Calculate the ratio of absence to presence to deal with class imbalance 
@@ -725,113 +620,3 @@
         # use a threshold to covert from probability of ice to a binary ice or no ice 
         threshold <- 0.5
         hind_ice_xgb <- 1 * (predicted_ice_prob_xgb > threshold)
-
-# Add Hindcasts to df and visualize ----------------------------------------------
-        hind_data$ice_rf <- hind_ice_rf
-        hind_data$ice_xgb <- hind_ice_xgb
-
-        hind_data %>%
-            mutate(
-            cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_rf, na.rm = TRUE)),
-            temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_rf, na.rm = TRUE)), 
-            cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_rf, na.rm = TRUE)), 
-            q_scaled = scales::rescale(Flow, to = range(ice_rf, na.rm = TRUE))
-            ) %>%
-            ggplot(aes(x= Date)) +
-            geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
-            geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
-            geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
-            geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
-            geom_point(aes(y = ice_rf), color = "skyblue3", alpha = 0.75) + 
-            theme_minimal() + 
-            labs(
-                x = "Date", 
-                title = "Random Forest Ice Predictions"
-            ) + 
-        facet_wrap(~waterYear, scales = "free")
-
-# First Day of Ice Off  ----------------------------------------------
-
-    # Extract the first day in each water year when the model predicts ice off
-        hind_results <- subset(hind_data, select = c("waterYear" , "wy_doy", "Date", "ice_rf" ,  "ice_xgb"))
-        head(hind_results)
-
-        hind_summary <- hind_results %>%
-        group_by(waterYear) %>%
-        arrange(Date, .by_group = TRUE) %>%
-        summarize(
-            # rf_ice_off_date = first(Date[ice_rf == 0]), 
-            rf_ice_off_dowy = first(wy_doy[ice_rf == 0]),
-            # xgb_ice_off_date = first(Date[ice_xgb == 0]), 
-            xgb_ice_off_dowy = first(wy_doy[ice_xgb == 0])
-        )
-        names(hind_summary)[names(hind_summary)== "rf_ice_off_dowy"] <- "rf"
-        names(hind_summary)[names(hind_summary)== "xgb_ice_off_dowy"] <- "xgb"
-
-    # Pivot hindcasted days longer 
-        hind_summary <- hind_summary %>%
-            tidyr::pivot_longer(
-                cols = c(rf, xgb), # designate the columns that you want to pivot longer
-                names_to = "model", # take the names of the current columns and put them in a new column called model
-                values_to = "wy_doy" # the values in those columns go to a column called 
-            )
-
-    # Format the observed first day of ice off to go with the modeled 
-        loch_out_summary <- loch_out %>%
-            group_by(waterYear) %>%
-            arrange(Date, .by_group = TRUE) %>%
-            summarize(
-                wy_doy = first(wy_doy[ice == 0])
-            )
-        loch_out_summary$model <- "obs"
-        loch_out_summary <- subset(loch_out_summary, select = c("waterYear", "model", "wy_doy"))
-
-    # put together observed and modeled ice off doy 
-        ice_off_summary <- rbind(loch_out_summary, hind_summary)
-
-    # plot ice off date over time
-            set.seed(123)  # makes the jitter reproducible
-
-        ice_off_summary %>%
-          
-        filter(waterYear != 1987) %>%
-        
-        mutate(
-            error_days = case_when(
-            model == "rf"  ~ 5,
-            model == "xgb" ~ 9,
-            TRUE ~ 0
-            ),
-            
-            ymin = wy_doy - error_days,
-            ymax = wy_doy + error_days,
-            
-            # manually jitter the x positions
-            waterYear_jitter = waterYear + runif(n(), -0.25, 0.25)
-        ) %>%
-        
-        ggplot(aes(x = waterYear_jitter, y = wy_doy, color = model)) +
-        
-        geom_errorbar(
-            aes(ymin = ymin, ymax = ymax),
-            width = 0.15,
-            alpha = 0.5
-        ) +
-        
-        geom_point(
-            alpha = 0.75,
-            size = 3
-        ) +
-        
-        scale_color_manual(values = c(
-            "rf" = "forestgreen",
-            "xgb" = "maroon",
-            "obs" = "cornflowerblue"
-        )) +
-        
-        theme_minimal(base_size = 16) +
-        
-        labs(
-            y = "Ice Off Date (day of water year)",
-            x = "Water Year"
-        )

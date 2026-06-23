@@ -19,5 +19,10 @@ pacman::p_load(dplyr,
               gridExtra,
               broom,
               gtsummary, 
-              snotelr)
+              snotelr, # for pull snotel data  
+              tree, # for tree based models 
+              randomForest, # for random forest specifically 
+              gbm, # I think this is for xgboost but not 100% sure on that 
+              precrec # for AUC (area under the curve) modeling tuning for xgb
+            )
 
