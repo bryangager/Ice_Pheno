@@ -18,5 +18,6 @@ pacman::p_load(dplyr,
               pROC,
               gridExtra,
               broom,
-              gtsummary)
+              gtsummary, 
+              snotelr)
 
