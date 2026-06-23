@@ -136,9 +136,9 @@ source(here::here("source", "00_functions.R"))
     flow_temp_cond_impute <- full_join(cumulative_flow_df, TCond_imputed_all, by = "Date")
     #View(flow_temp_cond_impute)
 
-    # save outputs 
-      # write.csv(flow_temp_cond_impute, "derived_data/flow_temp_cond_impute.csv")
-      # write.csv(flow_temp_cond_weekly, "derived_data/flow_temp_cond_weekly.csv")
+    # # save outputs 
+    #   write.csv(flow_temp_cond_impute, "derived_data/00_flow_temp_cond_impute.csv")
+    #   write.csv(flow_temp_cond_weekly, "derived_data/00_flow_temp_cond_weekly.csv")
 
 # __________________________________________________
 # 04. Bring in OBSERVED ice presence on The Loch
@@ -226,9 +226,9 @@ head(flow_temp_cond_imputed_ice)
     daily_data_trimmed <- filter_by_year_and_doy(flow_temp_cond_daily_ice, c(170,288)) # March 18 - July 15
 
     # save trimmed data for spring ice OFF 
-    write.csv(imputed_data_trimmed, "derived_data/imputed_data_trimmed_spring.csv")
-    write.csv(weekly_data_trimmed, "derived_data/weekly_data_trimmed_spring.csv")
-    write.csv(daily_data_trimmed, "derived_data/daily_data_trimmed_spring.csv")
+    write.csv(imputed_data_trimmed, "derived_data/00_imputed_data_trimmed_spring.csv")
+    write.csv(weekly_data_trimmed, "derived_data/00_weekly_data_trimmed_spring.csv")
+    write.csv(daily_data_trimmed, "derived_data/00_daily_data_trimmed_spring.csv")
 
 # 6b) trimming and formatting for fall (ice ON)
 # extra steps here because we cross the water year boundary 
@@ -265,9 +265,9 @@ head(flow_temp_cond_imputed_ice)
       daily_data_trimmed_winter <- sept_dec_daily[ordered_indices_daily, ]
 
     # save trimmed data for fall ice ON  
-        write.csv(imputed_data_trimmed_winter, "derived_data/imputed_data_trimmed_winter.csv")
-        write.csv(weekly_data_trimmed_winter, "derived_data/weekly_data_trimmed_winter.csv")
-        write.csv(daily_data_trimmed_winter, "derived_data/daily_data_trimmed_winter.csv")
+        write.csv(imputed_data_trimmed_winter, "derived_data/00_imputed_data_trimmed_winter.csv")
+        write.csv(weekly_data_trimmed_winter, "derived_data/00_weekly_data_trimmed_winter.csv")
+        write.csv(daily_data_trimmed_winter, "derived_data/00_daily_data_trimmed_winter.csv")
 
 
 # ___________________________________________
@@ -304,7 +304,7 @@ head(flow_temp_cond_imputed_ice)
       facet_wrap(~waterYear, scales = "free_x")
 
     # save output 
-    # write.csv(snotel, "derived_data/snotel_322.csv")
+    write.csv(snotel, "derived_data/00_snotel_322.csv")
 
 # __________________________________________________
 # 08. Daily Weather
@@ -338,5 +338,5 @@ head(flow_temp_cond_imputed_ice)
       facet_wrap(~waterYear, scales = "free_x")
 
     # save output 
-    write.csv(weather_daily, "derived_data/weather_daily.csv")
+    write.csv(weather_daily, "derived_data/00_weather_daily.csv")
 
