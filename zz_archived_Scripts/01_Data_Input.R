@@ -245,37 +245,37 @@ imputed_data_trimmed_14_23_winter <- imputed_data_trimmed_winter %>% filter(wate
 weekly_data_trimmed_14_23_winter <- weekly_data_trimmed_winter %>% filter(waterYear >= 2014 & waterYear <= 2023)
 
 ####### Randomly sampling 60% of the data with observed ice presence:
-# choosing random years for the training and validation datasets:
-obs_years_list <- as_tibble(unique(imputed_data_trimmed_14_23$waterYear))
-randomYears <- obs_years_list %>% slice_sample(n=6)
+    # choosing random years for the training and validation datasets:
+    obs_years_list <- as_tibble(unique(imputed_data_trimmed_14_23$waterYear))
+    randomYears <- obs_years_list %>% slice_sample(n=6)
 
-# filtering imputed data into training dataset:
-imputed_test_df <- imputed_data_trimmed_14_23 %>% filter(waterYear %in% randomYears$value)
-#View(imputed_test_df)
+    # filtering imputed data into training dataset:
+    imputed_test_df <- imputed_data_trimmed_14_23 %>% filter(waterYear %in% randomYears$value)
+    #View(imputed_test_df)
 
-# filtering imputed data into validation dataset:
-imputed_validation_df <- imputed_data_trimmed_14_23 %>% filter(!(waterYear %in% randomYears$value))
-#View(imputed_validation_df)
+    # filtering imputed data into validation dataset:
+    imputed_validation_df <- imputed_data_trimmed_14_23 %>% filter(!(waterYear %in% randomYears$value))
+    #View(imputed_validation_df)
 
-# filtering weekly data into training dataset:
-weekly_test_df <- weekly_data_trimmed_14_23 %>% filter(waterYear %in% randomYears$value)
+    # filtering weekly data into training dataset:
+    weekly_test_df <- weekly_data_trimmed_14_23 %>% filter(waterYear %in% randomYears$value)
 
 
-# filtering weekly data into validation dataset:
-weekly_validation_df <- weekly_data_trimmed_14_23 %>% filter(!(waterYear %in% randomYears$value))
+    # filtering weekly data into validation dataset:
+    weekly_validation_df <- weekly_data_trimmed_14_23 %>% filter(!(waterYear %in% randomYears$value))
 
-# filtering daily data into training dataset
-daily_test_df <- daily_data_trimmed %>% filter(waterYear %in% randomYears$value)
+    # filtering daily data into training dataset
+    daily_test_df <- daily_data_trimmed %>% filter(waterYear %in% randomYears$value)
 
-# filtering daily data into validation dataset:
-daily_validation_df <- daily_data_trimmed %>% filter(!(waterYear %in% randomYears$value))
+    # filtering daily data into validation dataset:
+    daily_validation_df <- daily_data_trimmed %>% filter(!(waterYear %in% randomYears$value))
 
-####### Final Models:
-daily_final_model_test <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_test_df, family = binomial)
+    ####### Final Models:
+    daily_final_model_test <- glm(ice_presence~cumulative_dis+Temperature_C, data = daily_test_df, family = binomial)
 
-weekly_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_weekly, data = weekly_test_df, family = binomial)
+    weekly_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_weekly, data = weekly_test_df, family = binomial)
 
-imputed_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_test_df, family = binomial)
+    imputed_final_model_test <- glm(ice_presence~cumulative_dis+temperature_C_impute, data = imputed_test_df, family = binomial)
 
 ##### Pierson Dates:
 pierson_dates <- read_xlsx("Input_Files/Peirson_IcePhenoDates_AVG_20250120.xlsx")

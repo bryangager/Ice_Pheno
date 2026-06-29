@@ -3,6 +3,7 @@ title: "New Models"
 output: html_document
 date: "2025-02-20"
 ---
+6 + 7
 ```{r}
 # load libraries
 library(pacman)
