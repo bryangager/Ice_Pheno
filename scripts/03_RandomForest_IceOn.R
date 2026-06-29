@@ -17,37 +17,40 @@
     # Load in data   
 
         # Ice presence, conductivity, water temperature, and flow for full time series 
-        full_timeseries <- read.csv("derived_data/00_imputed_data_trimmed_spring.csv")
+        full_timeseries <- read.csv("derived_data/00_imputed_data_trimmed_winter.csv")
+
         full_timeseries$Date <- as.POSIXct(full_timeseries$Date)
+        full_timeseries$calYear <- substring(as.character(full_timeseries$Date), 1, 4) %>%
+          as.integer()
 
         # Create another data frame that contains just the years for which we also have ice observations 
         loch_raw <- full_timeseries %>%
             filter(waterYear >= 2014)
 
-    # # Looking at data 
-    #     # individual predictors to sanity check 
-    #       full_timeseries   %>%
-    #         ggplot(aes(x = wy_doy, y = temperature_C_impute)) + 
-    #         geom_point(alpha = 0.5) + 
-    #         theme_minimal() + 
-    #         facet_wrap(~waterYear,scales = "free_x")
+    # Looking at data 
+        # individual predictors to sanity check 
+          full_timeseries   %>%
+            ggplot(aes(x = wy_doy, y = temperature_C_impute)) + 
+            geom_point(alpha = 0.5) + 
+            theme_minimal() + 
+            facet_wrap(~calYear,scales = "free_x")
 
-    #     # plot all together 
-    #         loch_raw %>%
-    #             mutate(
-    #             cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_or_no, na.rm = TRUE)),
-    #             temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_or_no, na.rm = TRUE)), 
-    #             cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
-    #             q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
-    #             ) %>%
-    #             ggplot(aes(x= Date)) +
-    #             geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
-    #             geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
-    #             geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
-    #             geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
-    #             geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
-    #             theme_minimal() + 
-    #         facet_wrap(~waterYear, scales = "free")
+        # plot all together 
+            loch_raw %>%
+                mutate(
+                cond_scaled = scales::rescale(cond_uScm_impute, to = range(ice_or_no, na.rm = TRUE)),
+                temp_scaled = scales::rescale(temperature_C_impute, to = range(ice_or_no, na.rm = TRUE)), 
+                cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
+                q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
+                ) %>%
+                ggplot(aes(x= Date)) +
+                geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
+                geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
+                geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
+                geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
+                geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+                theme_minimal() + 
+            facet_wrap(~calYear, scales = "free")
 
 # __________________________________________________
 # Feature Engineering 

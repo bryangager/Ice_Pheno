@@ -3,6 +3,11 @@
 #######################################
 # # KAG & BDG 2026-06-15
 
+# KAG 20260630 Trouble shooting missing data for ice on 
+# I think that there is an issue with dropping data during the joining and subsetting in 2c
+# making plots at every step and trying to figure out where things drop out 
+# goal to compile data for ice on models 
+
 # __________________________________________________
 # 0. Set Up R Environment and data munging 
 # __________________________________________________
@@ -62,25 +67,50 @@ source(here::here("source", "00_functions.R"))
     lv_dat_outlet_input <- readWQPqw(paste0("USGS-", lv_no), parameterCd)
 
     #Clean up dataframe
-    lv_dat_outlet <- lv_dat_outlet_input %>%
-      select(ActivityStartDate, ActivityConductingOrganizationText, CharacteristicName, ResultMeasureValue) %>%
-      pivot_wider(names_from = CharacteristicName, values_from = ResultMeasureValue, values_fn = mean) %>%
-      rename(cond_uScm="Specific conductance",
-            temperature_C_raw="Temperature, water",
-            Date = "ActivityStartDate") %>%
-      select(-ActivityConductingOrganizationText) %>%
-      mutate(wy_doy = hydro.day(Date)) %>%
-      addWaterYear() %>% 
+    lv_dat_outlet <- lv_dat_outlet_input %>% # take this dataframe that you downloaded from NWIS in the line above 
+      select( 
+          ActivityStartDate, # now select only some columns because it comes in with a BUNCH 
+          ActivityConductingOrganizationText, 
+          CharacteristicName, 
+          ResultMeasureValue
+      ) %>%
+      pivot_wider(
+          names_from = CharacteristicName, # the names of the new columns come from the values in this column 
+          values_from = ResultMeasureValue, # the values that fill those columns come from this column 
+          values_fn = mean # if there are multiple values that go here then take the mean 
+      ) %>%
+      rename(
+          cond_uScm="Specific conductance", # change the column names to somethign more manageable 
+          temperature_C_raw="Temperature, water",
+          Date = "ActivityStartDate"
+      ) %>%
+      select(-ActivityConductingOrganizationText) %>% # remove this column because we don't need it anymore 
+      mutate(
+          wy_doy = hydro.day(Date) # create a new column for the day of the water year 
+      ) %>%
+      addWaterYear() %>% # add water year as a column 
       distinct(Date, .keep_all = TRUE) %>%
       as_tsibble(., key = waterYear, index = Date) %>% #time series tibble
       fill_gaps() #%>%  #makes the missing data implicit
     # View(lv_dat_outlet) # This is weekly data from 1982-2023, but missing temp & cond after 2019
 
+      # Plot to sanity check 
+    #  lv_dat_outlet %>%
+    #       ggplot(
+    #           aes(x = Date, 
+    #               y =  temperature_C_raw
+    #           )
+    #       ) + 
+    #       geom_point(alpha = 0.75, color = "salmon3") + 
+    #       theme_minimal()  + 
+    #       facet_wrap(~waterYear, scales = "free") 
+      # okay this data starts to look spotty in 2021
+
 # 2b)  Pulling in Daily Temp and Cond from Graham with USGS:
     # These CSVs contain data from 2019-2023
     out_cond_dat <- read.csv("Input_Files/Loch_O_daily_conductivity.csv")
     out_temp_dat <- read.csv("Input_Files/Loch_O_daily_temperature.csv")
-    # Joining those two using FULL join because there are less conductivity observations
+    # Joining those two using FULL join because there are fewer conductivity observations
     out_condTemp_dat19_23 <- full_join(out_cond_dat,out_temp_dat, by = "Date")
     # This CSV contains data from 2011-2019
     out_condTemp_dat11_19 <- read.csv("Input_Files/LochDaily_TempCond_2011-2019.csv")
@@ -90,11 +120,29 @@ source(here::here("source", "00_functions.R"))
     #View(out_condTemp_allDates)
 
     # Adding water year and water year doy to the daily data
-    out_cond_temp_daily <- out_condTemp_allDates %>% mutate(Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")) %>% 
-      mutate(wy_doy = hydro.day(Date)) %>% addWaterYear() %>% 
+    out_cond_temp_daily <- out_condTemp_allDates %>% 
+      mutate(
+          Date = as.Date(Date, tz = "MST", format = "%Y-%m-%d")
+      ) %>% 
+      mutate(wy_doy = hydro.day(Date)) %>% 
+      addWaterYear() %>% 
       distinct(Date, .keep_all = TRUE)
     #View(out_cond_temp_daily)
 
+  # Plot to sanity check 
+      # conductivity: color = "olivedrab4". temperature:  color = "salmon3"
+    out_cond_temp_daily %>%
+          filter(waterYear == 2023) %>%
+          ggplot(
+              aes(x = Date, 
+                  y = cond_uScm
+              )
+          ) + 
+          geom_point(alpha = 0.75, color =  "olivedrab4") + 
+          theme_minimal()  # + 
+          # facet_wrap(~waterYear, scales = "free") 
+
+## KAG 20260630 I think that part of the missing data issue is coming from here in 2c 
 
 # 2c) Subsetting weekly temp and cond observations from the daily observations to fill in gap from 2019 onwards
     # Create a weekly dataset from the WY2020-2024 data
@@ -122,6 +170,18 @@ source(here::here("source", "00_functions.R"))
       mutate(cond_uScm_impute = imputeTS::na_interpolation(cond_uScm_weekly, maxgap = 7),
             temperature_C_impute = imputeTS::na_interpolation(temperature_C_weekly, maxgap = 7))
     # THIS IS THE IMPUTED DATA FOR THE ENTIRE TIME SERIES (1982-2023) - TCond_imputed_all
+
+## Katie trouble shooting imputed vs. daily data 202060630 
+      TCond_weekly_all %>%
+          filter(waterYear == 2022 | waterYear == 2023) %>%
+          ggplot(aes(x = Date, y =  temperature_C_weekly)) + 
+          geom_point(alpha = 0.75, color = "salmon3") + 
+          theme_minimal() # + 
+      # facet_wrap(~waterYear, scales = "free_x")
+    # weekly temperature until august 2023
+      # 2019 goes oct to oct 
+      # 2023 only may to oct (guessing the sensor went down somehow)
+    # Weekly cond 
 
 # __________________________________________________
 # 03. Put together flow, conductivity, and temperature and export as a single file 
@@ -263,6 +323,25 @@ head(flow_temp_cond_imputed_ice)
       imputed_data_trimmed_winter <- sept_dec_impute[ordered_indices_impute, ]
       weekly_data_trimmed_winter <- sept_dec_weekly[ordered_indices_weekly, ]
       daily_data_trimmed_winter <- sept_dec_daily[ordered_indices_daily, ]
+
+    # Plot to sanity check 
+          weekly_data_trimmed_winter %>%
+                mutate(
+                cond_scaled = scales::rescale(cond_uScm_weekly, to = range(ice_or_no, na.rm = TRUE)),
+                temp_scaled = scales::rescale(temperature_C_weekly, to = range(ice_or_no, na.rm = TRUE)), 
+                cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(ice_or_no, na.rm = TRUE)), 
+                q_scaled = scales::rescale(Flow, to = range(ice_or_no, na.rm = TRUE))
+                ) %>%
+                ggplot(aes(x= Date)) +
+                geom_point(aes(y = ice_or_no), color = "skyblue3", alpha = 0.75) + 
+                geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
+                geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
+                geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
+                geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+                theme_minimal() + 
+            facet_wrap(~waterYear, scales = "free")
+
+    # Create a new data frame putting together imputed and daily to get the full time series 
 
     # save trimmed data for fall ice ON  
         write.csv(imputed_data_trimmed_winter, "derived_data/00_imputed_data_trimmed_winter.csv")
