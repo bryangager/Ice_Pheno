@@ -120,6 +120,9 @@ met_hydro_winter <- met_hydro_winter %>%
                                     fill = NA,
                                     align = "right"))
 
+
+# # Adding this DF to Input_Files
+# write.csv(met_hydro_winter, "Input_Files/met_hydro_winter_ice_on.csv", row.names = FALSE)
 ```
 # Models
 ## All and CFDD
