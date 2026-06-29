@@ -2,11 +2,6 @@
 # Random Forest Ice OFF  
 #######################################
 
-# NOTES: 
-# # --> KAG: first make sure it runs with just temp conductivity and flow. Then you can add in and mess around with the snotel data and the met station data 
-
-# FOLLOW UP ON: 
-
 # __________________________________________________
 # 0. Set Up R Environment and data munging 
 # __________________________________________________
