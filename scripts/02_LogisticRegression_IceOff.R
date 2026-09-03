@@ -42,7 +42,6 @@ hydro_only_fixed <- hydro_only %>%
   )
 
 anyDuplicated(hydro_only_fixed$Date)
-
 # Add Ice data to create the three data frames you are going to work with 
 met_data_full_timeseries <- full_join(ice_only, met_only)
 hydro_data_full_timeseries <- full_join(ice_only, hydro_only_fixed)
@@ -249,7 +248,7 @@ sink_data <- filter_by_year_and_doy(sink_data_full_timeseries, c(170,288))  %>% 
       
       
       # Train a logistic regression model on training data 
-      trained_log_model <- glm(ice_presence ~ Flow + cumulative_dis + water_temp_C + cond_uScm, 
+      trained_log_model <- glm(ice_presence ~ Flow + cumulative_dis + water_temp_C + cond_uScm + precip + precip_cumulative + airT_mean, 
                                data = training_data, 
                                family = binomial)
       
@@ -311,9 +310,9 @@ sink_data <- filter_by_year_and_doy(sink_data_full_timeseries, c(170,288))  %>% 
     
 ############## Explaining years that aren't as accurate by looking at missing data: (log reg. by default eliminates an entire row if there's any NAs)
     sum(complete.cases(sink_data[, c("ice_presence", "Flow", "cumulative_dis", "water_temp_C", "cond_uScm")]))
-    # only 773 rows with no NAs
+    # only 1160 rows with no NAs
     nrow(sink_data)
-    # 1050 rows total = 277 rows omitted from model
+    # 1309 rows total = 149 rows omitted from model
     
     # Pulling out rows with NAs:
     na_plot <- sink_data %>%
