@@ -51,20 +51,20 @@ sink_data_full_timeseries <- full_join(hydro_data_full_timeseries, met_data_full
 
 # Trim data frames to only spring and only since 2014
 met_data <- filter_by_year_and_doy(met_data_full_timeseries, c(1,76))  %>% # October 1 - December 15
-  filter(waterYear >= 2014)
+  filter(waterYear >= 2014 & waterYear <= 2024)
 
 hydro_data <- filter_by_year_and_doy(hydro_data_full_timeseries, c(1,76))  %>% # October 1 - December 15
-  filter(waterYear >= 2014)
+  filter(waterYear >= 2014 & waterYear <= 2024)
 
 sink_data <- filter_by_year_and_doy(sink_data_full_timeseries, c(1,76))  %>% # October 1 - December 15
   filter(waterYear >= 2014 & waterYear <= 2024)
 
-# __________________________________________________
-# 01. For loop for Leave one Year out Accuracy for Logistic Regression -- Ice ON
-# __________________________________________________
-
 # # # Pull in ice on data:
 # ice_on_data <- read.csv("Input_Files/met_hydro_winter_ice_on.csv")
+
+# __________________________________________________
+# 01. For loop for Leave one Year out Accuracy for Logistic Regression -- Sink Data
+# __________________________________________________
 
 # initialize i to step through for loop 
 i <- 3 
@@ -87,7 +87,8 @@ for (i in 1:length(years)){
   
   
   # Train a logistic regression model on training data 
-  trained_log_model <- glm(ice_presence ~ temp_7day_mean + z_cond_uScm, ############# I'm here. Need to change variables
+  trained_log_model <- glm(ice ~ swe + precip + precip_cumulative + airT_min + airT_max + airT_mean + 
+                             wind_10m_mean + wind_10m_max+ Flow + cumulative_dis + water_temp_C + cond_uScm,
                            data = training_data, 
                            family = binomial)
   
@@ -98,12 +99,12 @@ for (i in 1:length(years)){
   predicted_ice_log <- ifelse(predicted_ice_prob_log > 0.5, 1, 0)
   
   # Calculate the accuracy of those predictions and save into the object you made to hold accuracy
-  ice_on_accuracy_log[i] <- mean(predicted_ice_log == test_data$ice_or_no, na.rm = TRUE)
+  ice_on_accuracy_log[i] <- mean(predicted_ice_log == test_data$ice, na.rm = TRUE)
   
   # Calculate the number of days away from observed ice off the 
   
   # extract the day when we first observed no ice 
-  ice_on_obs <- which(test_data$ice_or_no == 1)[1]
+  ice_on_obs <- which(test_data$ice == 1)[1]
   
   # extract the day when the model first predicted no ice 
   ice_on_pred <- which(predicted_ice_log == 1)[1] %>% 
@@ -128,6 +129,9 @@ mean(abs(ice_on_diff_log)) # on average how far away from zero are you
 
 mean(ice_on_accuracy_log)
 
+sink_ice_on_diff_df <- ice_on_diff_log_df
+sink_ice_on_diff_df <- sink_ice_on_diff_df %>% mutate(model = "sink")
+
 # Take a look at accuracy over each year for log model
 ice_on_accuracy_yr_summary <- cbind(years, ice_on_accuracy_log) %>% 
   as.data.frame()
@@ -138,5 +142,239 @@ ice_on_accuracy_yr_summary %>%
   labs(
     x = "Year Held Out", 
     y = "Accuracy", 
-    title = "Logistic Regression Out of Sample Accuracy for each Year"
+    title = "LR Out of Sample Accuracy - Sink Ice On"
   )
+
+sink_accuracy_df <- ice_on_accuracy_yr_summary
+sink_accuracy_df <- sink_accuracy_df %>% mutate(model = "sink")
+
+# __________________________________________________
+# 02. For loop for Leave one Year out Accuracy for Logistic Regression -- Met Data
+# __________________________________________________
+
+# initialize i to step through for loop 
+i <- 3 
+
+
+# create an object that holds all of the waterYears in the full dataset 
+years <- unique(met_data$waterYear) 
+
+# Create an obect to hold the out of sample accuracy for each year 
+ice_on_accuracy_log <- rep(NA, length(years))
+ice_on_diff_log <- rep(NA, length(years))
+
+# for each year in your list of years 
+for (i in 1:length(years)){
+  
+  # seperate into train and test data 
+  test_year <- years[i]
+  training_data <- met_data[met_data$waterYear != test_year, ]
+  test_data <- met_data[met_data$waterYear == test_year, ]
+  
+  
+  # Train a logistic regression model on training data 
+  trained_log_model <- glm(ice ~ swe + precip + precip_cumulative + airT_min + airT_max + airT_mean + wind_10m_mean + wind_10m_max,
+                           data = training_data, 
+                           family = binomial)
+  
+  # use the trained logistic regression model to predict the presence or absence of ice in the test data 
+  predicted_ice_prob_log <- predict(trained_log_model, newdata = test_data, type = "response")  # do I need something here that selects the column for ice presence like in Katie's code? (column 2)
+  
+  # Convert the probability into a prediction 
+  predicted_ice_log <- ifelse(predicted_ice_prob_log > 0.5, 1, 0)
+  
+  # Calculate the accuracy of those predictions and save into the object you made to hold accuracy
+  ice_on_accuracy_log[i] <- mean(predicted_ice_log == test_data$ice, na.rm = TRUE)
+  
+  # Calculate the number of days away from observed ice off the 
+  
+  # extract the day when we first observed no ice 
+  ice_on_obs <- which(test_data$ice == 1)[1]
+  
+  # extract the day when the model first predicted no ice 
+  ice_on_pred <- which(predicted_ice_log == 1)[1] %>% 
+    as.numeric()
+  
+  # take the difference betweent those two days and save it in the days_off_log 
+  ice_on_diff_log[i] <- ice_on_obs -  ice_on_pred
+  
+}
+
+
+# Look at the number of days off from predicted ice off each of your predictions are 
+ice_on_diff_log_df <- as.data.frame(ice_on_diff_log)
+ggplot(data = ice_on_diff_log_df, aes(x = ice_on_diff_log)) + 
+  geom_histogram(binwidth = 1, fill = "#69b3a2", color = "white") +
+  labs(
+    x = "Observed - Predicted Ice On Day"
+  ) +
+  theme_minimal()
+mean(ice_on_diff_log)
+mean(abs(ice_on_diff_log)) # on average how far away from zero are you
+
+mean(ice_on_accuracy_log)
+
+met_ice_on_diff_df <- ice_on_diff_log_df
+met_ice_on_diff_df <- met_ice_on_diff_df %>% mutate(model = "met")
+
+# Take a look at accuracy over each year for log model
+ice_on_accuracy_yr_summary <- cbind(years, ice_on_accuracy_log) %>% 
+  as.data.frame()
+ice_on_accuracy_yr_summary %>%
+  ggplot(aes(x = years, y = ice_on_accuracy_log)) + 
+  geom_point(color = "forestgreen", size = 3) + 
+  theme_minimal(base_size = 16) + 
+  labs(
+    x = "Year Held Out", 
+    y = "Accuracy", 
+    title = "LR Out of Sample Accuracy - Met Ice On"
+  )
+
+met_accuracy_df <- ice_on_accuracy_yr_summary
+met_accuracy_df <- met_accuracy_df %>% mutate(model = "met")
+
+# __________________________________________________
+# 03. For loop for Leave one Year out Accuracy for Logistic Regression -- Hydro Data
+# __________________________________________________
+
+# initialize i to step through for loop 
+i <- 3 
+
+
+# create an object that holds all of the waterYears in the full dataset 
+years <- unique(hydro_data$waterYear) 
+
+# Create an obect to hold the out of sample accuracy for each year 
+ice_on_accuracy_log <- rep(NA, length(years))
+ice_on_diff_log <- rep(NA, length(years))
+
+# for each year in your list of years 
+for (i in 1:length(years)){
+  
+  # seperate into train and test data 
+  test_year <- years[i]
+  training_data <- hydro_data[hydro_data$waterYear != test_year, ]
+  test_data <- hydro_data[hydro_data$waterYear == test_year, ]
+  
+  
+  # Train a logistic regression model on training data 
+  trained_log_model <- glm(ice ~ Flow + cumulative_dis + water_temp_C + cond_uScm,
+                           data = training_data, 
+                           family = binomial)
+  
+  # use the trained logistic regression model to predict the presence or absence of ice in the test data 
+  predicted_ice_prob_log <- predict(trained_log_model, newdata = test_data, type = "response")  # do I need something here that selects the column for ice presence like in Katie's code? (column 2)
+  
+  # Convert the probability into a prediction 
+  predicted_ice_log <- ifelse(predicted_ice_prob_log > 0.5, 1, 0)
+  
+  # Calculate the accuracy of those predictions and save into the object you made to hold accuracy
+  ice_on_accuracy_log[i] <- mean(predicted_ice_log == test_data$ice, na.rm = TRUE)
+  
+  # Calculate the number of days away from observed ice off the 
+  
+  # extract the day when we first observed no ice 
+  ice_on_obs <- which(test_data$ice == 1)[1]
+  
+  # extract the day when the model first predicted no ice 
+  ice_on_pred <- which(predicted_ice_log == 1)[1] %>% 
+    as.numeric()
+  
+  # take the difference betweent those two days and save it in the days_off_log 
+  ice_on_diff_log[i] <- ice_on_obs -  ice_on_pred
+  
+}
+
+
+# Look at the number of days off from predicted ice off each of your predictions are 
+ice_on_diff_log_df <- as.data.frame(ice_on_diff_log)
+ggplot(data = ice_on_diff_log_df, aes(x = ice_on_diff_log)) + 
+  geom_histogram(binwidth = 1, fill = "#69b3a2", color = "white") +
+  labs(
+    x = "Observed - Predicted Ice On Day"
+  ) +
+  theme_minimal()
+mean(ice_on_diff_log)
+mean(abs(ice_on_diff_log)) # on average how far away from zero are you
+
+mean(ice_on_accuracy_log)
+
+hydro_ice_on_diff_df <- ice_on_diff_log_df
+hydro_ice_on_diff_df <- hydro_ice_on_diff_df %>% mutate(model = "hydro")
+
+# Take a look at accuracy over each year for log model
+ice_on_accuracy_yr_summary <- cbind(years, ice_on_accuracy_log) %>% 
+  as.data.frame()
+ice_on_accuracy_yr_summary %>%
+  ggplot(aes(x = years, y = ice_on_accuracy_log)) + 
+  geom_point(color = "forestgreen", size = 3) + 
+  theme_minimal(base_size = 16) + 
+  labs(
+    x = "Year Held Out", 
+    y = "Accuracy", 
+    title = "LR Out of Sample Accuracy - Hydro Ice On"
+  )
+
+hydro_accuracy_df <- ice_on_accuracy_yr_summary
+hydro_accuracy_df <- hydro_accuracy_df %>% mutate(model = "hydro")
+
+#------------------------------------------------
+### Combining accuracies from all three models
+#------------------------------------------------
+
+### All three difference from observed
+
+all_three_diff_df <- rbind(sink_ice_on_diff_df,met_ice_on_diff_df,hydro_ice_on_diff_df)
+
+
+ggplot(all_three_diff_df, aes(x = ice_on_diff_log, fill = model)) +
+  geom_histogram(
+    bins = 30,
+    position = "dodge"
+  ) +
+  labs(
+    x = "Ice-on difference (log)",
+    y = "Density",
+    fill = "Model"
+  ) +
+  scale_fill_discrete(
+    labels = c(
+      "met" = "Meteorological",
+      "hydro" = "Hydrological",
+      "sink" = "Both"
+    )
+  ) +
+  theme_minimal()
+
+ggplot(all_three_diff_df, aes(x = ice_on_diff_log)) +
+  geom_histogram(
+    aes(fill = model),
+    bins = 30
+  ) +
+  facet_wrap(~ model, ncol = 1) +
+  labs(
+    x = "Ice-on difference (log)",
+    y = "Count"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "met" = "orange",
+      "hydro" = "steelblue",
+      "sink" = "forestgreen"
+    )
+  ) +
+  theme_minimal()
+
+#### Accuracy
+all_three_accuracy_df <- rbind(sink_accuracy_df, met_accuracy_df, hydro_accuracy_df)
+
+ggplot(all_three_accuracy_df,
+       aes(x = years, y = accuracy_log, color = model)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c(
+    "met" = "orange",
+    "hydro" = "steelblue",
+    "sink" = "forestgreen"
+  )) +
+  theme_minimal(base_size = 16) +
+  labs(x = "Year Held Out", y = "Accuracy", title = "LR Out of Sample Accuracy - Ice On")
