@@ -127,6 +127,7 @@ ggplot(data = ice_on_diff_log_df, aes(x = ice_on_diff_log)) +
   theme_minimal()
 mean(ice_on_diff_log)
 mean(abs(ice_on_diff_log)) # on average how far away from zero are you
+sinkIceOnError <- mean(abs(ice_on_diff_log)) # save this to use in ggplot - error bars
 
 mean(ice_on_accuracy_log)
 
@@ -212,6 +213,7 @@ ggplot(data = ice_on_diff_log_df, aes(x = ice_on_diff_log)) +
   theme_minimal()
 mean(ice_on_diff_log)
 mean(abs(ice_on_diff_log)) # on average how far away from zero are you
+metIceOnError <- mean(abs(ice_on_diff_log)) # save met model error for ggplot error bars
 
 mean(ice_on_accuracy_log)
 
@@ -296,7 +298,8 @@ ggplot(data = ice_on_diff_log_df, aes(x = ice_on_diff_log)) +
   ) +
   theme_minimal()
 mean(ice_on_diff_log)
-mean(abs(ice_on_diff_log)) # on average how far away from zero are you
+mean(abs(ice_on_diff_log)) # on average how far away from zero are you - error bars on hindcast plots
+hydroIceOnError <- mean(abs(ice_on_diff_log)) # save hydro error for ggplot
 
 mean(ice_on_accuracy_log)
 
@@ -608,9 +611,9 @@ for(year in unique(ice_only$waterYear)) {
 # Adding "observed" to model column for observed df
 ice_on_observed <- ice_on_observed %>% mutate(model="observed")
 # Combining all three models hindcasts
-all_three_hinds_df <- rbind(hindcasted_ice_on_dates_sink,hindcasted_ice_on_dates_met,hindcasted_ice_on_dates_hydro,ice_on_observed)
+all_three_hinds_ice_on_df <- rbind(hindcasted_ice_on_dates_sink,hindcasted_ice_on_dates_met,hindcasted_ice_on_dates_hydro,ice_on_observed)
 # changing column names and adding date
-all_three_hinds_df <- all_three_hinds_df %>%
+all_three_hinds_ice_on_df <- all_three_hinds_ice_on_df %>%
   mutate(
     ice_on_dowy = first_ice_wy_doy,
     ice_on_date = make_date(waterYear - 1, 10, 1) +
@@ -618,21 +621,60 @@ all_three_hinds_df <- all_three_hinds_df %>%
   ) %>%
   select(-first_ice_wy_doy)
 # rearranging the columns to match Katie's hindcast tables
-all_three_hinds_df <- all_three_hinds_df %>% select(c(model,waterYear,ice_on_date,ice_on_dowy))
+all_three_hinds_ice_on_df <- all_three_hinds_ice_on_df %>% select(c(model,waterYear,ice_on_date,ice_on_dowy))
 
+# Add errors as a column to use in plot:
+all_three_hinds_ice_on_df <- all_three_hinds_ice_on_df %>%
+  mutate(
+    ice_on_error = case_when(
+      model == "sink" ~ sinkIceOnError,
+      model == "hydro" ~ hydroIceOnError,
+      model == "met" ~ metIceOnError,
+      model == "observed" ~ 7
+    )
+  )
 
-ggplot(all_three_hinds_df,
+ggplot(all_three_hinds_ice_on_df,
        aes(x = waterYear, y = ice_on_dowy, color = model)) +
-  geom_point(size = 3) +
+  geom_errorbar(
+    aes(
+      ymin = ice_on_dowy - ice_on_error,
+      ymax = ice_on_dowy + ice_on_error
+    ),
+    width = 0.2
+  ) +
+  geom_point(size = 2) +
   scale_color_manual(values = c(
     "met" = "orange",
     "hydro" = "steelblue",
     "sink" = "forestgreen",
     "observed" = "pink"
   )) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal(base_size = 16) +
+  labs(
+    x = "Water Year",
+    y = "Ice On Day of Water Year",
+    title = "Hindcasted and Observed Ice On Dates"
+  )
+
+
+# No error bars:
+ggplot(all_three_hinds_ice_on_df,
+       aes(x = waterYear, y = ice_on_dowy, color = model)) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c(
+    "met" = "orange",
+    "hydro" = "steelblue",
+    "sink" = "forestgreen",
+    "observed" = "pink"
+  )) +
+  geom_smooth(method = "lm", se= FALSE)+
   theme_minimal(base_size = 16) +
   labs(x = "Water Year", y = "Ice On Day of Water Year", title = "Hindcasted and Observed Ice On Dates")
 
 # Write a CSV for all dates:
-#write.csv(all_three_hinds_df, "derived_data/01_hindcast_ice_on_dates_lr")
+# first remove the error column:
+#all_three_hinds_ice_on_df_no_error <- all_three_hinds_ice_on_df %>% select(-ice_on_error)
+#write.csv(all_three_hinds_ice_on_df, "derived_data/01_hindcast_ice_on_dates_lr")
 
