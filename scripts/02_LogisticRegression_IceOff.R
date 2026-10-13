@@ -2,6 +2,11 @@
 # Leave one Year out Accuracy for Logistic Regression  -  Ice OFF
 ###################################################
 
+# ***READ THIS*** Welcome! For now, this script shares a lot of variable names with the logistic regression ice-on
+# script, so as stated in the ice-on script, you have to run it from top down to get to a chunk of code you want to 
+# look at. For example, if you were working in the ice-on script and then switched to this script to quickly check
+# a value or a df for the models or hindcasts, you'll be looking at ice-on data.
+# Re-run it all from the top every time! (sorry)
 
 # __________________________________________________
 # 0. Set Up R Environment and data munging 
