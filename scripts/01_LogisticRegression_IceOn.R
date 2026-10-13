@@ -397,6 +397,7 @@ sink_train_data <- sink_data
 
 # Trimming full time series
 sink_data_real_full_time_series_trim <- filter_by_year_and_doy(sink_data_real_full_time_series, c(1,76))
+sink_data_real_full_time_series_trim <- sink_data_real_full_time_series_trim %>% filter(calYear <= 2013) # don't include training years
 
 #----------------------------------------------------------------------
 #  05a. Hindcasting - sink model
@@ -423,7 +424,7 @@ hindcast_prob_factor <- factor(hindcast_probs_0_1, levels = c(1, 0),labels = c("
 hindcast_imputed_df <- sink_data_real_full_time_series_trim  
 hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
 # adding the daily probabilities to the main df
-hindcast_imputed_df$hindcasted_probability <- hindcast_preds
+hindcast_imputed_df$hindcasted_probability <- ice_on_hind_preds
 
 # Initialize an empty data frame to store the results
 hindcasted_ice_on_dates_sink <- data.frame()
@@ -482,7 +483,7 @@ hindcast_prob_factor <- factor(hindcast_probs_0_1, levels = c(1, 0),labels = c("
 hindcast_imputed_df <- sink_data_real_full_time_series_trim  
 hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
 # adding the daily probabilities to the main df
-hindcast_imputed_df$hindcasted_probability <- hindcast_preds
+hindcast_imputed_df$hindcasted_probability <- ice_on_hind_preds
 
 # Initialize an empty data frame to store the results
 hindcasted_ice_on_dates_met <- data.frame()
@@ -541,7 +542,7 @@ hindcast_prob_factor <- factor(hindcast_probs_0_1, levels = c(1, 0),labels = c("
 hindcast_imputed_df <- sink_data_real_full_time_series_trim  
 hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
 # adding the daily probabilities to the main df
-hindcast_imputed_df$hindcasted_probability <- hindcast_preds
+hindcast_imputed_df$hindcasted_probability <- ice_on_hind_preds
 
 # Initialize an empty data frame to store the results
 hindcasted_ice_on_dates_hydro <- data.frame()
@@ -676,5 +677,5 @@ ggplot(all_three_hinds_ice_on_df,
 # Write a CSV for all dates:
 # first remove the error column:
 #all_three_hinds_ice_on_df_no_error <- all_three_hinds_ice_on_df %>% select(-ice_on_error)
-#write.csv(all_three_hinds_ice_on_df, "derived_data/01_hindcast_ice_on_dates_lr")
+#write.csv(all_three_hinds_ice_on_df, "derived_data/01_hindcast_ice_on_dates_lr.csv")
 

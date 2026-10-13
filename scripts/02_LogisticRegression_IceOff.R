@@ -400,6 +400,7 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
    
    # Trimming full time series
    sink_data_real_full_time_series_trim <- filter_by_year_and_doy(sink_data_real_full_time_series, c(170,288))
+   sink_data_real_full_time_series_trim <- sink_data_real_full_time_series_trim %>% filter(calYear <= 2013) # don't include training years
    
    #----------------------------------------------------------------------
    #  05a. Hindcasting - sink model
@@ -426,7 +427,7 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
    hindcast_imputed_df <- sink_data_real_full_time_series_trim  
    hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
    # adding the daily probabilities to the main df
-   hindcast_imputed_df$hindcasted_probability <- hindcast_preds
+   hindcast_imputed_df$hindcasted_probability <- ice_off_hind_preds
    
    # Initialize an empty data frame to store the results
    hindcasted_ice_off_dates_sink <- data.frame()
@@ -485,7 +486,7 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
    hindcast_imputed_df <- sink_data_real_full_time_series_trim  
    hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
    # adding the daily probabilities to the main df
-   hindcast_imputed_df$hindcasted_probability <- hindcast_preds
+   hindcast_imputed_df$hindcasted_probability <- ice_off_hind_preds
    
    # Initialize an empty data frame to store the results
    hindcasted_ice_off_dates_met <- data.frame()
@@ -544,7 +545,7 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
    hindcast_imputed_df <- sink_data_real_full_time_series_trim  
    hindcast_imputed_df$predicted_ice <- hindcast_prob_factor
    # adding the daily probabilities to the main df
-   hindcast_imputed_df$hindcasted_probability <- hindcast_preds
+   hindcast_imputed_df$hindcasted_probability <- ice_off_hind_preds
    
    # Initialize an empty data frame to store the results
    hindcasted_ice_off_dates_hydro <- data.frame()
@@ -683,10 +684,55 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
    # Write a CSV for all dates:
    # first remove the error column:
    #all_three_hinds_ice_off_df_no_error <- all_three_hinds_ice_off_df %>% select(-ice_off_error)
-   #write.csv(all_three_hinds_ice_off_df_no_error, "derived_data/02_hindcast_ice_off_dates_lr"
+   #write.csv(all_three_hinds_ice_off_df_no_error, "derived_data/02_hindcast_ice_off_dates_lr.csv")
    
    
+#-----------------------------------------------
+### Adding in Random Forest ice off dates
+#-----------------------------------------------
+   # read in Katie's data
+   rf_ice_off_dates <- read.csv("derived_data/04_hindcast_ice_off_dates_rf.csv")
+   # remove X column
+   rf_ice_off_dates <- rf_ice_off_dates %>% select(-X)
+   # combine my dates with hers
+   rf_and_lr_ice_off <- rbind(all_three_hinds_ice_off_df_no_error, rf_ice_off_dates)
+   # add in errors:
+   rf_and_lr_ice_off_errors <- rf_and_lr_ice_off %>%
+     mutate(
+       ice_off_error = case_when(
+         model == "sink" ~ sinkIceOffError,
+         model == "hydro" ~ hydroIceOffError,
+         model == "met" ~ metIceOffError,
+         model == "observed" ~ 7,
+         model == "RandomForest" ~ 5.2 # got this from Katie's slides for machine learning class
+       )
+     )
    
+   # Plot em
+   ggplot(rf_and_lr_ice_off_errors,
+          aes(x = waterYear, y = ice_off_dowy, color = model)) +
+     geom_errorbar(
+       aes(
+         ymin = ice_off_dowy - ice_off_error,
+         ymax = ice_off_dowy + ice_off_error
+       ),
+       width = 0.2
+     ) +
+     geom_point(size = 2) +
+     scale_color_manual(values = c(
+       "met" = "orange",
+       "hydro" = "steelblue",
+       "sink" = "forestgreen",
+       "observed" = "pink",
+       "RandomForest" = "darkred"
+     )) +
+     geom_smooth(method = "lm", se = FALSE) +
+     theme_minimal(base_size = 16) +
+     labs(
+       x = "Water Year",
+       y = "Ice Off Day of Water Year",
+       title = "Hindcasted and Observed Ice Off Dates"
+     )
    
       
     
