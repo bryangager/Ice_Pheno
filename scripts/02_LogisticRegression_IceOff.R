@@ -14,25 +14,13 @@
 
 # Load any necessary packages and functions 
 source("source/00_libraries.R")
-########### OG load in data 
-# # Load in data   
-# 
-# # Ice presence, conductivity, water temperature, and flow for full time series 
-# full_timeseries <- read.csv("derived_data/00_imputed_data_trimmed_spring.csv")
-# full_timeseries$Date <- as.POSIXct(full_timeseries$Date)
-# 
-# # Create another data frame that contains just the years for which we also have ice observations 
-# loch_raw <- full_timeseries %>%
-#   filter(waterYear >= 2014)
 
-############### Katie's data load-in process:
 # Load in data   
 met_only <- read.csv("derived_data/00_met_daily_fullyr.csv") %>% select(-X)
 hydro_only <- read.csv("derived_data/00_hydro_daily_fullyr.csv")  %>% select(-X) # This has 239 duplicate dates
 ice_only <- read.csv("derived_data/00_ice_daily_fullyr.csv") %>% select(-X)
 
-# fix hydro_only
-
+# hydro data has duplicate because of wydoy stuff, needs to be fixed in data munging script but this works for now
 hydro_only_fixed <- hydro_only %>%
   group_by(Date) %>%
   summarise(
@@ -391,6 +379,15 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
      theme_minimal(base_size = 16) +
      labs(x = "Year Held Out", y = "Accuracy", title = "LR Out of Sample Accuracy - Ice Off")
    
+   ggplot(all_three_accuracy_df, aes(x = model, y = accuracy_log, color = model)) +
+     geom_boxplot(linewidth = 0.6, median.linewidth = 1.2) +
+     geom_point(alpha = 0.5) +
+     scale_color_manual(values = c(hydro = "#4A90E2",
+                                   met   = "#D4A634",
+                                   sink  = "#3F8F2F")) +
+     labs(x = "Model Input Data",
+          y = "Leave One Year Out Accuracy") +
+     theme_minimal()
    
    #----------------------------------------------------------------------
    #  05. Hindcasting - getting ready
@@ -714,7 +711,7 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
      )
    
    # Plot em
-   ggplot(rf_and_lr_ice_off_errors,
+   ggplot(rf_and_lr_ice_off_errors %>% filter(waterYear >= 1992),
           aes(x = waterYear, y = ice_off_dowy, color = model)) +
      geom_errorbar(
        aes(
@@ -739,8 +736,83 @@ all_three_diff_df <- rbind(sink_ice_off_diff_df,met_ice_off_diff_df,hydro_ice_of
        title = "Hindcasted and Observed Ice Off Dates"
      )
    
-      
+########### Getting the equations and p values for all the models:
+   lm_results <- rf_and_lr_ice_off_errors %>% filter(waterYear >= 1992) %>%
+     group_by(model) %>%
+     nest() %>%
+     mutate(
+       fit     = map(data, ~ lm(ice_off_dowy ~ waterYear, data = .x)),
+       tidy    = map(fit, tidy),
+       glance  = map(fit, glance)
+     ) %>%
+     summarise(
+       model        = model,
+       intercept    = map_dbl(tidy, ~ .x$estimate[.x$term == "(Intercept)"]),
+       slope        = map_dbl(tidy, ~ .x$estimate[.x$term == "waterYear"]),
+       slope_p      = map_dbl(tidy, ~ .x$p.value[.x$term == "waterYear"]),
+       r_squared    = map_dbl(glance, ~ .x$r.squared),
+       n            = map_int(data, nrow)
+     ) %>%
+     mutate(
+       equation = sprintf("y = %.3f * waterYear + %.1f", slope, intercept)
+     )
+   
+   lm_results
+   
+############### Making the results into a nice table
+   pretty_tbl <- lm_results %>%
+     select(model, equation, slope, slope_p, r_squared, n) %>%
+     gt() %>%
+     tab_header(
+       title = "Linear Trends in Ice Off Date by Model",
+       subtitle = "Ice off day of water year ~ water year"
+     ) %>%
+     cols_label(
+       model     = "Model",
+       equation  = "Equation",
+       slope     = "Slope (days/yr)",
+       slope_p   = "p-value",
+       r_squared = "R²",
+       n         = "n"
+     ) %>%
+     fmt_number(columns = c(slope, r_squared), decimals = 3) %>%
+     fmt(columns = slope_p,
+         fns = function(x) ifelse(x < 0.001, "< 0.001", sprintf("%.3f", x))) %>%
+     cols_align(align = "center", columns = -model) %>%
+     tab_style(
+       style = cell_text(weight = "bold"),
+       locations = cells_body(columns = slope_p, rows = slope_p < 0.05)
+     ) %>%
+     tab_footnote("Bold p-values indicate a significant trend (p < 0.05).")
+   
+   pretty_tbl
     
+   
+   pretty_tbl <- lm_results %>%
+     select(model, slope, slope_p, r_squared, n) %>%
+     gt() %>%
+     tab_header(
+       title = "Linear Trends in Ice Off Date by Model",
+       subtitle = "Ice off day of water year ~ water year"
+     ) %>%
+     cols_label(
+       model     = "Model",
+       slope     = "Slope (days/yr)",
+       slope_p   = "p-value",
+       r_squared = "R²",
+       n         = "n"
+     ) %>%
+     fmt_number(columns = c(slope, r_squared), decimals = 3) %>%
+     fmt(columns = slope_p,
+         fns = function(x) ifelse(x < 0.001, "< 0.001", sprintf("%.3f", x))) %>%
+     cols_align(align = "center", columns = -model) %>%
+     tab_style(
+       style = cell_text(weight = "bold"),
+       locations = cells_body(columns = slope_p, rows = slope_p < 0.05)
+     ) %>%
+     tab_footnote("Bold p-values indicate a significant trend (p < 0.05).")
+   
+   pretty_tbl
 ############## Explaining years that aren't as accurate by looking at missing data: (log reg. by default eliminates an entire row if there's any NAs)
     sum(complete.cases(sink_data[, c("ice_presence", "Flow", "cumulative_dis", "water_temp_C", "cond_uScm")]))
     # only 1160 rows with no NAs

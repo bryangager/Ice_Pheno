@@ -14,26 +14,10 @@
 source("source/00_libraries.R")
 
 # Load in data   
-
-# # Ice presence, conductivity, water temperature, and flow for full time series 
-# full_timeseries <- read.csv("derived_data/00_imputed_data_trimmed_winter.csv")
-# full_timeseries$Date <- as.POSIXct(full_timeseries$Date)
-# 
-# # Create another data frame that contains just the years for which we also have ice observations 
-# loch_raw <- full_timeseries %>%
-#   filter(waterYear >= 2014)
-# 
-# # Met data from Bear Lake SnoTel site 322
-# full_met <- read.csv("derived_data/00_snotel_322.csv")
-# full_met$date <- as.POSIXct(full_met$date)
-
-
-############### NEW load in data from Katie's script + my fix for duplicates in hydro_data because of wy_doy discrepencies
-# Load in data   
 met_only <- read.csv("derived_data/00_met_daily_fullyr.csv") %>% select(-X)
 hydro_only <- read.csv("derived_data/00_hydro_daily_fullyr.csv")  %>% select(-X) # This has 239 duplicate dates
 ice_only <- read.csv("derived_data/00_ice_daily_fullyr.csv") %>% select(-X)
-
+# hydro data has duplicate because of wydoy stuff, needs to be fixed in data munging script but this works for now
 hydro_only_fixed <- hydro_only %>%
   group_by(Date) %>%
   summarise(
@@ -376,7 +360,7 @@ ggplot(all_three_diff_df, aes(x = ice_on_diff_log)) +
 all_three_accuracy_df <- rbind(sink_accuracy_df, met_accuracy_df, hydro_accuracy_df)
 
 ggplot(all_three_accuracy_df,
-       aes(x = years, y = accuracy_log, color = model)) +
+       aes(x = years, y = ice_on_accuracy_log, color = model)) +
   geom_point(size = 3) +
   scale_color_manual(values = c(
     "met" = "orange",
@@ -385,6 +369,16 @@ ggplot(all_three_accuracy_df,
   )) +
   theme_minimal(base_size = 16) +
   labs(x = "Year Held Out", y = "Accuracy", title = "LR Out of Sample Accuracy - Ice On")
+
+ggplot(all_three_accuracy_df, aes(x = model, y = ice_on_accuracy_log, color = model)) +
+  geom_boxplot(linewidth = 0.6, median.linewidth = 1.2) +
+  geom_point(alpha = 0.5) +
+  scale_color_manual(values = c(hydro = "#4A90E2",
+                                met   = "#D4A634",
+                                sink  = "#3F8F2F")) +
+  labs(x = "Model Input Data",
+       y = "Leave One Year Out Accuracy") +
+  theme_minimal()
 
 
 #----------------------------------------------------------------------
@@ -638,7 +632,7 @@ all_three_hinds_ice_on_df <- all_three_hinds_ice_on_df %>%
     )
   )
 
-ggplot(all_three_hinds_ice_on_df,
+ggplot(all_three_hinds_ice_on_df %>% filter(waterYear >= 1993),
        aes(x = waterYear, y = ice_on_dowy, color = model)) +
   geom_errorbar(
     aes(
@@ -682,3 +676,51 @@ ggplot(all_three_hinds_ice_on_df,
 #all_three_hinds_ice_on_df_no_error <- all_three_hinds_ice_on_df %>% select(-ice_on_error)
 #write.csv(all_three_hinds_ice_on_df, "derived_data/01_hindcast_ice_on_dates_lr.csv")
 
+lm_results_ice_on <- all_three_hinds_ice_on_df %>% filter(waterYear >= 1993) %>%
+  group_by(model) %>%
+  nest() %>%
+  mutate(
+    fit     = map(data, ~ lm(ice_on_dowy ~ waterYear, data = .x)),
+    tidy    = map(fit, tidy),
+    glance  = map(fit, glance)
+  ) %>%
+  summarise(
+    model        = model,
+    intercept    = map_dbl(tidy, ~ .x$estimate[.x$term == "(Intercept)"]),
+    slope        = map_dbl(tidy, ~ .x$estimate[.x$term == "waterYear"]),
+    slope_p      = map_dbl(tidy, ~ .x$p.value[.x$term == "waterYear"]),
+    r_squared    = map_dbl(glance, ~ .x$r.squared),
+    n            = map_int(data, nrow)
+  ) %>%
+  mutate(
+    equation = sprintf("y = %.3f * waterYear + %.1f", slope, intercept)
+  )
+
+lm_results_ice_on
+
+# Making a pretty table:
+pretty_tbl_ice_on <- lm_results_ice_on %>%
+  select(model, slope, slope_p, r_squared, n) %>%
+  gt() %>%
+  tab_header(
+    title = "Linear Trends in Ice On Date by Model",
+    subtitle = "Ice on day of water year ~ water year"
+  ) %>%
+  cols_label(
+    model     = "Model",
+    slope     = "Slope (days/yr)",
+    slope_p   = "p-value",
+    r_squared = "R²",
+    n         = "n"
+  ) %>%
+  fmt_number(columns = c(slope, r_squared), decimals = 3) %>%
+  fmt(columns = slope_p,
+      fns = function(x) ifelse(x < 0.001, "< 0.001", sprintf("%.3f", x))) %>%
+  cols_align(align = "center", columns = -model) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = slope_p, rows = slope_p < 0.05)
+  ) %>%
+  tab_footnote("Bold p-values indicate a significant trend (p < 0.05).")
+
+pretty_tbl_ice_on
