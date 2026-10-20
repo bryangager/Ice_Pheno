@@ -282,11 +282,17 @@ source(here::here("source", "00_functions.R"))
 
       # Format both as data frames to that they play nice (unclear why the time series tibbles are enemies )
       cumulative_flow_data_frame <- as.data.frame(cumulative_flow_df)
-      temp_cond_data_frame <- as.data.frame(temp_cond_df)
+      temp_cond_data_frame <- as.data.frame(temp_cond_df) %>%
+          select(-c(waterYear, wy_doy))
+
+      head(cumulative_flow_data_frame)
+      head(temp_cond_data_frame)
 
       # join together all hydro data:
-      hydro_daily <- full_join(temp_cond_data_frame , 
-                              cumulative_flow_data_frame)
+      hydro_daily <- left_join(cumulative_flow_data_frame,
+          temp_cond_data_frame ,                      
+          by = "Date"
+          )
 
       # add a calendar year column 
         hydro_daily$calYear <- substring(hydro_daily$Date, 1, 4)
