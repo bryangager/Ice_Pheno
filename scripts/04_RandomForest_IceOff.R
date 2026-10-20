@@ -5,8 +5,7 @@
 # KAG NEXT STEPS: 
 # [X] put the leave one out accuracy into a function 
 # [X] run the looa function for each model (met, hydro, sink)
-# [ ] standardize the ouputs (accuracy and predictons and hindcasts)
-# [ ] write another script to copare the outputs across modesl 
+# [ ] standardize the ouputs (accuracy and predictons and hindcasts) 
 
 # Stop and Fix: hydro and sink models not running for 2020, 2021, 2022, and 2023 --> but it looks like the data is there? Check hydro, hmm also hydro should be working because I got it to work for ML class  
     # somehow looosing flow and cumulative flow for 2021 
@@ -43,21 +42,21 @@
 
     # Trouble shooting hydro data missing? KAG 20260722 
 
-        hydro_data  %>%
+        hydro_trimmed  %>%
             mutate(
-            Date = as.POSIXct(Date), 
-            cond_scaled = scales::rescale(cond_uScm, to = range(c(0,1), na.rm = TRUE)),
-            temp_scaled = scales::rescale(water_temp_C, to = range(c(0,1), na.rm = TRUE)), 
-            cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(c(0,1), na.rm = TRUE)), 
-            q_scaled = scales::rescale(Flow, to = range(c(0,1), na.rm = TRUE))
-            ) %>%
+                Date = as.POSIXct(Date), 
+                cond_scaled = scales::rescale(cond_uScm, to = range(c(0,1), na.rm = TRUE)),
+                temp_scaled = scales::rescale(water_temp_C, to = range(c(0,1), na.rm = TRUE)), 
+                cumulative_q_scaled = scales::rescale(cumulative_dis, to = range(c(0,1), na.rm = TRUE)), 
+                q_scaled = scales::rescale(Flow, to = range(c(0,1), na.rm = TRUE))
+            )%>%
             ggplot(aes(x= Date)) + 
-            geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
-            geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
-            geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
-            geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
-            theme_minimal() + 
-        facet_wrap(~waterYear, scales = "free")
+                geom_point(aes(y = cond_scaled), color = "olivedrab4", alpha = 0.75) + 
+                geom_point(aes(y = temp_scaled), color = "salmon3", alpha = 0.75) + 
+                geom_point(aes(y = q_scaled), color = "mediumpurple1", alpha = 0.75) + 
+                geom_point(aes(y = cumulative_q_scaled), color = "mediumpurple4", alpha = 0.75) + 
+                theme_minimal() + 
+                facet_wrap(~waterYear, scales = "free")
 
 # __________________________________________________
 # Feature Engineering 
@@ -67,8 +66,6 @@
 hydro_data <- feature_engineer_hydro_ice_off(hydro_trimmed) %>%
   tidyr::drop_na()  # Remove any rows with NA
 
-            # hydro trimmed has all of the water years, but coming out of the feature engineering function it does not 
-
 met_data <- feature_engineer_met_ice_off(met_trimmed) %>%
   tidyr::drop_na()  # Remove any rows with NA
 
@@ -76,8 +73,6 @@ sink_data <- sink_trimmed %>%
     feature_engineer_hydro_ice_off() %>%
     feature_engineer_met_ice_off() %>%
     tidyr::drop_na()  # Remove any rows with NA
-
-
 
 # check for class imbalance 
     # --> need to deal with slight class imbalance  in the modeling, we have fewer data points with no ice than with ice  
@@ -89,6 +84,7 @@ sink_data <- sink_trimmed %>%
           values_from = n,
           names_prefix = "ice_"
         )
+
     balance_count$proportion_0 <- balance_count$ice_0 /(balance_count$ice_0 + balance_count$ice_1)
 
 # __________________________________________________
@@ -199,7 +195,7 @@ mutate(
     # Accuracy_______
 
         # Scatterpolot of Leave One Year Out Model Accuracy over time 
-            model_performance %>%
+        model_performance %>%
             ggplot(
                 aes(
                     x = waterYear, 
@@ -299,7 +295,7 @@ mutate(
             theme_minimal(base_size = 16)
 
     # Observed vs. predicted plots 
-        # --> something weird is happenign with met data obs vs. pred here 
+    # --> something weird is happenign with met data obs vs. pred here 
         model_performance %>%
             ggplot(
                 aes(
@@ -439,18 +435,50 @@ mutate(
 
         # The output of all of these models is the probability of presence, in order to get a charcterization of presence absence set a threshold 
             predicted_hind_binary_rf_hydro <- 1 * (predicted_hind_prob_rf_hydro > threshold)
+           
+            predicted_hind_binary_rf_met <- 1 * (predicted_hind_prob_rf_met > threshold)
+
+            predicted_hind_binary_rf_sink <- 1 * (predicted_hind_prob_rf_sink > threshold)
+
+
             hindcast_dialy_hydro <- cbind(hind_data_hydro, 
-                                        predicted_hind_prob_rf_hydro,
-                                        predicted_hind_binary_rf_hydro 
-                                     ) %>%
-                                     select(
-                                        c(Date, calYear, waterYear, wy_doy, ice, predicted_hind_prob_rf_hydro, predicted_hind_binary_rf_hydro)
-                                     ) %>%
-                                     rename(
-                                        obs_ice = ice, 
-                                        ice_pred_prob = predicted_hind_prob_rf_hydro, 
-                                        ice_pred_binary = predicted_hind_binary_rf_hydro
-                                     )
+                    predicted_hind_prob_rf_hydro,
+                    predicted_hind_binary_rf_hydro 
+                ) %>%
+                select(
+                    c(Date, calYear, waterYear, wy_doy, ice, predicted_hind_prob_rf_hydro, predicted_hind_binary_rf_hydro)
+                ) %>%
+                rename(
+                    obs_ice = ice, 
+                    ice_pred_prob = predicted_hind_prob_rf_hydro, 
+                    ice_pred_binary = predicted_hind_binary_rf_hydro
+                )
+
+            hindcast_dialy_met <- cbind(hind_data_met, 
+                    predicted_hind_prob_rf_met,
+                    predicted_hind_binary_rf_met 
+                ) %>%
+                select(
+                    c(Date, calYear, waterYear, wy_doy, ice, predicted_hind_prob_rf_met, predicted_hind_binary_rf_met)
+                ) %>%
+                rename(
+                    obs_ice = ice, 
+                    ice_pred_prob = predicted_hind_prob_rf_met, 
+                    ice_pred_binary = predicted_hind_binary_rf_met
+                )
+
+            hindcast_dialy_sink <- cbind(hind_data_sink, 
+                    predicted_hind_prob_rf_sink,
+                    predicted_hind_binary_rf_sink 
+                ) %>%
+                select(
+                    c(Date, calYear, waterYear, wy_doy, ice, predicted_hind_prob_rf_sink, predicted_hind_binary_rf_sink)
+                ) %>%
+                rename(
+                    obs_ice = ice, 
+                    ice_pred_prob = predicted_hind_prob_rf_sink, 
+                    ice_pred_binary = predicted_hind_binary_rf_sink
+                )
 
         # Bella wants you to save both the probabiliy and the binary to plot so put them together 
 
@@ -458,34 +486,30 @@ mutate(
 # Visualize and Save Daily Hindcast Results 
 # __________________________________________________      
 
-    # Save predicted probabilities and binary 
+    # plot predictions to sanity check at daily 
+    hindcast_dialy_sink  %>%
+        ggplot(aes(
+                x = Date, 
+                y = ice_pred_prob)
+            ) + 
+            geom_point(
+                alpha = 0.5, 
+                color = "skyblue3"
+            ) + 
+            theme_minimal() + 
+            geom_hline(
+                yintercept = 0.50, 
+                color = "grey60", 
+                linetype = "dashed"
+            ) + 
+            facet_wrap(~waterYear, scales = "free")
 
-            # create a data frame of the daily ice predictions 
-            daily_pred <- hind_data %>%
-            subset(select = c("waterYear", "wy_doy", "Date"))
-            daily_pred$predicted_ice_probability <- predicted_hind_prob_rf
-            daily_pred$predicted_ice_binary <- hind_ice_rf
+        # Save the daily ice predictions 
+        write.csv(hindcast_dialy_hydro, "derived_data/04_hindcast_daily_ice_off_prob_rf_hydro.csv")
+        write.csv(hindcast_dialy_met, "derived_data/04_hindcast_daily_ice_off_prob_rf_met.csv")
+        write.csv(hindcast_dialy_sink, "derived_data/04_hindcast_daily_ice_off_prob_rf_sink.csv")
 
-            # plot predictions to sanity check at daily 
-            daily_pred %>%
-            ggplot(aes(
-                    x = Date, 
-                    y = predicted_ice_probability)
-                ) + 
-                geom_point(
-                    alpha = 0.5, 
-                    color = "skyblue3"
-                ) + 
-                theme_minimal() + 
-                geom_hline(
-                    yintercept = 0.50, 
-                    color = "grey60", 
-                    linetype = "dashed"
-                ) + 
-                facet_wrap(~waterYear, scales = "free")
-
-            # Save the daily ice predictions 
-            write.csv(daily_pred, "derived_data/04_hindcast_daily_ice_off_prob_rf.csv")
+## ****** Katie you got to here on 2026 oct 20 
 
     # Plot hindcast ice with predictor variables 
         hind_data$ice_rf <- hind_ice_rf
